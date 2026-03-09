@@ -336,15 +336,16 @@ const LocativePage: React.FC = () => {
 
         <Divider style={{ margin: '8px 0' }} />
 
-        <Button
-          type="link"
-          icon={<EyeOutlined />}
-          onClick={() => handleView(record)}
-          size="small"
-          style={{ padding: 0 }}
-        >
-          Ver
-        </Button>
+        <div style={{ textAlign: 'center' }}>
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={() => handleView(record)}
+            size="small"
+          >
+            Ver
+          </Button>
+        </div>
       </div>
     </Card>
   );

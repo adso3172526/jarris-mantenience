@@ -352,14 +352,17 @@ const EventosPage: React.FC = () => {
         {record.workOrderId && (
           <>
             <Divider style={{ margin: '8px 0' }} />
-            <Button
-              type="link"
-              icon={<EyeOutlined />}
-              onClick={() => handleView(record)}
-              size="small"
-              style={{ padding: 0 }}
-              loading={loadingWO}
-            />
+            <div style={{ textAlign: 'center' }}>
+              <Button
+                type="link"
+                icon={<EyeOutlined />}
+                onClick={() => handleView(record)}
+                size="small"
+                loading={loadingWO}
+              >
+                Ver
+              </Button>
+            </div>
           </>
         )}
       </div>
