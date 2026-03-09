@@ -509,7 +509,7 @@ const AssetsPage: React.FC = () => {
                   <Tooltip title="Editar">
                     <Button
                       type="text"
-                      icon={<EditOutlined />}
+                      icon={<EditOutlined style={{ color: '#1890ff' }} />}
                       onClick={() => handleEdit(record)}
                     />
                   </Tooltip>

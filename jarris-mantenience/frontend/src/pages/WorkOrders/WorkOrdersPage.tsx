@@ -232,7 +232,7 @@ const WorkOrdersPage: React.FC = () => {
       <Tooltip key="view" title="Ver detalles">
         <Button
           type={isMobileView ? "default" : "text"}
-          icon={<EyeOutlined />}
+          icon={<EyeOutlined style={{ color: '#1890ff' }} />}
           onClick={() => handleView(record)}
           block={isMobileView}
         >

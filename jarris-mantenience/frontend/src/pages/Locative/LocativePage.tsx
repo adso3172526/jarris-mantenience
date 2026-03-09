@@ -273,9 +273,8 @@ const LocativePage: React.FC = () => {
           icon={<EyeOutlined />}
           onClick={() => handleView(record)}
           size="small"
-        >
-          Ver
-        </Button>
+        />
+
       ),
     },
   ];
@@ -344,7 +343,7 @@ const LocativePage: React.FC = () => {
           size="small"
           style={{ padding: 0 }}
         >
-          Ver detalle
+          Ver
         </Button>
       </div>
     </Card>

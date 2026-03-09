@@ -170,7 +170,7 @@ const LocationsPage: React.FC = () => {
           <Tooltip title="Editar ubicación">
             <Button
               type="text"
-              icon={<EditOutlined />}
+              icon={<EditOutlined style={{ color: '#1890ff' }} />}
               onClick={() => handleEdit(record)}
             />
           </Tooltip>

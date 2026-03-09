@@ -299,9 +299,7 @@ const EventosPage: React.FC = () => {
           size="small"
           disabled={!record.workOrderId}
           loading={loadingWO}
-        >
-          Ver
-        </Button>
+        />
       ),
     },
   ];
@@ -361,9 +359,7 @@ const EventosPage: React.FC = () => {
               size="small"
               style={{ padding: 0 }}
               loading={loadingWO}
-            >
-              Ver OT
-            </Button>
+            />
           </>
         )}
       </div>

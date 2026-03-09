@@ -149,22 +149,18 @@ const MainLayout: React.FC = () => {
           onClick: () => navigate('/categories'),
         },
         {
+          key: '/users',
+          icon: <UserOutlined />,
+          label: 'Usuarios',
+          onClick: () => navigate('/users'),
+        },
+        {
           key: '/reports',
           icon: <BarChartOutlined />,
           label: 'Reportes',
           onClick: () => navigate('/reports'),
         }
       );
-    }
-
-    // ADMIN y JEFE_MANTENIMIENTO ven usuarios
-    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO'])) {
-      items.push({
-        key: '/users',
-        icon: <UserOutlined />,
-        label: 'Usuarios',
-        onClick: () => navigate('/users'),
-      });
     }
 
     return items;

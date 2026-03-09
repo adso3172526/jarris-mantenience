@@ -577,7 +577,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
               icon={<EditOutlined />}
               onClick={onEdit}
               type="primary"
-              style={{ backgroundColor: '#faad14', borderColor: '#faad14' }}
+              style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}
             >
               Editar OT
             </Button>
