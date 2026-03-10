@@ -167,7 +167,7 @@ const ReportsPage: React.FC = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Card
-        title="Generación de Reportes"
+        title="Reportes"
         style={{ maxWidth: 600, margin: '0 auto' }}
       >
         <Tabs defaultActiveKey="ot" items={tabItems} />

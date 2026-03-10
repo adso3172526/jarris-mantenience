@@ -123,37 +123,40 @@ const DashboardPage: React.FC = () => {
         }}
       >
         {/* Filtros */}
-        <Row gutter={[12, 12]} style={{ marginBottom: 16 }}>
-          <Col xs={24} sm={12} md={6}>
-            <div style={{ marginBottom: 8, fontWeight: 500 }}>Fecha Desde:</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end', marginBottom: 16 }}>
+          <div style={{ minWidth: 150, flex: '1 1 150px', maxWidth: 200 }}>
+            <div style={{ marginBottom: 6, fontWeight: 500, fontSize: 13 }}>Fecha Desde:</div>
             <DatePicker
               value={fechaDesde}
               onChange={(date) => date && setFechaDesde(date)}
               format="DD/MM/YYYY"
               style={{ width: '100%' }}
               placeholder="Seleccionar fecha"
+              size={isMobile ? 'large' : 'middle'}
             />
-          </Col>
+          </div>
 
-          <Col xs={24} sm={12} md={6}>
-            <div style={{ marginBottom: 8, fontWeight: 500 }}>Fecha Hasta:</div>
+          <div style={{ minWidth: 150, flex: '1 1 150px', maxWidth: 200 }}>
+            <div style={{ marginBottom: 6, fontWeight: 500, fontSize: 13 }}>Fecha Hasta:</div>
             <DatePicker
               value={fechaHasta}
               onChange={(date) => date && setFechaHasta(date)}
               format="DD/MM/YYYY"
               style={{ width: '100%' }}
               placeholder="Seleccionar fecha"
+              size={isMobile ? 'large' : 'middle'}
             />
-          </Col>
+          </div>
 
-          <Col xs={24} sm={12} md={6}>
-            <div style={{ marginBottom: 8, fontWeight: 500 }}>Ubicación:</div>
+          <div style={{ minWidth: 180, flex: '1 1 180px', maxWidth: 240 }}>
+            <div style={{ marginBottom: 6, fontWeight: 500, fontSize: 13 }}>Ubicación:</div>
             <Select
               value={ubicacionId}
               onChange={setUbicacionId}
               style={{ width: '100%' }}
               allowClear
-              placeholder="Todas las ubicaciones"
+              placeholder="Todas"
+              size={isMobile ? 'large' : 'middle'}
             >
               {locations.map((loc) => (
                 <Option key={loc.id} value={loc.id}>
@@ -161,22 +164,18 @@ const DashboardPage: React.FC = () => {
                 </Option>
               ))}
             </Select>
-          </Col>
+          </div>
 
-          <Col xs={24} sm={12} md={6}>
-            <div style={{ marginBottom: 8, visibility: isMobile ? 'visible' : 'hidden' }}>
-              {isMobile ? '' : '.'}
-            </div>
+          <div>
             <Button
               type="primary"
               onClick={loadDashboard}
-              style={{ width: '100%', height: 40 }}
-              size="large"
+              size={isMobile ? 'large' : 'middle'}
             >
-              Aplicar Filtro
+              Aplicar
             </Button>
-          </Col>
-        </Row>
+          </div>
+        </div>
 
         <Spin spinning={loading}>
           {/* Métricas */}

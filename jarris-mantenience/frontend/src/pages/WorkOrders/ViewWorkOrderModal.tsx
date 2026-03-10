@@ -260,6 +260,20 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
           <Text type="secondary" style={{ fontSize: 12 }}>Descripción:</Text>
           <div style={{ fontSize: 13 }}>{workOrder.requestDescription || 'Sin descripción'}</div>
         </div>
+        {workOrder.assignmentDescription && (
+          <div style={{
+            marginTop: 12,
+            padding: '10px 12px',
+            background: '#e6f7ff',
+            borderLeft: '3px solid #1890ff',
+            borderRadius: 4,
+          }}>
+            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>
+              Instrucciones:
+            </Text>
+            <div style={{ fontSize: 13 }}>{workOrder.assignmentDescription}</div>
+          </div>
+        )}
       </div>
 
       {/* Fotos del PDV */}
@@ -463,6 +477,18 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
         <Descriptions.Item label="Descripción">
           {workOrder.requestDescription || 'Sin descripción'}
         </Descriptions.Item>
+        {workOrder.assignmentDescription && (
+          <Descriptions.Item label="Instrucciones">
+            <div style={{
+              padding: '6px 10px',
+              background: '#e6f7ff',
+              borderLeft: '3px solid #1890ff',
+              borderRadius: 4,
+            }}>
+              {workOrder.assignmentDescription}
+            </div>
+          </Descriptions.Item>
+        )}
       </Descriptions>
 
       {workOrder.pdvPhotos && workOrder.pdvPhotos.length > 0 && (

@@ -66,6 +66,7 @@ export const workOrderStatusColors = {
   EN_PROCESO: 'cyan',
   TERMINADA: 'green',
   CERRADA: 'default',
+  RECHAZADA: 'red',
 } as const;
 
 // Estados de Assets con colores

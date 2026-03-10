@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Space, Drawer, Button } from 'antd';
+import { Layout, Avatar, Dropdown, Space, Drawer, Button } from 'antd';
 import type { MenuProps } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -16,33 +16,38 @@ import {
   HomeOutlined,
   StopOutlined,
   UnorderedListOutlined,
+  TagOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../../contexts/AuthContext';
 
-const { Header, Sider, Content } = Layout;
+const { Header, Content } = Layout;
+
+const SIDEBAR_WIDTH = 90;
+
+interface SidebarItem {
+  key: string;
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}
 
 const MainLayout: React.FC = () => {
-  const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, hasRole } = useAuth();
 
-  // Detect mobile on resize
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
-      if (!mobile) {
-        setMobileMenuOpen(false); // Close mobile menu when resizing to desktop
-      }
+      if (!mobile) setMobileMenuOpen(false);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
@@ -61,11 +66,9 @@ const MainLayout: React.FC = () => {
     },
   ];
 
-  // Filtrar items del menú según rol
-  const getMenuItems = (): MenuProps['items'] => {
-    const items: MenuProps['items'] = [];
+  const getMenuItems = (): SidebarItem[] => {
+    const items: SidebarItem[] = [];
 
-    // 1. Dashboard: Solo ADMIN y JEFE_MANTENIMIENTO
     if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO'])) {
       items.push({
         key: '/dashboard',
@@ -75,15 +78,13 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    // 2. Órdenes de Trabajo - Todos los roles
     items.push({
       key: '/work-orders',
       icon: <FileTextOutlined />,
-      label: 'Órdenes de Trabajo',
+      label: 'Órdenes',
       onClick: () => navigate('/work-orders'),
     });
 
-    // 3. Locativo: ADMIN, JEFE_MANTENIMIENTO, TECNICO_INTERNO
     if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'])) {
       items.push({
         key: '/locative',
@@ -93,7 +94,6 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    // 3.5 Eventos: ADMIN, JEFE_MANTENIMIENTO, TECNICO_INTERNO
     if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'])) {
       items.push({
         key: '/eventos',
@@ -103,7 +103,6 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    // 4. Activos: Solo ADMIN, JEFE_MANTENIMIENTO y TECNICO_INTERNO
     if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'])) {
       items.push({
         key: '/assets',
@@ -113,7 +112,6 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    // 5. Traslados: ADMIN, JEFE_MANTENIMIENTO, TECNICO_INTERNO
     if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'])) {
       items.push({
         key: '/events',
@@ -123,17 +121,15 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    // 6. Historial Bajas: ADMIN, JEFE_MANTENIMIENTO, TECNICO_INTERNO
     if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'])) {
       items.push({
         key: '/bajas',
         icon: <StopOutlined />,
-        label: 'Historial Bajas',
+        label: 'Bajas',
         onClick: () => navigate('/bajas'),
       });
     }
 
-    // Solo ADMIN y JEFE_MANTENIMIENTO ven estas opciones
     if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO'])) {
       items.push(
         {
@@ -147,6 +143,12 @@ const MainLayout: React.FC = () => {
           icon: <AppstoreOutlined />,
           label: 'Categorías',
           onClick: () => navigate('/categories'),
+        },
+        {
+          key: '/locative-categories',
+          icon: <TagOutlined />,
+          label: 'Cat. Locat.',
+          onClick: () => navigate('/locative-categories'),
         },
         {
           key: '/users',
@@ -177,19 +179,100 @@ const MainLayout: React.FC = () => {
     return roles.map((r) => roleLabels[r] || r).join(', ');
   };
 
+  const menuItems = getMenuItems();
+
+  const renderSidebarItem = (item: SidebarItem) => {
+    const isActive = location.pathname === item.key;
+    return (
+      <div
+        key={item.key}
+        onClick={item.onClick}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '10px 4px',
+          cursor: 'pointer',
+          borderRadius: 8,
+          margin: '2px 8px',
+          background: isActive ? 'rgba(230, 0, 18, 0.15)' : 'transparent',
+          color: isActive ? '#ff4d4f' : 'rgba(255,255,255,0.65)',
+          transition: 'all 0.2s',
+        }}
+        onMouseEnter={(e) => {
+          if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+        }}
+        onMouseLeave={(e) => {
+          if (!isActive) e.currentTarget.style.background = 'transparent';
+        }}
+      >
+        <span style={{ fontSize: 22, lineHeight: 1, marginBottom: 3 }}>
+          {item.icon}
+        </span>
+        <span style={{
+          fontSize: 10,
+          lineHeight: 1.2,
+          textAlign: 'center',
+          fontWeight: isActive ? 600 : 400,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          maxWidth: '100%',
+        }}>
+          {item.label}
+        </span>
+      </div>
+    );
+  };
+
+  // Mobile drawer menu items (full text, vertical list)
+  const renderMobileMenuItem = (item: SidebarItem) => {
+    const isActive = location.pathname === item.key;
+    return (
+      <div
+        key={item.key}
+        onClick={item.onClick}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '12px 20px',
+          cursor: 'pointer',
+          background: isActive ? '#fff1f0' : 'transparent',
+          color: isActive ? '#E60012' : '#333',
+          fontWeight: isActive ? 600 : 400,
+          fontSize: 14,
+          borderRight: isActive ? '3px solid #E60012' : '3px solid transparent',
+        }}
+      >
+        <span style={{ fontSize: 18 }}>{item.icon}</span>
+        <span>{item.label}</span>
+      </div>
+    );
+  };
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar - always collapsed, icons + labels */}
       {!isMobile && (
-        <Sider
-          collapsible
-          collapsed={collapsed}
-          onCollapse={setCollapsed}
+        <div
           style={{
+            width: SIDEBAR_WIDTH,
+            minHeight: '100vh',
             background: '#2c3e50',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            bottom: 0,
+            zIndex: 101,
+            overflowY: 'auto',
+            overflowX: 'hidden',
           }}
         >
+          {/* Logo */}
           <div
             style={{
               height: 64,
@@ -197,32 +280,48 @@ const MainLayout: React.FC = () => {
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white',
-              fontSize: collapsed ? 18 : 24,
+              fontSize: 20,
               fontWeight: 800,
-              letterSpacing: collapsed ? 0 : 4,
+              letterSpacing: 2,
               fontFamily: "'Segoe UI', Arial, sans-serif",
               textTransform: 'uppercase',
               textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-              transition: 'all 0.2s',
+              flexShrink: 0,
             }}
           >
-            {collapsed ? 'J' : 'JARRIS'}
+            J
           </div>
 
-          <Menu
-            mode="inline"
-            selectedKeys={[location.pathname]}
-            items={getMenuItems()}
+          {/* Menu items */}
+          <div style={{ flex: 1, paddingTop: 4 }}>
+            {menuItems.map(renderSidebarItem)}
+          </div>
+
+          {/* Logout at bottom */}
+          <div
+            onClick={handleLogout}
             style={{
-              background: '#2c3e50',
-              border: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '12px 4px',
+              cursor: 'pointer',
+              color: 'rgba(255,255,255,0.45)',
+              borderTop: '1px solid rgba(255,255,255,0.1)',
+              flexShrink: 0,
+              transition: 'all 0.2s',
             }}
-            theme="dark"
-          />
-        </Sider>
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#ff4d4f'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; }}
+          >
+            <LogoutOutlined style={{ fontSize: 20, marginBottom: 3 }} />
+            <span style={{ fontSize: 10 }}>Salir</span>
+          </div>
+        </div>
       )}
 
-      <Layout>
+      <Layout style={{ marginLeft: isMobile ? 0 : SIDEBAR_WIDTH }}>
         <Header
           style={{
             padding: isMobile ? '0 12px' : '0 24px',
@@ -237,7 +336,6 @@ const MainLayout: React.FC = () => {
             height: 64,
           }}
         >
-          {/* Left side: Menu button (mobile) or Title */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {isMobile && (
               <Button
@@ -247,17 +345,16 @@ const MainLayout: React.FC = () => {
                 style={{ padding: '4px 8px' }}
               />
             )}
-            <div style={{ 
-              fontSize: isMobile ? 16 : 18, 
-              fontWeight: isMobile ? 600 : 500, 
-              color: '#2c3e50'
+            <div style={{
+              fontSize: isMobile ? 16 : 18,
+              fontWeight: isMobile ? 600 : 500,
+              color: '#2c3e50',
             }}>
               {isMobile ? 'JARRIS' : 'Mantenimiento'}
             </div>
           </div>
 
-          {/* Right side: User dropdown */}
-          <div style={{ paddingRight: isMobile ? 0 : 28 }}>
+          <div style={{ paddingRight: isMobile ? 0 : 4 }}>
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
               <Space
                 align="center"
@@ -284,9 +381,9 @@ const MainLayout: React.FC = () => {
 
         <Content
           style={{
-            margin: isMobile ? '12px' : '24px',
+            margin: isMobile ? 0 : '24px',
             padding: isMobile ? 12 : 24,
-            background: '#f0f2f5',
+            background: isMobile ? '#2c3e50' : '#f0f2f5',
             minHeight: 280,
           }}
         >
@@ -298,25 +395,23 @@ const MainLayout: React.FC = () => {
       <Drawer
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ 
-              width: 40, 
-              height: 40, 
-              background: '#E60012', 
+            <div style={{
+              width: 40,
+              height: 40,
+              background: '#E60012',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white',
               fontWeight: 700,
-              fontSize: 18
+              fontSize: 18,
             }}>
               J
             </div>
             <div>
               <div style={{ fontWeight: 600, fontSize: 16 }}>JARRIS</div>
-              <div style={{ fontSize: 12, color: '#8c8c8c' }}>
-                Mantenimiento
-              </div>
+              <div style={{ fontSize: 12, color: '#8c8c8c' }}>Mantenimiento</div>
             </div>
           </div>
         }
@@ -324,16 +419,14 @@ const MainLayout: React.FC = () => {
         onClose={() => setMobileMenuOpen(false)}
         open={mobileMenuOpen}
         width={280}
-        styles={{
-          body: { padding: 0 }
-        }}
+        styles={{ body: { padding: 0 } }}
       >
-        {/* User Info in Drawer */}
-        <div style={{ 
+        {/* User Info */}
+        <div style={{
           padding: '16px',
           background: '#f5f5f5',
           borderBottom: '1px solid #d9d9d9',
-          marginBottom: 8
+          marginBottom: 8,
         }}>
           <Space align="center">
             <Avatar style={{ backgroundColor: '#E60012' }} size={48}>
@@ -351,21 +444,18 @@ const MainLayout: React.FC = () => {
         </div>
 
         {/* Menu Items */}
-        <Menu
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          items={getMenuItems()}
-          style={{ border: 'none' }}
-        />
+        <div>
+          {menuItems.map(renderMobileMenuItem)}
+        </div>
 
         {/* Logout at bottom */}
-        <div style={{ 
-          position: 'absolute', 
-          bottom: 0, 
-          left: 0, 
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
           right: 0,
           borderTop: '1px solid #d9d9d9',
-          padding: '12px 16px'
+          padding: '12px 16px',
         }}>
           <Button
             type="text"

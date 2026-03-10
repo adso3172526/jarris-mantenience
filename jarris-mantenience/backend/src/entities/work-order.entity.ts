@@ -16,6 +16,7 @@ export enum WorkOrderStatus {
   EN_PROCESO = 'EN_PROCESO',
   TERMINADA = 'TERMINADA',
   CERRADA = 'CERRADA',
+  RECHAZADA = 'RECHAZADA',
 }
 
 export enum AssigneeType {
@@ -27,19 +28,6 @@ export enum AssigneeType {
 export enum MaintenanceType {
   EQUIPO = 'EQUIPO',
   LOCATIVO = 'LOCATIVO',
-}
-
-// ✅ NUEVO: Categorías locativas
-export enum LocativeCategory {
-  PINTURA = 'PINTURA',
-  ELECTRICO = 'ELECTRICO',
-  ESTRUCTURAL = 'ESTRUCTURAL',
-  PLOMERIA = 'PLOMERIA',
-  HVAC = 'HVAC',
-  PISOS = 'PISOS',
-  FACHADA = 'FACHADA',
-  CARPINTERIA = 'CARPINTERIA',
-  OTROS = 'OTROS',
 }
 
 @Entity('work_orders')
@@ -73,7 +61,7 @@ export class WorkOrderEntity {
     nullable: true,
     name: 'locative_category',
   })
-  locativeCategory?: LocativeCategory;
+  locativeCategory?: string;
 
   @Column({ length: 200 })
   title: string;
@@ -92,6 +80,9 @@ export class WorkOrderEntity {
 
   @Column({ nullable: true })
   assigneeEmail?: string;
+
+  @Column({ type: 'text', nullable: true })
+  assignmentDescription?: string;
 
   // Campos de rechazo
   @Column({ type: 'text', nullable: true })

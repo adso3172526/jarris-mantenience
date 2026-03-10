@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, message, Card, Row, Col, Upload } from 'antd';
-import { ToolOutlined, HomeOutlined, PlusOutlined, CameraOutlined } from '@ant-design/icons';
+import { Modal, Form, Input, Select, message, Card, Row, Col, Upload, Button, Space } from 'antd';
+import { ToolOutlined, HomeOutlined, PlusOutlined, CameraOutlined, ScanOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
-import { workOrdersApi, assetsApi } from '../../services/api';
+import { workOrdersApi, assetsApi, locativeCategoriesApi, locationsApi } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import QrScannerModal from '../../components/QrScannerModal';
 
 interface CreateWorkOrderModalProps {
   open: boolean;
@@ -20,9 +21,15 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [assets, setAssets] = useState<any[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
+  const [locativeCategories, setLocativeCategories] = useState<any[]>([]);
+  const [loadingLocativeCategories, setLoadingLocativeCategories] = useState(false);
+  const [allLocations, setAllLocations] = useState<any[]>([]);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | undefined>();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const { user } = useAuth();
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
+  const { user, hasRole } = useAuth();
+  const isAdminOrJefe = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
 
   const maintenanceType = Form.useWatch('maintenanceType', form);
 
@@ -34,10 +41,48 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
 
   useEffect(() => {
     if (open) {
-      loadAssets();
+      if (!isAdminOrJefe) {
+        loadAssets();
+      }
+      loadLocativeCategories();
       form.setFieldsValue({ maintenanceType: 'EQUIPO' });
+      if (isAdminOrJefe) {
+        loadLocations();
+        setSelectedLocationId(undefined);
+      }
     }
   }, [open]);
+
+  const loadLocations = async () => {
+    try {
+      const response = await locationsApi.getAll();
+      setAllLocations(response.data.filter((l: any) => l.active !== false));
+    } catch (error) {
+      message.error('Error al cargar ubicaciones');
+    }
+  };
+
+  const loadAssetsByLocation = async (locationId: string) => {
+    try {
+      setLoadingAssets(true);
+      const response = await assetsApi.getByLocation(locationId);
+      const activeAssets = response.data.filter((a: any) => a.status === 'ACTIVO');
+      setAssets(activeAssets);
+    } catch (error) {
+      message.error('Error al cargar activos');
+    } finally {
+      setLoadingAssets(false);
+    }
+  };
+
+  const handleLocationChange = (locationId: string) => {
+    setSelectedLocationId(locationId);
+    form.setFieldsValue({ assetId: undefined, locativeCategory: undefined });
+    setAssets([]);
+    if (locationId) {
+      loadAssetsByLocation(locationId);
+    }
+  };
 
   const loadAssets = async () => {
     try {
@@ -59,13 +104,77 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
     }
   };
 
+  const loadLocativeCategories = async () => {
+    try {
+      setLoadingLocativeCategories(true);
+      const response = await locativeCategoriesApi.getActive();
+      setLocativeCategories(response.data);
+    } catch (error) {
+      message.error('Error al cargar categorías locativas');
+    } finally {
+      setLoadingLocativeCategories(false);
+    }
+  };
+
+  const handleQrScan = async (decodedText: string) => {
+    try {
+      const data = JSON.parse(decodedText);
+      if (data.type !== 'asset' || !data.code) {
+        message.error('Código QR no reconocido');
+        return;
+      }
+
+      // Try to find in already-loaded local assets first
+      const localMatch = assets.find((a: any) => a.code === data.code);
+      if (localMatch) {
+        form.setFieldsValue({ assetId: localMatch.id });
+        message.success(`Equipo seleccionado: ${localMatch.code} - ${localMatch.description}`);
+        return;
+      }
+
+      // Fallback: fetch from API
+      const response = await assetsApi.getByCode(data.code);
+      const asset = response.data;
+
+      if (asset.status !== 'ACTIVO') {
+        message.error(`El equipo ${asset.code} no está activo`);
+        return;
+      }
+      if (user?.locationId && asset.location?.id !== user.locationId) {
+        message.error(`El equipo ${asset.code} no pertenece a tu ubicación`);
+        return;
+      }
+
+      // Add to local list so it appears in the dropdown
+      setAssets((prev) => {
+        if (prev.find((a) => a.id === asset.id)) return prev;
+        return [...prev, asset];
+      });
+      form.setFieldsValue({ assetId: asset.id });
+      message.success(`Equipo seleccionado: ${asset.code} - ${asset.description}`);
+    } catch (err: any) {
+      if (err instanceof SyntaxError) {
+        message.error('Código QR no reconocido');
+      } else {
+        message.error(err.response?.data?.message || 'Error al buscar el equipo');
+      }
+    }
+  };
+
   const handleSubmit = async (values: any) => {
+    if (isAdminOrJefe && !selectedLocationId) {
+      message.error('Selecciona una ubicación');
+      return;
+    }
     try {
       setLoading(true);
-      const data = {
+      const data: any = {
         ...values,
         createdBy: user?.email,
       };
+      if (isAdminOrJefe && selectedLocationId) {
+        data.locationId = selectedLocationId;
+      }
       const response = await workOrdersApi.create(data);
       const newWoId = response.data.id;
 
@@ -91,6 +200,8 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
       message.success('Solicitud creada exitosamente');
       form.resetFields();
       setFileList([]);
+      setSelectedLocationId(undefined);
+      setAssets([]);
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -109,10 +220,11 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
   });
 
   return (
+    <>
     <Modal
       title="Nueva Solicitud"
       open={open}
-      onCancel={() => { form.resetFields(); setFileList([]); onClose(); }}
+      onCancel={() => { form.resetFields(); setFileList([]); setSelectedLocationId(undefined); setAssets([]); onClose(); }}
       onOk={() => form.submit()}
       confirmLoading={loading}
       width={isMobile ? '100%' : 520}
@@ -127,6 +239,32 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
       }}
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        {/* Selector de ubicación para ADMIN/JEFE */}
+        {isAdminOrJefe && (
+          <Form.Item
+            label="Ubicación"
+            required
+            style={{ marginBottom: 16 }}
+          >
+            <Select
+              placeholder="Selecciona la ubicación"
+              value={selectedLocationId}
+              onChange={handleLocationChange}
+              showSearch
+              optionFilterProp="children"
+              size={isMobile ? "large" : "middle"}
+            >
+              {allLocations
+                .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                .map((loc: any) => (
+                  <Select.Option key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </Select.Option>
+                ))}
+            </Select>
+          </Form.Item>
+        )}
+
         {/* Tipo de mantenimiento - Cards seleccionables */}
         <Form.Item
           name="maintenanceType"
@@ -139,7 +277,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
                 size="small"
                 style={typeCardStyle('EQUIPO')}
                 styles={{ body: { padding: '12px 16px', textAlign: 'center' } }}
-                onClick={() => form.setFieldsValue({ maintenanceType: 'EQUIPO', assetId: undefined, locativeCategory: undefined })}
+                onClick={() => { form.setFieldsValue({ maintenanceType: 'EQUIPO', assetId: undefined, locativeCategory: undefined }); if (isAdminOrJefe && selectedLocationId) loadAssetsByLocation(selectedLocationId); }}
               >
                 <ToolOutlined style={{ fontSize: 22, color: maintenanceType === 'EQUIPO' ? '#1890ff' : '#8c8c8c', display: 'block', marginBottom: 4 }} />
                 <div style={{ fontWeight: 600, fontSize: 13 }}>Equipo</div>
@@ -161,25 +299,36 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
 
         {/* Equipo selector */}
         {maintenanceType === 'EQUIPO' && (
-          <Form.Item
-            label="Equipo"
-            name="assetId"
-            rules={[{ required: true, message: 'Selecciona un equipo' }]}
-          >
-            <Select
-              placeholder={assets.length > 0 ? "Selecciona el equipo" : "No hay equipos en tu ubicación"}
-              loading={loadingAssets}
-              showSearch
-              optionFilterProp="children"
-              disabled={assets.length === 0}
-              size={isMobile ? "large" : "middle"}
-            >
-              {assets.map((asset) => (
-                <Select.Option key={asset.id} value={asset.id}>
-                  {asset.code} - {asset.description}
-                </Select.Option>
-              ))}
-            </Select>
+          <Form.Item label="Equipo" required>
+            <Space.Compact style={{ width: '100%' }}>
+              <Form.Item
+                name="assetId"
+                noStyle
+                rules={[{ required: true, message: 'Selecciona un equipo' }]}
+              >
+                <Select
+                  placeholder={isAdminOrJefe && !selectedLocationId ? "Primero selecciona una ubicación" : assets.length > 0 ? "Selecciona el equipo" : "No hay equipos en esta ubicación"}
+                  loading={loadingAssets}
+                  showSearch
+                  optionFilterProp="children"
+                  disabled={assets.length === 0 || (isAdminOrJefe && !selectedLocationId)}
+                  size={isMobile ? "large" : "middle"}
+                  style={{ width: '100%' }}
+                >
+                  {assets.map((asset) => (
+                    <Select.Option key={asset.id} value={asset.id}>
+                      {asset.code} - {asset.description}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Button
+                icon={<ScanOutlined />}
+                size={isMobile ? "large" : "middle"}
+                onClick={() => setQrScannerOpen(true)}
+                title="Escanear QR"
+              />
+            </Space.Compact>
           </Form.Item>
         )}
 
@@ -193,16 +342,15 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
             <Select
               placeholder="Tipo de mantenimiento locativo"
               size={isMobile ? "large" : "middle"}
+              loading={loadingLocativeCategories}
+              showSearch
+              optionFilterProp="children"
             >
-              <Select.Option value="PINTURA">Pintura y Acabados</Select.Option>
-              <Select.Option value="ELECTRICO">Sistema Eléctrico</Select.Option>
-              <Select.Option value="ESTRUCTURAL">Estructura y Obra Civil</Select.Option>
-              <Select.Option value="PLOMERIA">Plomería e Hidráulica</Select.Option>
-              <Select.Option value="HVAC">Climatización (HVAC)</Select.Option>
-              <Select.Option value="PISOS">Pisos y Revestimientos</Select.Option>
-              <Select.Option value="FACHADA">Fachada Exterior</Select.Option>
-              <Select.Option value="CARPINTERIA">Carpintería y Mobiliario</Select.Option>
-              <Select.Option value="OTROS">Otros</Select.Option>
+              {locativeCategories.map((cat) => (
+                <Select.Option key={cat.id} value={cat.name}>
+                  {cat.name}
+                </Select.Option>
+              ))}
             </Select>
           </Form.Item>
         )}
@@ -276,6 +424,12 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
         La solicitud será enviada al Jefe de Mantenimiento para su revisión.
       </div>
     </Modal>
+    <QrScannerModal
+      open={qrScannerOpen}
+      onClose={() => setQrScannerOpen(false)}
+      onScan={handleQrScan}
+    />
+    </>
   );
 };
 

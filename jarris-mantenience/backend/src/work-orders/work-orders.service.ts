@@ -79,28 +79,39 @@ async create(dto: CreateWorkOrderDto) {
     
     location = asset.location;
   }
-  // ? CASO 2: Mantenimiento LOCATIVO
+  // ? CASO 2: Mantenimiento LOCATIVO (o EQUIPO sin asset desde el caso anterior)
   else {
-    // Obtener ubicación del usuario PDV que crea la OT
-    const user = await this.userRepo.findOne({
-      where: { email: dto.createdBy },
-    });
-    
-    if (!user?.locationId) {
-      throw new BadRequestException(
-        'Usuario PDV debe tener ubicación asignada para crear OT locativa'
-      );
+    // Si viene locationId explícito (ADMIN/JEFE), usarlo directamente
+    if (dto.locationId) {
+      const foundLocation = await this.locationRepo.findOne({
+        where: { id: dto.locationId },
+      });
+      if (!foundLocation) {
+        throw new NotFoundException('Location not found');
+      }
+      location = foundLocation;
+    } else {
+      // Obtener ubicación del usuario PDV que crea la OT
+      const user = await this.userRepo.findOne({
+        where: { email: dto.createdBy },
+      });
+
+      if (!user?.locationId) {
+        throw new BadRequestException(
+          'Usuario PDV debe tener ubicación asignada para crear OT locativa'
+        );
+      }
+
+      const foundLocation = await this.locationRepo.findOne({
+        where: { id: user.locationId },
+      });
+
+      if (!foundLocation) {
+        throw new NotFoundException('Location not found');
+      }
+
+      location = foundLocation;
     }
-    
-    const foundLocation = await this.locationRepo.findOne({
-      where: { id: user.locationId },
-    });
-    
-    if (!foundLocation) {
-      throw new NotFoundException('Location not found');
-    }
-    
-    location = foundLocation;
   }
 
   // Crear OT
@@ -131,13 +142,14 @@ async create(dto: CreateWorkOrderDto) {
   wo.assigneeType = dto.assigneeType;
   wo.assigneeName = dto.assigneeName.trim();
   wo.assigneeEmail = dto.assigneeEmail?.trim();
+  wo.assignmentDescription = dto.assignmentDescription?.trim() || undefined;
   wo.status = WorkOrderStatus.ASIGNADA;
   const saved = await this.woRepo.save(wo);
   
-  // Enviar correo si es CONTRATISTA
-  if (dto.assigneeType === AssigneeType.CONTRATISTA) {
+  // Enviar correo si es CONTRATISTA o TECNICO_INTERNO
+  if ([AssigneeType.CONTRATISTA, AssigneeType.INTERNO].includes(dto.assigneeType)) {
     if (!wo.assigneeEmail) {
-      throw new BadRequestException('assigneeEmail is required for CONTRATISTA');
+      throw new BadRequestException('assigneeEmail is required');
     }
     
     // Solo buscar asset si es mantenimiento de equipo
@@ -610,7 +622,7 @@ Cuando termine, suba la factura (PDF/JPG/PNG) si aplica.
     wo.rejectionReason = dto.rejectionReason;
     wo.rejectedBy = dto.rejectedBy;
     wo.rejectedAt = new Date();
-    wo.status = WorkOrderStatus.CERRADA;
+    wo.status = WorkOrderStatus.RECHAZADA;
 
     const saved = await this.woRepo.save(wo);
 
@@ -660,7 +672,18 @@ Fecha: ${new Date().toLocaleString('es-CO')}
     if (dto.requestDescription !== undefined) wo.requestDescription = dto.requestDescription;
     if (dto.title !== undefined) wo.title = dto.title;
 
-    return this.woRepo.save(wo);
+    await this.woRepo.save(wo);
+
+    // Actualizar el evento de activo asociado
+    const eventRepo = this.dataSource.getRepository(AssetEventEntity);
+    const event = await eventRepo.findOne({ where: { workOrderId: id } });
+    if (event) {
+      if (dto.workDoneDescription !== undefined) event.description = dto.workDoneDescription;
+      if (dto.cost !== undefined) event.cost = dto.cost;
+      await eventRepo.save(event);
+    }
+
+    return wo;
   }
 
  async close(id: string, dto: CloseWorkOrderDto) {

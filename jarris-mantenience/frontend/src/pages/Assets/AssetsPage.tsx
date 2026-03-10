@@ -15,8 +15,6 @@ import {
   Row,
   Col,
   Divider,
-  Tabs,
-  Badge,
   DatePicker,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -30,6 +28,7 @@ import {
   HistoryOutlined,
   ClearOutlined,
   CheckCircleOutlined,
+  ToolOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -82,13 +81,11 @@ const AssetsPage: React.FC = () => {
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [qrCode, setQrCode] = useState<string>('');
   
-  // Tabs
-  const [activeTab, setActiveTab] = useState('activos');
-
   // Filters
   const [searchText, setSearchText] = useState('');
   const [filterLocation, setFilterLocation] = useState<string | undefined>();
   const [filterCategory, setFilterCategory] = useState<string | undefined>();
+  const [filterStatus, setFilterStatus] = useState<string | undefined>();
   const [filterBrand, setFilterBrand] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
 
@@ -115,7 +112,7 @@ const AssetsPage: React.FC = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [assets, searchText, filterLocation, filterCategory, filterBrand, dateRange, activeTab]);
+  }, [assets, searchText, filterLocation, filterCategory, filterStatus, filterBrand, dateRange]);
 
   const loadData = async () => {
     try {
@@ -138,10 +135,11 @@ const AssetsPage: React.FC = () => {
   };
 
   const applyFilters = () => {
-    // Separar por tab: activos muestra ACTIVO y MANTENIMIENTO, baja muestra BAJA
-    let filtered = activeTab === 'activos'
-      ? assets.filter((a) => a.status !== 'BAJA')
-      : assets.filter((a) => a.status === 'BAJA');
+    let filtered = [...assets];
+
+    if (filterStatus) {
+      filtered = filtered.filter((asset) => asset.status === filterStatus);
+    }
 
     if (searchText) {
       const search = searchText.toLowerCase();
@@ -187,20 +185,13 @@ const AssetsPage: React.FC = () => {
     setSearchText('');
     setFilterLocation(undefined);
     setFilterCategory(undefined);
+    setFilterStatus(undefined);
     setFilterBrand('');
     setDateRange(null);
   };
 
-  const handleTabChange = (key: string) => {
-    setActiveTab(key);
-    handleClearFilters();
-  };
-
-  const activosCount = assets.filter((a) => a.status !== 'BAJA').length;
-  const bajaCount = assets.filter((a) => a.status === 'BAJA').length;
-
   const hasActiveFilters =
-    searchText || filterLocation || filterCategory || filterBrand || dateRange;
+    searchText || filterLocation || filterCategory || filterStatus || filterBrand || dateRange;
 
   const handleViewQR = async (asset: Asset) => {
     try {
@@ -589,7 +580,20 @@ const AssetsPage: React.FC = () => {
               ))}
             </Select>
           </Col>
-          <Col xs={24} sm={12} md={4}>
+          <Col xs={24} sm={12} md={3}>
+            <Select
+              placeholder="Estado"
+              style={{ width: '100%' }}
+              value={filterStatus}
+              onChange={setFilterStatus}
+              allowClear
+              size={isMobile ? "large" : "middle"}
+            >
+              <Select.Option value="ACTIVO">Activo</Select.Option>
+              <Select.Option value="BAJA">Baja</Select.Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={3}>
             <Input
               placeholder="Filtrar por marca"
               value={filterBrand}
@@ -648,7 +652,7 @@ const AssetsPage: React.FC = () => {
         </Row>
         {hasActiveFilters && (
           <div style={{ marginTop: 8, color: '#1890ff', fontSize: isMobile ? 11 : 12 }}>
-            Mostrando {filteredAssets.length} de {activeTab === 'activos' ? activosCount : bajaCount} activos
+            Mostrando {filteredAssets.length} de {assets.length} activos
           </div>
         )}
       </Card>
@@ -666,7 +670,7 @@ const AssetsPage: React.FC = () => {
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>
-            {activeTab === 'activos' ? 'No hay activos' : 'No hay activos dados de baja'}
+            No hay activos
           </div>
         )
       ) : (
@@ -705,9 +709,10 @@ const AssetsPage: React.FC = () => {
             flexWrap: 'wrap',
             gap: 8
           }}>
-            <span style={{ fontSize: isMobile ? 16 : 18, fontWeight: 600 }}>
-              Gestion de Activos
-            </span>
+            <Space>
+              <ToolOutlined style={{ fontSize: 18, color: '#E60012' }} />
+              <span style={{ fontSize: isMobile ? 16 : 18, fontWeight: 600 }}>Activos</span>
+            </Space>
             {canEdit && (
               <Button
                 type="primary"
@@ -721,31 +726,7 @@ const AssetsPage: React.FC = () => {
           </div>
         }
       >
-        <Tabs
-          activeKey={activeTab}
-          onChange={handleTabChange}
-          style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden', minHeight: 0 }}
-          items={[
-            {
-              key: 'activos',
-              label: (
-                <span>
-                   Activos <Badge count={activosCount} style={{ backgroundColor: '#52c41a', marginLeft: 8 }} />
-                </span>
-              ),
-              children: renderFiltersAndList(),
-            },
-            {
-              key: 'baja',
-              label: (
-                <span>
-                   Bajas <Badge count={bajaCount} style={{ backgroundColor: '#ff4d4f', marginLeft: 8 }} />
-                </span>
-              ),
-              children: renderFiltersAndList(),
-            },
-          ]}
-        />
+        {renderFiltersAndList()}
       </Card>
 
       {/* Modals */}

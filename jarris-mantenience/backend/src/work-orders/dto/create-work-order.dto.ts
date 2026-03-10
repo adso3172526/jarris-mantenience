@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateIf } from 'class-validator';
-import { MaintenanceType, LocativeCategory } from '../../entities/work-order.entity';
+import { MaintenanceType } from '../../entities/work-order.entity';
 
 export class CreateWorkOrderDto {
   // ✅ CAMBIO: assetId ahora es opcional
@@ -14,8 +14,9 @@ export class CreateWorkOrderDto {
 
   // ✅ NUEVO: Categoría locativa (requerida solo si maintenanceType === LOCATIVO)
   @ValidateIf(o => o.maintenanceType === MaintenanceType.LOCATIVO)
-  @IsEnum(LocativeCategory)
-  locativeCategory?: LocativeCategory;
+  @IsString()
+  @IsNotEmpty()
+  locativeCategory?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -28,4 +29,8 @@ export class CreateWorkOrderDto {
   @IsOptional()
   @IsString()
   createdBy?: string; // Email del usuario que crea (PDV)
+
+  @IsOptional()
+  @IsUUID()
+  locationId?: string; // Ubicación destino (ADMIN/JEFE seleccionan manualmente)
 }

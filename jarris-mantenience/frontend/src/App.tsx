@@ -13,6 +13,7 @@ import EventsPage from './pages/Events/EventsPage';
 import LocativePage from './pages/Locative/LocativePage';
 import EventosPage from './pages/Eventos/EventosPage';
 import BajasPage from './pages/Bajas/BajasPage';
+import LocativeCategoriesPage from './pages/LocativeCategories/LocativeCategoriesPage';
 
 // Layouts
 import MainLayout from './components/Layout/MainLayout';
@@ -56,6 +57,7 @@ function App() {
               <Route path="locative" element={<LocativePage />} />
               <Route path="eventos" element={<EventosPage />} />
               <Route path="bajas" element={<BajasPage />} />
+              <Route path="locative-categories" element={<LocativeCategoriesPage />} />
               
               <Route path="users" element={<UsersPage />} />
               <Route path="reports" element={<ReportsPage />} />

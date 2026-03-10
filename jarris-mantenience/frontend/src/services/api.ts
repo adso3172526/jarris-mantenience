@@ -60,6 +60,14 @@ export const categoriesApi = {
   delete: (id: string) => api.delete(`/categories/${id}`),
 };
 
+// Locative Categories
+export const locativeCategoriesApi = {
+  getAll: () => api.get('/locative-categories'),
+  getActive: () => api.get('/locative-categories/active'),
+  create: (data: any) => api.post('/locative-categories', data),
+  update: (id: string, data: any) => api.patch(`/locative-categories/${id}`, data),
+};
+
 // Locations
 export const locationsApi = {
   getAll: () => api.get('/locations'),

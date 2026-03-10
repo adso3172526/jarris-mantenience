@@ -8,7 +8,6 @@ import {
   Select,
   Input,
   Tooltip,
-  Badge,
   Row,
   Col,
   Divider,
@@ -29,10 +28,11 @@ import {
   ToolOutlined,
   HomeOutlined,
   EditOutlined,
+  ClearOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import { workOrdersApi, usersApi } from '../../services/api';
+import { workOrdersApi, usersApi, locationsApi } from '../../services/api';
 import { workOrderStatusColors } from '../../config/theme';
 import { useAuth } from '../../contexts/AuthContext';
 import CreateWorkOrderModal from './CreateWorkOrderModal';
@@ -46,7 +46,6 @@ import UploadPhotosModal from './UploadPhotosModal';
 import EditClosedWorkOrderModal from './EditClosedWorkOrderModal';
 import { message } from 'antd';
 
-const { Search } = Input;
 
 interface WorkOrder {
   id: string;
@@ -83,6 +82,7 @@ const WorkOrdersPage: React.FC = () => {
   const [filterAssignee, setFilterAssignee] = useState<string | undefined>();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
   const [technicians, setTechnicians] = useState<any[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   
   // Modals
@@ -119,9 +119,8 @@ const WorkOrdersPage: React.FC = () => {
 
   useEffect(() => {
     loadWorkOrders();
-    if (isJefe) {
-      usersApi.getTechniciansAndContractors().then((res) => setTechnicians(res.data)).catch(() => {});
-    }
+    usersApi.getTechniciansAndContractors().then((res) => setTechnicians(res.data)).catch(() => {});
+    locationsApi.getAll().then((res) => setLocations(res.data)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -133,14 +132,14 @@ const WorkOrdersPage: React.FC = () => {
       setLoading(true);
       let response;
       
-      if (isPDV && user?.locationId) {
-        response = await workOrdersApi.getByLocation(user.locationId);
+      if (isPDV && user?.email) {
+        response = await workOrdersApi.getByLocation(user.locationId!);
       } else if ((isTecnico || isContratista) && user?.email) {
         response = await workOrdersApi.getByAssignee(user.email);
       } else {
         response = await workOrdersApi.getAll();
       }
-      
+
       setWorkOrders(response.data);
     } catch (error: any) {
       console.error('Error loading work orders:', error);
@@ -148,6 +147,16 @@ const WorkOrdersPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const hasActiveFilters = !!(searchText || filterStatus || filterLocation || filterAssignee || dateRange);
+
+  const handleClearFilters = () => {
+    setSearchText('');
+    setFilterStatus(undefined);
+    setFilterLocation(undefined);
+    setFilterAssignee(undefined);
+    setDateRange(null);
   };
 
   const applyFilters = () => {
@@ -242,7 +251,7 @@ const WorkOrdersPage: React.FC = () => {
     );
 
     // Subir fotos
-    if (record.status !== 'CERRADA') {
+    if (record.status !== 'CERRADA' && record.status !== 'RECHAZADA') {
       buttons.push(
         <Tooltip key="photos" title="Subir fotos">
           <Button
@@ -414,7 +423,7 @@ const WorkOrdersPage: React.FC = () => {
            {record.location.name}
         </div>
 
-        {record.assigneeName && (
+        {!isPDV && record.assigneeName && (
           <div style={{ fontSize: 12, marginBottom: 4 }}>
             <strong>Asignado:</strong> {record.assigneeName}{' '}
             <Tag size="small" color={record.assigneeType === 'INTERNO' ? 'blue' : 'orange'}>
@@ -423,9 +432,11 @@ const WorkOrdersPage: React.FC = () => {
           </div>
         )}
 
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#E60012', marginBottom: 4 }}>
-          {formatCOP(record.cost)}
-        </div>
+        {!isPDV && (
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#E60012', marginBottom: 4 }}>
+            {formatCOP(record.cost)}
+          </div>
+        )}
 
         <div style={{ fontSize: 11, color: '#8c8c8c' }}>
           {new Date(record.createdAt).toLocaleDateString('es-CO')}
@@ -440,7 +451,7 @@ const WorkOrdersPage: React.FC = () => {
   );
 
   // Desktop Table Columns
-  const columns: ColumnsType<WorkOrder> = [
+  const allColumns: ColumnsType<WorkOrder> = [
     {
       title: 'OT',
       dataIndex: 'id',
@@ -555,10 +566,11 @@ const WorkOrdersPage: React.FC = () => {
     },
   ];
 
-  const statusCounts = workOrders.reduce((acc, wo) => {
-    acc[wo.status] = (acc[wo.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  // PDV: hide columns not relevant to them
+  const hiddenForPDV = ['assignee', 'cost'];
+  const columns = isPDV
+    ? allColumns.filter((c) => !hiddenForPDV.includes(c.key as string))
+    : allColumns;
 
   return (
     <div style={{ height: isMobile ? 'auto' : 'calc(100vh - 112px)', display: 'flex', flexDirection: 'column' }}>
@@ -567,9 +579,9 @@ const WorkOrdersPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
             <Space>
               <FileTextOutlined style={{ fontSize: 18, color: '#E60012' }} />
-              <span style={{ fontSize: isMobile ? 16 : 16, fontWeight: 600 }}>Ordenes de Trabajo</span>
+              <span style={{ fontSize: isMobile ? 16 : 16, fontWeight: 600 }}>{isPDV ? 'Mis Solicitudes' : 'Ordenes de Trabajo'}</span>
             </Space>
-            {(isPDV || isJefe) && (
+            {(isPDV || isJefe || hasRole('ADMIN')) && (
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -584,136 +596,149 @@ const WorkOrdersPage: React.FC = () => {
         styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'auto' : 'hidden' } }}
         style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'auto' : 'hidden' }}
       >
-        {/* Resumen y Filtros */}
-        <div style={{ marginBottom: 12, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-          {/* Resumen de estados */}
-          <Space wrap size={4}>
-            <Badge count={statusCounts.NUEVA || 0} showZero size="small">
-              <Tag color="gold" style={{ padding: '2px 8px', fontSize: 12 }}>NUEVA</Tag>
-            </Badge>
-            <Badge count={statusCounts.ASIGNADA || 0} showZero size="small">
-              <Tag color="blue" style={{ padding: '2px 8px', fontSize: 12 }}>ASIGNADA</Tag>
-            </Badge>
-            <Badge count={statusCounts.EN_PROCESO || 0} showZero size="small">
-              <Tag color="cyan" style={{ padding: '2px 8px', fontSize: 12 }}>EN PROCESO</Tag>
-            </Badge>
-            <Badge count={statusCounts.TERMINADA || 0} showZero size="small">
-              <Tag color="green" style={{ padding: '2px 8px', fontSize: 12 }}>TERMINADA</Tag>
-            </Badge>
-            <Badge count={statusCounts.CERRADA || 0} showZero size="small">
-              <Tag color="default" style={{ padding: '2px 8px', fontSize: 12 }}>CERRADA</Tag>
-            </Badge>
-          </Space>
-
-          {/* Filtros */}
-          <Card size="small" style={{ background: '#fafafa' }}>
-            <Row gutter={[8, 8]}>
-              <Col xs={24} sm={12} md={5}>
-                <Search
-                  placeholder="Buscar OT..."
-                  allowClear
-                  size={isMobile ? 'large' : 'small'}
-                  prefix={<SearchOutlined />}
-                  onChange={(e) => setSearchText(e.target.value)}
-                />
-              </Col>
-              <Col xs={24} sm={12} md={3}>
+        {/* Filtros */}
+        <Card size="small" style={{ marginBottom: 12, background: '#fafafa' }}>
+          <Row gutter={[8, 8]}>
+            <Col xs={24} sm={12} md={4}>
+              <Input
+                placeholder={isMobile ? 'Buscar...' : 'Buscar OT...'}
+                prefix={<SearchOutlined />}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                allowClear
+                size={isMobile ? 'large' : 'middle'}
+              />
+            </Col>
+            <Col xs={24} sm={12} md={3}>
+              <Select
+                placeholder="Estado"
+                style={{ width: '100%' }}
+                value={filterStatus}
+                onChange={setFilterStatus}
+                allowClear
+                size={isMobile ? 'large' : 'middle'}
+              >
+                <Select.Option value="NUEVA">Nueva</Select.Option>
+                <Select.Option value="ASIGNADA">Asignada</Select.Option>
+                <Select.Option value="EN_PROCESO">En Proceso</Select.Option>
+                <Select.Option value="TERMINADA">Terminada</Select.Option>
+                <Select.Option value="CERRADA">Cerrada</Select.Option>
+                <Select.Option value="RECHAZADA">Rechazada</Select.Option>
+              </Select>
+            </Col>
+            {!isTecnico && !isContratista && !isPDV && (
+              <Col xs={24} sm={12} md={4}>
                 <Select
-                  placeholder="Estado"
+                  placeholder="Técnico/Contratista"
                   style={{ width: '100%' }}
-                  size={isMobile ? 'large' : 'small'}
+                  value={filterAssignee}
+                  onChange={setFilterAssignee}
                   allowClear
-                  onChange={setFilterStatus}
+                  showSearch
+                  optionFilterProp="children"
+                  size={isMobile ? 'large' : 'middle'}
                 >
-                  <Select.Option value="NUEVA">Nueva</Select.Option>
-                  <Select.Option value="ASIGNADA">Asignada</Select.Option>
-                  <Select.Option value="EN_PROCESO">En Proceso</Select.Option>
-                  <Select.Option value="TERMINADA">Terminada</Select.Option>
-                  <Select.Option value="CERRADA">Cerrada</Select.Option>
+                  {technicians
+                    .sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email))
+                    .map((tech) => (
+                      <Select.Option key={tech.id} value={tech.email}>
+                        {tech.name || tech.email.split('@')[0]}
+                      </Select.Option>
+                    ))}
                 </Select>
               </Col>
-              {isJefe && (
-                <Col xs={24} sm={12} md={4}>
-                  <Select
-                    placeholder="PDV / Ubicación"
+            )}
+            {!isPDV && (
+              <Col xs={24} sm={12} md={4}>
+                <Select
+                  placeholder="Ubicación"
+                  style={{ width: '100%' }}
+                  value={filterLocation}
+                  onChange={setFilterLocation}
+                  allowClear
+                  showSearch
+                  optionFilterProp="children"
+                  size={isMobile ? 'large' : 'middle'}
+                >
+                  {locations
+                    .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                    .map((loc: any) => (
+                      <Select.Option key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </Select.Option>
+                    ))}
+                </Select>
+              </Col>
+            )}
+            {isMobile && (
+              <Col xs={24}>
+                <Button
+                  icon={<ClearOutlined />}
+                  onClick={handleClearFilters}
+                  disabled={!hasActiveFilters}
+                  block
+                  size="large"
+                >
+                  Limpiar
+                </Button>
+              </Col>
+            )}
+            {isMobile ? (
+              <>
+                <Col xs={12}>
+                  <DatePicker
                     style={{ width: '100%' }}
-                    size={isMobile ? 'large' : 'small'}
-                    allowClear
-                    showSearch
-                    optionFilterProp="children"
-                    onChange={setFilterLocation}
-                  >
-                    {Array.from(new Map(workOrders.map((wo) => [wo.location?.id, wo.location])).values())
-                      .filter(Boolean)
-                      .sort((a, b) => a!.name.localeCompare(b!.name))
-                      .map((loc) => (
-                        <Select.Option key={loc!.id} value={loc!.id}>
-                          {loc!.name}
-                        </Select.Option>
-                      ))}
-                  </Select>
+                    placeholder="Desde"
+                    value={dateRange?.[0] || null}
+                    onChange={(date) => setDateRange(date ? [date, dateRange?.[1] || date] : null)}
+                    format="DD/MM/YYYY"
+                    size="large"
+                    placement="topLeft"
+                  />
                 </Col>
-              )}
-              {isJefe && (
-                <Col xs={24} sm={12} md={4}>
-                  <Select
-                    placeholder="Técnico"
+                <Col xs={12}>
+                  <DatePicker
                     style={{ width: '100%' }}
-                    size={isMobile ? 'large' : 'small'}
-                    allowClear
-                    showSearch
-                    optionFilterProp="children"
-                    onChange={setFilterAssignee}
-                  >
-                    {technicians
-                      .sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email))
-                      .map((tech) => (
-                        <Select.Option key={tech.id} value={tech.email}>
-                          {tech.name || tech.email.split('@')[0]}
-                        </Select.Option>
-                      ))}
-                  </Select>
+                    placeholder="Hasta"
+                    value={dateRange?.[1] || null}
+                    onChange={(date) => setDateRange(date ? [dateRange?.[0] || date, date] : null)}
+                    format="DD/MM/YYYY"
+                    size="large"
+                    placement="topRight"
+                  />
                 </Col>
-              )}
-              {isMobile ? (
-                <>
-                  <Col xs={12}>
-                    <DatePicker
-                      style={{ width: '100%' }}
-                      placeholder="Desde"
-                      value={dateRange?.[0] || null}
-                      onChange={(date) => setDateRange(date ? [date, dateRange?.[1] || date] : null)}
-                      format="DD/MM/YYYY"
-                      size="large"
-                      placement="topLeft"
-                    />
-                  </Col>
-                  <Col xs={12}>
-                    <DatePicker
-                      style={{ width: '100%' }}
-                      placeholder="Hasta"
-                      value={dateRange?.[1] || null}
-                      onChange={(date) => setDateRange(date ? [dateRange?.[0] || date, date] : null)}
-                      format="DD/MM/YYYY"
-                      size="large"
-                      placement="topRight"
-                    />
-                  </Col>
-                </>
-              ) : (
-                <Col sm={12} md={5}>
+              </>
+            ) : (
+              <>
+                <Col sm={12} md={4}>
                   <DatePicker.RangePicker
                     style={{ width: '100%' }}
                     value={dateRange}
                     onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs] | null)}
                     format="DD/MM/YYYY"
-                    size="small"
+                    size="middle"
                   />
                 </Col>
-              )}
-            </Row>
-          </Card>
-        </div>
+                <Col sm={12} md={3}>
+                  <Button
+                    icon={<ClearOutlined />}
+                    onClick={handleClearFilters}
+                    disabled={!hasActiveFilters}
+                    block
+                    size="middle"
+                  >
+                    Limpiar
+                  </Button>
+                </Col>
+              </>
+            )}
+          </Row>
+          {hasActiveFilters && (
+            <div style={{ marginTop: 8, color: '#1890ff', fontSize: isMobile ? 11 : 12 }}>
+              Mostrando {filteredOrders.length} de {workOrders.length} órdenes
+            </div>
+          )}
+        </Card>
 
         {/* Lista */}
         {isMobile ? (
