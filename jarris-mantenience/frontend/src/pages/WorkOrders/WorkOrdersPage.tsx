@@ -163,7 +163,7 @@ const WorkOrdersPage: React.FC = () => {
     let filtered = [...workOrders];
 
     if (searchText) {
-      const search = searchText.toLowerCase();
+      const search = searchText.toLowerCase().replace(/^ot-/i, '');
       filtered = filtered.filter(
         (wo) =>
           wo.id.toLowerCase().includes(search) ||

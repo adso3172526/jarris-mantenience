@@ -16,6 +16,7 @@ import {
   DollarOutlined,
   ToolOutlined,
   ThunderboltOutlined,
+  ClearOutlined,
 } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { reportsApi, locationsApi } from '../../services/api';
@@ -65,17 +66,21 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  const loadDashboard = async () => {
+  const loadDashboard = async (overrides?: { desde?: Dayjs; hasta?: Dayjs; ubicacion?: string }) => {
     try {
       setLoading(true);
-      
+
+      const desde = overrides?.desde || fechaDesde;
+      const hasta = overrides?.hasta || fechaHasta;
+      const ubic = overrides ? overrides.ubicacion : ubicacionId;
+
       const params: any = {
-        fechaDesde: fechaDesde.format('YYYY-MM-DD'),
-        fechaHasta: fechaHasta.format('YYYY-MM-DD'),
+        fechaDesde: desde.format('YYYY-MM-DD'),
+        fechaHasta: hasta.format('YYYY-MM-DD'),
       };
 
-      if (ubicacionId) {
-        params.ubicacionId = ubicacionId;
+      if (ubic) {
+        params.ubicacionId = ubic;
       }
 
       const res = await reportsApi.getDashboard(params);
@@ -83,7 +88,7 @@ const DashboardPage: React.FC = () => {
       setMetricas(res.data.metricas);
 
       // Decidir qué datos mostrar en el gráfico
-      if (ubicacionId) {
+      if (ubic) {
         // Si hay ubicación seleccionada ? mostrar por mes
         setDatosGrafico(
           res.data.porMes.map((item: any) => ({
@@ -168,8 +173,24 @@ const DashboardPage: React.FC = () => {
 
           <div>
             <Button
+              icon={<ClearOutlined />}
+              onClick={() => {
+                const desde = dayjs().startOf('month');
+                const hasta = dayjs().endOf('month');
+                setFechaDesde(desde);
+                setFechaHasta(hasta);
+                setUbicacionId(undefined);
+                loadDashboard({ desde, hasta, ubicacion: undefined });
+              }}
+              size={isMobile ? 'large' : 'middle'}
+            >
+              Limpiar
+            </Button>
+          </div>
+          <div>
+            <Button
               type="primary"
-              onClick={loadDashboard}
+              onClick={() => loadDashboard()}
               size={isMobile ? 'large' : 'middle'}
             >
               Aplicar

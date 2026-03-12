@@ -192,6 +192,20 @@ const EventosPage: React.FC = () => {
 
   const columns: ColumnsType<AssetEvent> = [
     {
+      title: 'OT',
+      key: 'workOrderId',
+      width: 85,
+      ellipsis: true,
+      render: (_: any, record: AssetEvent) =>
+        record.workOrderId ? (
+          <span style={{ fontFamily: 'monospace', fontSize: 13 }}>
+            {record.workOrderId.substring(0, 8)}
+          </span>
+        ) : (
+          <span style={{ color: '#8c8c8c' }}>-</span>
+        ),
+    },
+    {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
@@ -307,6 +321,11 @@ const EventosPage: React.FC = () => {
   const renderMobileCard = (record: AssetEvent) => (
     <Card key={record.id} style={{ marginBottom: 12 }} size="small">
       <div>
+        {record.workOrderId && (
+          <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 4 }}>
+            OT-{record.workOrderId.substring(0, 8)}
+          </div>
+        )}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
