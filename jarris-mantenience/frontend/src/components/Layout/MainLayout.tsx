@@ -141,7 +141,7 @@ const MainLayout: React.FC = () => {
         {
           key: '/categories',
           icon: <AppstoreOutlined />,
-          label: 'Categorías Activos',
+          label: 'Categorias Activos',
           onClick: () => navigate('/categories'),
         },
         {
@@ -211,7 +211,7 @@ const MainLayout: React.FC = () => {
           {item.icon}
         </span>
         <span style={{
-          fontSize: 9,
+          fontSize: 11,
           lineHeight: 1.2,
           textAlign: 'center',
           fontWeight: isActive ? 600 : 400,

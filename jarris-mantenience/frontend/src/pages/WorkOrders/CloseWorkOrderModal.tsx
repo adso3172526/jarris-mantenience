@@ -43,8 +43,6 @@ const CloseWorkOrderModal: React.FC<CloseWorkOrderModalProps> = ({
     }
   };
 
-  const needsInvoice = workOrder.assigneeType === 'CONTRATISTA' && !workOrder.invoiceFilePath;
-
   return (
     <Modal
       title={`Cerrar OT - ${workOrder.id.substring(0, 8)}`}
@@ -56,16 +54,6 @@ const CloseWorkOrderModal: React.FC<CloseWorkOrderModalProps> = ({
       okText="Cerrar OT"
       cancelText="Cancelar"
     >
-      {needsInvoice && (
-        <Alert
-          message="Falta factura"
-          description="Esta OT fue asignada a un contratista pero aún no se ha subido la factura. No podrás cerrarla hasta que el contratista suba la factura."
-          type="error"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
-      )}
-
       <Alert
         message="Información del Trabajo"
         description={
