@@ -192,9 +192,19 @@ const EventosPage: React.FC = () => {
 
   const columns: ColumnsType<AssetEvent> = [
     {
+      title: 'Fecha',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 100,
+      ellipsis: true,
+      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      defaultSortOrder: 'descend',
+      render: (date: string) => new Date(date).toLocaleDateString('es-CO'),
+    },
+    {
       title: 'OT',
       key: 'workOrderId',
-      width: 85,
+      width: 80,
       ellipsis: true,
       render: (_: any, record: AssetEvent) =>
         record.workOrderId ? (
@@ -218,30 +228,6 @@ const EventosPage: React.FC = () => {
       ),
     },
     {
-      title: 'Activo',
-      key: 'asset_code',
-      width: 100,
-      ellipsis: true,
-      sorter: (a, b) => (a.asset?.code || '').localeCompare(b.asset?.code || ''),
-      render: (_: any, record: AssetEvent) =>
-        record.asset ? (
-          <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 600 }}>
-            {record.asset.code}
-          </span>
-        ) : (
-          <span style={{ color: '#8c8c8c' }}>N/A</span>
-        ),
-    },
-    {
-      title: 'Descripción Activo',
-      key: 'asset_desc',
-      width: 150,
-      ellipsis: true,
-      sorter: (a, b) => (a.asset?.description || '').localeCompare(b.asset?.description || ''),
-      render: (_: any, record: AssetEvent) =>
-        record.asset?.description || '-',
-    },
-    {
       title: 'Ubicación',
       key: 'location',
       width: 120,
@@ -251,15 +237,13 @@ const EventosPage: React.FC = () => {
         record.fromLocation?.name || '-',
     },
     {
-      title: 'Técnico',
-      key: 'technician',
-      width: 120,
+      title: 'Activo',
+      key: 'asset_code',
+      width: 100,
       ellipsis: true,
-      sorter: (a, b) => (a.workOrder?.assigneeName || '').localeCompare(b.workOrder?.assigneeName || ''),
+      sorter: (a, b) => (a.asset?.code || '').localeCompare(b.asset?.code || ''),
       render: (_: any, record: AssetEvent) =>
-        record.workOrder?.assigneeName || (
-          <span style={{ color: '#8c8c8c' }}>-</span>
-        ),
+        record.asset?.code || <span style={{ color: '#8c8c8c' }}>N/A</span>,
     },
     {
       title: 'Tipo',
@@ -275,10 +259,21 @@ const EventosPage: React.FC = () => {
       ),
     },
     {
+      title: 'Técnico',
+      key: 'technician',
+      width: 120,
+      ellipsis: true,
+      sorter: (a, b) => (a.workOrder?.assigneeName || '').localeCompare(b.workOrder?.assigneeName || ''),
+      render: (_: any, record: AssetEvent) =>
+        record.workOrder?.assigneeName || (
+          <span style={{ color: '#8c8c8c' }}>-</span>
+        ),
+    },
+    {
       title: 'Descripción',
       dataIndex: 'description',
       key: 'description',
-      width: 180,
+      width: 150,
       ellipsis: true,
       sorter: (a, b) => (a.description || '').localeCompare(b.description || ''),
     },
@@ -290,16 +285,6 @@ const EventosPage: React.FC = () => {
       ellipsis: true,
       sorter: (a, b) => Number(a.cost || 0) - Number(b.cost || 0),
       render: (cost: number) => cost ? formatCOP(cost) : '-',
-    },
-    {
-      title: 'Fecha',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 100,
-      ellipsis: true,
-      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      defaultSortOrder: 'descend',
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
       title: 'Acciones',
@@ -566,7 +551,7 @@ const EventosPage: React.FC = () => {
               loading={loading}
               size="small"
               tableLayout="fixed"
-              scroll={{ y: 'calc(100vh - 350px)' }}
+              scroll={{ y: 'calc(100vh - 310px)' }}
               pagination={{
                 total: filteredEvents.length,
                 pageSize: 10,

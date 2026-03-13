@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Select, Switch, message, Alert } from 'antd';
+import { Modal, Form, Select, Switch, Input, message, Alert } from 'antd';
+import { PhoneOutlined } from '@ant-design/icons';
 import { usersApi, locationsApi } from '../../services/api';
 
 interface EditUserModalProps {
@@ -24,6 +25,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
     if (open && user) {
       loadLocations();
       form.setFieldsValue({
+        phone: user.phone,
         roles: user.roles,
         locationId: user.locationId,
         active: user.active,
@@ -84,6 +86,16 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
         layout="vertical"
         onFinish={handleSubmit}
       >
+        <Form.Item
+          label="Celular"
+          name="phone"
+        >
+          <Input
+            prefix={<PhoneOutlined />}
+            placeholder="Número de celular"
+          />
+        </Form.Item>
+
         <Form.Item
           label="Roles"
           name="roles"

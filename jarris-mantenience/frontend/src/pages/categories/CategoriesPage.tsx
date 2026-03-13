@@ -135,7 +135,7 @@ const CategoriesPage: React.FC = () => {
   // Desktop Table Columns
   const columns: ColumnsType<Category> = [
     {
-      title: 'Categoría',
+      title: 'Categoria',
       key: 'category',
       render: (_, record) => (
         <div>
@@ -211,7 +211,7 @@ const CategoriesPage: React.FC = () => {
             gap: 8,
           }}>
             <span style={{ fontSize: 16, fontWeight: 600 }}>
-              Gestión de Categorías
+              Categorías Activos
             </span>
             {canEdit && (
               <Button

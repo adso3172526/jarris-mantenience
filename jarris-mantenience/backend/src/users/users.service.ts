@@ -54,7 +54,7 @@ export class UsersService implements OnModuleInit {
 
   findAll() {
     return this.repo.find({
-      select: ['id', 'name', 'email', 'roles', 'active', 'locationId', 'createdAt', 'updatedAt'],
+      select: ['id', 'name', 'email', 'phone', 'roles', 'active', 'locationId', 'createdAt', 'updatedAt'],
       relations: ['location'],
       order: { createdAt: 'DESC' },
     });
@@ -63,7 +63,7 @@ export class UsersService implements OnModuleInit {
   async findById(id: string) {
     const user = await this.repo.findOne({
       where: { id },
-      select: ['id', 'name', 'email', 'roles', 'active', 'locationId', 'createdAt', 'updatedAt'],
+      select: ['id', 'name', 'email', 'phone', 'roles', 'active', 'locationId', 'createdAt', 'updatedAt'],
       relations: ['location'],
     });
     if (!user) throw new NotFoundException('User not found');

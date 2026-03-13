@@ -22,6 +22,7 @@ import {
   UserOutlined,
   LockOutlined,
   MailOutlined,
+  PhoneOutlined,
   EnvironmentOutlined,
   SafetyCertificateOutlined,
   SettingOutlined,
@@ -37,6 +38,7 @@ interface User {
   name?: string;
   email: string;
   roles: string[];
+  phone?: string;
   locationId?: string;
   location?: {
     name: string;
@@ -111,7 +113,7 @@ const UsersPage: React.FC = () => {
   const handleCreate = () => {
     setEditingUser(null);
     form.resetFields();
-    form.setFieldsValue({ roles: ['PDV'], active: true });
+    form.setFieldsValue({ active: true });
     setModalOpen(true);
   };
 
@@ -120,6 +122,7 @@ const UsersPage: React.FC = () => {
     form.setFieldsValue({
       name: user.name,
       email: user.email,
+      phone: user.phone,
       roles: user.roles,
       locationId: user.locationId,
       active: user.active,
@@ -184,6 +187,11 @@ const UsersPage: React.FC = () => {
           <Badge status={record.active ? 'success' : 'default'} text={record.active ? 'Activo' : 'Inactivo'} />
         </div>
         <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>{record.email}</div>
+        {record.phone && (
+          <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>
+            <PhoneOutlined /> {record.phone}
+          </div>
+        )}
         <Space wrap size={4} style={{ marginBottom: 4 }}>
           {record.roles.map((role) => (
             <Tag key={role} style={{ fontSize: 11, margin: 0 }}>
@@ -229,6 +237,7 @@ const UsersPage: React.FC = () => {
           <div style={{ fontWeight: 600, fontSize: 13 }}>{record.name || record.email.split('@')[0]}</div>
           <div style={{ fontSize: 12, color: '#8c8c8c' }}>
             {record.email}
+            {record.phone ? ` · ${record.phone}` : ''}
             {record.location ? ` · ${record.location.name}` : ''}
           </div>
         </div>
@@ -415,6 +424,17 @@ const UsersPage: React.FC = () => {
           </Form.Item>
 
           <Form.Item
+            label="Celular"
+            name="phone"
+          >
+            <Input
+              prefix={<PhoneOutlined />}
+              placeholder="Número de celular"
+              size={isMobile ? "large" : "middle"}
+            />
+          </Form.Item>
+
+          <Form.Item
             label={editingUser ? 'Contraseña (dejar vacío para no cambiar)' : 'Contraseña'}
             name="password"
             rules={[
@@ -439,21 +459,11 @@ const UsersPage: React.FC = () => {
               placeholder="Selecciona uno o más roles"
               size={isMobile ? "large" : "middle"}
             >
-              <Select.Option value="ADMIN">
-                <Tag color="red">Administrador</Tag>
-              </Select.Option>
-              <Select.Option value="JEFE_MANTENIMIENTO">
-                <Tag color="blue">Jefe de Mantenimiento</Tag>
-              </Select.Option>
-              <Select.Option value="TECNICO_INTERNO">
-                <Tag color="green">Técnico Interno</Tag>
-              </Select.Option>
-              <Select.Option value="CONTRATISTA">
-                <Tag color="orange">Contratista</Tag>
-              </Select.Option>
-              <Select.Option value="PDV">
-                <Tag color="purple">Punto de Venta</Tag>
-              </Select.Option>
+              <Select.Option value="ADMIN">Administrador</Select.Option>
+              <Select.Option value="JEFE_MANTENIMIENTO">Jefe de Mantenimiento</Select.Option>
+              <Select.Option value="TECNICO_INTERNO">Técnico Interno</Select.Option>
+              <Select.Option value="CONTRATISTA">Contratista</Select.Option>
+              <Select.Option value="PDV">Punto de Venta</Select.Option>
             </Select>
           </Form.Item>
 

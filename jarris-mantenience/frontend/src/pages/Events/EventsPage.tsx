@@ -157,10 +157,20 @@ const EventsPage: React.FC = () => {
 
   const columns: ColumnsType<AssetEvent> = [
     {
+      title: 'Fecha',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 100,
+      ellipsis: true,
+      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      defaultSortOrder: 'descend',
+      render: (date: string) => new Date(date).toLocaleDateString('es-CO'),
+    },
+    {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
-      width: 90,
+      width: 80,
       ellipsis: true,
       render: (id: string) => (
         <span style={{ fontFamily: 'monospace', fontSize: 13 }}>{id.substring(0, 8)}</span>
@@ -169,37 +179,34 @@ const EventsPage: React.FC = () => {
     {
       title: 'Activo',
       key: 'asset',
-      width: 120,
+      width: 100,
       ellipsis: true,
       sorter: (a, b) => (a.asset?.code || '').localeCompare(b.asset?.code || ''),
-      render: (_: any, record: AssetEvent) => (
-        <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>
-          {record.asset?.code || 'N/A'}
-        </span>
-      ),
-    },
-    {
-      title: 'Fecha',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 120,
-      ellipsis: true,
-      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      defaultSortOrder: 'descend',
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm'),
+      render: (_: any, record: AssetEvent) =>
+        record.asset?.code || <span style={{ color: '#8c8c8c' }}>N/A</span>,
     },
     {
       title: 'Tipo',
+      dataIndex: 'type',
       key: 'type',
       width: 100,
       ellipsis: true,
-      render: () => <Tag color="blue">Traslado</Tag>,
+      render: (type: string) => <Tag color="blue">{type}</Tag>,
+    },
+    {
+      title: 'Registrado por',
+      dataIndex: 'createdBy',
+      key: 'createdBy',
+      width: 120,
+      ellipsis: true,
+      sorter: (a, b) => (a.createdBy || '').localeCompare(b.createdBy || ''),
+      render: (email: string) => email || '-',
     },
     {
       title: 'Descripción',
       dataIndex: 'description',
       key: 'description',
-      width: 180,
+      width: 150,
       ellipsis: true,
       sorter: (a, b) => (a.description || '').localeCompare(b.description || ''),
     },
@@ -223,24 +230,15 @@ const EventsPage: React.FC = () => {
       title: 'Costo',
       dataIndex: 'cost',
       key: 'cost',
-      width: 110,
+      width: 100,
       ellipsis: true,
       sorter: (a, b) => (a.cost || 0) - (b.cost || 0),
       render: (cost: number) => cost ? formatCOP(cost) : '-',
     },
-    {
-      title: 'Registrado por',
-      dataIndex: 'createdBy',
-      key: 'createdBy',
-      width: 130,
-      ellipsis: true,
-      sorter: (a, b) => (a.createdBy || '').localeCompare(b.createdBy || ''),
-      render: (email: string) => email || '-',
-    },
     ...(canEdit ? [{
       title: 'Acciones',
       key: 'actions',
-      width: 90,
+      width: 80,
       render: (_: any, record: AssetEvent) => (
         <Space size="small">
           <Button
@@ -483,7 +481,7 @@ const EventsPage: React.FC = () => {
               loading={loading}
               size="small"
               tableLayout="fixed"
-              scroll={{ y: 'calc(100vh - 350px)' }}
+              scroll={{ y: 'calc(100vh - 310px)' }}
               pagination={{
                 total: filteredEvents.length,
                 pageSize: 10,

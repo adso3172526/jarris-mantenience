@@ -699,11 +699,6 @@ Fecha: ${new Date().toLocaleString('es-CO')}
       throw new BadRequestException('Only TERMINADA can be closed');
     }
 
-    // Si es contratista, exigir factura antes de cerrar
-    if (wo.assigneeType === AssigneeType.CONTRATISTA && !wo.invoiceFilePath) {
-      throw new BadRequestException('Contractor work order requires invoice before closing');
-    }
-
     // ✅ SOLO crear evento en asset SI es mantenimiento de EQUIPO
     if (wo.maintenanceType === MaintenanceType.EQUIPO && wo.asset) {
       const allowedTypes = [AssetEventType.MANTENIMIENTO, AssetEventType.REPARACION];

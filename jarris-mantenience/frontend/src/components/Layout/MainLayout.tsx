@@ -22,7 +22,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const { Header, Content } = Layout;
 
-const SIDEBAR_WIDTH = 90;
+const SIDEBAR_WIDTH = 100;
 
 interface SidebarItem {
   key: string;
@@ -141,13 +141,13 @@ const MainLayout: React.FC = () => {
         {
           key: '/categories',
           icon: <AppstoreOutlined />,
-          label: 'Categorías',
+          label: 'Categorías Activos',
           onClick: () => navigate('/categories'),
         },
         {
           key: '/locative-categories',
           icon: <TagOutlined />,
-          label: 'Cat. Locat.',
+          label: 'Categorias Locativos',
           onClick: () => navigate('/locative-categories'),
         },
         {
@@ -211,13 +211,11 @@ const MainLayout: React.FC = () => {
           {item.icon}
         </span>
         <span style={{
-          fontSize: 10,
+          fontSize: 9,
           lineHeight: 1.2,
           textAlign: 'center',
           fontWeight: isActive ? 600 : 400,
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
+          wordBreak: 'break-word',
           maxWidth: '100%',
         }}>
           {item.label}

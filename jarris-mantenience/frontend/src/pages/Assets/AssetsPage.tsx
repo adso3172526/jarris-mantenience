@@ -377,29 +377,34 @@ const AssetsPage: React.FC = () => {
   // Desktop Table Columns
   const columns: ColumnsType<Asset> = [
     {
+      title: 'Ingreso',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 100,
+      ellipsis: true,
+      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      render: (date) => new Date(date).toLocaleDateString('es-CO'),
+    },
+    {
       title: 'Codigo',
       dataIndex: 'code',
       key: 'code',
-      width: 100,
+      width: 80,
       ellipsis: true,
       sorter: (a, b) => (a.code || '').localeCompare(b.code || ''),
-      render: (code) => <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{code}</span>,
     },
     {
-      title: 'Descripcion',
-      dataIndex: 'description',
-      key: 'description',
-      width: 150,
+      title: 'Estado',
+      dataIndex: 'status',
+      key: 'status',
+      width: 100,
       ellipsis: true,
-      sorter: (a, b) => (a.description || '').localeCompare(b.description || ''),
-    },
-    {
-      title: 'Categoria',
-      dataIndex: ['category', 'name'],
-      key: 'category',
-      width: 110,
-      ellipsis: true,
-      sorter: (a, b) => (a.category?.name || '').localeCompare(b.category?.name || ''),
+      sorter: (a, b) => (a.status || '').localeCompare(b.status || ''),
+      render: (status) => (
+        <Tag color={assetStatusColors[status as keyof typeof assetStatusColors]}>
+          {status}
+        </Tag>
+      ),
     },
     {
       title: 'Ubicacion',
@@ -410,10 +415,26 @@ const AssetsPage: React.FC = () => {
       sorter: (a, b) => (a.location?.name || '').localeCompare(b.location?.name || ''),
     },
     {
+      title: 'Categoria',
+      dataIndex: ['category', 'name'],
+      key: 'category',
+      width: 100,
+      ellipsis: true,
+      sorter: (a, b) => (a.category?.name || '').localeCompare(b.category?.name || ''),
+    },
+    {
+      title: 'Descripcion',
+      dataIndex: 'description',
+      key: 'description',
+      width: 150,
+      ellipsis: true,
+      sorter: (a, b) => (a.description || '').localeCompare(b.description || ''),
+    },
+    {
       title: 'Marca',
       dataIndex: 'brand',
       key: 'brand',
-      width: 90,
+      width: 80,
       ellipsis: true,
       sorter: (a, b) => (a.brand || '').localeCompare(b.brand || ''),
     },
@@ -433,28 +454,6 @@ const AssetsPage: React.FC = () => {
       ellipsis: true,
       sorter: (a, b) => Number(a.value || 0) - Number(b.value || 0),
       render: (value) => value ? formatCOP(value) : 'N/A',
-    },
-    {
-      title: 'Estado',
-      dataIndex: 'status',
-      key: 'status',
-      width: 110,
-      ellipsis: true,
-      sorter: (a, b) => (a.status || '').localeCompare(b.status || ''),
-      render: (status) => (
-        <Tag color={assetStatusColors[status as keyof typeof assetStatusColors]}>
-          {status}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Ingreso',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 100,
-      ellipsis: true,
-      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      render: (date) => new Date(date).toLocaleDateString('es-CO'),
     },
     {
       title: 'Acciones',
@@ -682,7 +681,7 @@ const AssetsPage: React.FC = () => {
             loading={loading}
             size="small"
             tableLayout="fixed"
-            scroll={{ y: 'calc(100vh - 390px)' }}
+            scroll={{ y: 'calc(100vh - 310px)' }}
             pagination={{
               total: filteredAssets.length,
               pageSize: 8,

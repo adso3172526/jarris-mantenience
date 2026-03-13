@@ -161,7 +161,7 @@ const LocativeCategoriesPage: React.FC = () => {
             gap: 8,
           }}>
             <span style={{ fontSize: 16, fontWeight: 600 }}>
-              Categorías Locativas
+              Categorías Locativos
             </span>
             {canEdit && (
               <Button

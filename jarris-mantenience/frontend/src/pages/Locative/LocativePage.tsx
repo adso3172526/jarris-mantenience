@@ -225,6 +225,18 @@ const LocativePage: React.FC = () => {
       ),
     },
     {
+      title: 'Tipo',
+      dataIndex: 'maintenanceType',
+      key: 'maintenanceType',
+      width: 90,
+      ellipsis: true,
+      render: (type: string) => (
+        <Tag color="green">
+          <HomeOutlined /> {type}
+        </Tag>
+      ),
+    },
+    {
       title: 'Categoría',
       dataIndex: 'locativeCategory',
       key: 'locativeCategory',

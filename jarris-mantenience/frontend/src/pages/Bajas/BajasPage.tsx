@@ -156,10 +156,20 @@ const BajasPage: React.FC = () => {
 
   const columns: ColumnsType<AssetEvent> = [
     {
+      title: 'Fecha',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 100,
+      ellipsis: true,
+      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      defaultSortOrder: 'descend',
+      render: (date: string) => new Date(date).toLocaleDateString('es-CO'),
+    },
+    {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
-      width: 90,
+      width: 80,
       ellipsis: true,
       render: (id: string) => (
         <span style={{ fontFamily: 'monospace', fontSize: 13 }}>{id.substring(0, 8)}</span>
@@ -168,45 +178,11 @@ const BajasPage: React.FC = () => {
     {
       title: 'Activo',
       key: 'asset',
-      width: 120,
+      width: 100,
       ellipsis: true,
       sorter: (a, b) => (a.asset?.code || '').localeCompare(b.asset?.code || ''),
-      render: (_: any, record: AssetEvent) => (
-        <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>
-          {record.asset?.code || 'N/A'}
-        </span>
-      ),
-    },
-    {
-      title: 'Fecha',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 120,
-      ellipsis: true,
-      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      defaultSortOrder: 'descend',
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm'),
-    },
-    {
-      title: 'Tipo',
-      dataIndex: 'type',
-      key: 'type',
-      width: 110,
-      ellipsis: true,
-      sorter: (a, b) => a.type.localeCompare(b.type),
-      render: (type: string) => (
-        <Tag color={eventTypeColors[type] || 'default'}>
-          {eventTypeLabels[type] || type}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Descripción',
-      dataIndex: 'description',
-      key: 'description',
-      width: 180,
-      ellipsis: true,
-      sorter: (a, b) => (a.description || '').localeCompare(b.description || ''),
+      render: (_: any, record: AssetEvent) =>
+        record.asset?.code || <span style={{ color: '#8c8c8c' }}>N/A</span>,
     },
     {
       title: 'Ubicación',
@@ -217,13 +193,34 @@ const BajasPage: React.FC = () => {
       render: (_: any, record: AssetEvent) => record.fromLocation?.name || record.toLocation?.name || (record.asset as any)?.location?.name || '-',
     },
     {
+      title: 'Tipo',
+      dataIndex: 'type',
+      key: 'type',
+      width: 100,
+      ellipsis: true,
+      sorter: (a, b) => a.type.localeCompare(b.type),
+      render: (type: string) => (
+        <Tag color={eventTypeColors[type] || 'default'}>
+          {eventTypeLabels[type] || type}
+        </Tag>
+      ),
+    },
+    {
       title: 'Registrado por',
       dataIndex: 'createdBy',
       key: 'createdBy',
-      width: 130,
+      width: 120,
       ellipsis: true,
       sorter: (a, b) => (a.createdBy || '').localeCompare(b.createdBy || ''),
       render: (email: string) => email || '-',
+    },
+    {
+      title: 'Descripción',
+      dataIndex: 'description',
+      key: 'description',
+      width: 150,
+      ellipsis: true,
+      sorter: (a, b) => (a.description || '').localeCompare(b.description || ''),
     },
   ];
 
@@ -430,7 +427,7 @@ const BajasPage: React.FC = () => {
               loading={loading}
               size="small"
               tableLayout="fixed"
-              scroll={{ y: 'calc(100vh - 350px)' }}
+              scroll={{ y: 'calc(100vh - 310px)' }}
               pagination={{
                 total: filteredEvents.length,
                 pageSize: 10,

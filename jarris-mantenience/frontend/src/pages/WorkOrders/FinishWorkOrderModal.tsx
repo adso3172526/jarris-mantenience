@@ -39,13 +39,6 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
     try {
       setLoading(true);
       
-      // Validar factura SOLO si es CONTRATISTA (obligatorio)
-      if (isContratista && !invoiceFile) {
-        message.error('Los contratistas deben subir factura obligatoriamente');
-        setLoading(false);
-        return;
-      }
-
       // Finalizar la OT
       const data = {
         workDoneDescription: values.workDoneDescription,
@@ -197,18 +190,11 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
         <Form.Item
           label={
             <span style={{ fontSize: isMobile ? 14 : 14 }}>
-              Factura (PDF o Imagen) {isContratista ? '- OBLIGATORIA' : '- OPCIONAL'}
+              Factura (PDF o Imagen) - OPCIONAL
             </span>
           }
-          required={isContratista}
           help={
-            isMobile ? (
-              isContratista ? 'Obligatorio para contratistas' : 'Opcional'
-            ) : (
-              isContratista
-                ? 'Los contratistas deben adjuntar la factura obligatoriamente'
-                : 'Opcional: Puedes adjuntar la factura si la tienes disponible'
-            )
+            'Opcional: Puedes adjuntar la factura si la tienes disponible'
           }
           style={{ marginBottom: isMobile ? 12 : 24 }}
         >
@@ -236,21 +222,6 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
       </Form>
 
       {/* Información adicional */}
-      <div style={{ 
-        marginTop: isMobile ? 12 : 16, 
-        padding: isMobile ? 10 : 12, 
-        background: isContratista ? '#fff7e6' : '#e6f7ff', 
-        borderRadius: 4,
-        fontSize: isMobile ? 12 : 12
-      }}>
-        <p style={{ margin: 0 }}>
-          {isContratista ? (
-            <>⚠️ <strong>Contratista:</strong> Debes subir la factura obligatoriamente antes de finalizar.</>
-          ) : (
-            <>ℹ️ <strong>Técnico Interno:</strong> La factura es opcional. Puedes subirla ahora o después.</>
-          )}
-        </p>
-      </div>
     </Modal>
   );
 };

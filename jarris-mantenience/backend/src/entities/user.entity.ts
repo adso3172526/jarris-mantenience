@@ -26,6 +26,9 @@ export class UserEntity {
   @Column({ type: 'jsonb', default: () => "'[]'::jsonb" })
   roles: string[];
 
+  @Column({ nullable: true })
+  phone?: string;
+
   @Column({ default: true })
   active: boolean;
 
