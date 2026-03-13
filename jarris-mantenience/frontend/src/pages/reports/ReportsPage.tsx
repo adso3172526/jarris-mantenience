@@ -106,7 +106,7 @@ const ReportsPage: React.FC = () => {
               value={fechaDesde}
               onChange={(date) => date && setFechaDesde(date)}
               format="DD/MM/YYYY"
-              style={{ width: '100%' }}
+              style={{}}
               size="large"
             />
           </div>
@@ -117,18 +117,16 @@ const ReportsPage: React.FC = () => {
               value={fechaHasta}
               onChange={(date) => date && setFechaHasta(date)}
               format="DD/MM/YYYY"
-              style={{ width: '100%' }}
+              style={{}}
               size="large"
             />
           </div>
 
           <Button
             type="primary"
-            size="large"
             icon={<DownloadOutlined />}
             onClick={handleDownload}
             loading={loading}
-            style={{ height: 48, fontSize: 16, width: '100%' }}
           >
             Descargar Reporte OT
           </Button>
@@ -151,11 +149,9 @@ const ReportsPage: React.FC = () => {
 
           <Button
             type="primary"
-            size="large"
             icon={<DownloadOutlined />}
             onClick={handleDownloadAssets}
             loading={loadingAssets}
-            style={{ height: 48, fontSize: 16, width: '100%' }}
           >
             Descargar Inventario Excel
           </Button>

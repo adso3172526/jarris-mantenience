@@ -233,7 +233,7 @@ const LocativePage: React.FC = () => {
       ellipsis: true,
       sorter: (a, b) => (a.locativeCategory || '').localeCompare(b.locativeCategory || ''),
       render: (cat: string) => (
-        <Tag color="green">{locativeCategoryLabels[cat] || cat}</Tag>
+        <Tag color="blue">{locativeCategoryLabels[cat] || cat}</Tag>
       ),
     },
     {
@@ -315,7 +315,7 @@ const LocativePage: React.FC = () => {
         </div>
 
         <div style={{ marginBottom: 8 }}>
-          <Tag color="green">
+          <Tag color="blue">
             <HomeOutlined /> {locativeCategoryLabels[record.locativeCategory || ''] || record.locativeCategory}
           </Tag>
         </div>

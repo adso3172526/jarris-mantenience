@@ -142,11 +142,15 @@ export class ReportsService {
     rawData.forEach(row => {
       const key = row.ubicacion_nombre || 'Sin ubicación';
       if (!porUbicacion[key]) {
-        porUbicacion[key] = { cantidad: 0, costo: 0 };
+        porUbicacion[key] = { cantidadOT: 0, costoOTCerradas: 0, cantidadEventos: 0, costoEventos: 0 };
       }
-      // Contar tanto OT como EVENTOS
-      porUbicacion[key].cantidad++;
-      porUbicacion[key].costo += Number(row.costo || 0);
+      if (row.tipo_registro === 'OT') {
+        porUbicacion[key].cantidadOT++;
+        if (row.estado === 'CERRADA') porUbicacion[key].costoOTCerradas += Number(row.costo || 0);
+      } else {
+        porUbicacion[key].cantidadEventos++;
+        porUbicacion[key].costoEventos += Number(row.costo || 0);
+      }
     });
 
     // Agrupar por mes
@@ -154,11 +158,15 @@ export class ReportsService {
     rawData.forEach(row => {
       const mes = new Date(row.mes).toISOString();
       if (!porMes[mes]) {
-        porMes[mes] = { cantidad: 0, costo: 0 };
+        porMes[mes] = { cantidadOT: 0, costoOTCerradas: 0, cantidadEventos: 0, costoEventos: 0 };
       }
-      // Contar tanto OT como EVENTOS
-      porMes[mes].cantidad++;
-      porMes[mes].costo += Number(row.costo || 0);
+      if (row.tipo_registro === 'OT') {
+        porMes[mes].cantidadOT++;
+        if (row.estado === 'CERRADA') porMes[mes].costoOTCerradas += Number(row.costo || 0);
+      } else {
+        porMes[mes].cantidadEventos++;
+        porMes[mes].costoEventos += Number(row.costo || 0);
+      }
     });
 
     return {
@@ -173,14 +181,18 @@ export class ReportsService {
       },
       porUbicacion: Object.entries(porUbicacion).map(([nombre, datos]: [string, any]) => ({
         ubicacion: nombre,
-        cantidad: datos.cantidad,
-        costo: datos.costo,
+        cantidadOT: datos.cantidadOT,
+        costoOTCerradas: datos.costoOTCerradas,
+        cantidadEventos: datos.cantidadEventos,
+        costoEventos: datos.costoEventos,
       })),
       porMes: Object.entries(porMes)
         .map(([mes, datos]: [string, any]) => ({
           mes,
-          cantidad: datos.cantidad,
-          costo: datos.costo,
+          cantidadOT: datos.cantidadOT,
+          costoOTCerradas: datos.costoOTCerradas,
+          cantidadEventos: datos.cantidadEventos,
+          costoEventos: datos.costoEventos,
         }))
         .sort((a, b) => new Date(a.mes).getTime() - new Date(b.mes).getTime()),
     };

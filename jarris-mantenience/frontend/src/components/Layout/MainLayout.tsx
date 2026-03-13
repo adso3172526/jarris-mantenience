@@ -260,7 +260,7 @@ const MainLayout: React.FC = () => {
           style={{
             width: SIDEBAR_WIDTH,
             minHeight: '100vh',
-            background: '#2c3e50',
+            background: '#1a2733',
             display: 'flex',
             flexDirection: 'column',
             position: 'fixed',
@@ -289,7 +289,7 @@ const MainLayout: React.FC = () => {
               flexShrink: 0,
             }}
           >
-            J
+            J´S
           </div>
 
           {/* Menu items */}
@@ -348,7 +348,7 @@ const MainLayout: React.FC = () => {
             <div style={{
               fontSize: isMobile ? 16 : 18,
               fontWeight: isMobile ? 600 : 500,
-              color: '#2c3e50',
+              color: '#1a2733',
             }}>
               {isMobile ? 'JARRIS' : 'Mantenimiento'}
             </div>
@@ -383,7 +383,7 @@ const MainLayout: React.FC = () => {
           style={{
             margin: isMobile ? 0 : '24px',
             padding: isMobile ? 12 : 24,
-            background: isMobile ? '#2c3e50' : '#f0f2f5',
+            background: isMobile ? '#1a2733' : '#f0f2f5',
             minHeight: 280,
           }}
         >

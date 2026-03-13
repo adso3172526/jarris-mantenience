@@ -89,21 +89,23 @@ const DashboardPage: React.FC = () => {
 
       // Decidir qué datos mostrar en el gráfico
       if (ubic) {
-        // Si hay ubicación seleccionada ? mostrar por mes
         setDatosGrafico(
           res.data.porMes.map((item: any) => ({
             nombre: dayjs(item.mes).format('MMM YYYY'),
-            cantidad: item.cantidad,
-            costo: item.costo,
+            cantidadOT: item.cantidadOT,
+            costoOTCerradas: item.costoOTCerradas,
+            cantidadEventos: item.cantidadEventos,
+            costoEventos: item.costoEventos,
           }))
         );
       } else {
-        // Si NO hay ubicación ? mostrar por ubicación
         setDatosGrafico(
           res.data.porUbicacion.map((item: any) => ({
             nombre: item.ubicacion,
-            cantidad: item.cantidad,
-            costo: item.costo,
+            cantidadOT: item.cantidadOT,
+            costoOTCerradas: item.costoOTCerradas,
+            cantidadEventos: item.cantidadEventos,
+            costoEventos: item.costoEventos,
           }))
         );
       }
@@ -204,11 +206,10 @@ const DashboardPage: React.FC = () => {
             <Col xs={12} sm={8} md={4}>
               <Card size="small">
                 <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                  <FileTextOutlined style={{ fontSize: 32, color: '#E60012' }} />
-                  <div style={{ fontSize: 24, fontWeight: 600, marginTop: 8 }}>
+                  <div style={{ fontSize: 24, fontWeight: 600 }}>
                     {metricas.totalOT}
                   </div>
-                  <div style={{ color: '#8c8c8c', fontSize: 12, marginTop: 4 }}>Total OT</div>
+                  <div style={{ color: '#595959', fontSize: 14, marginTop: 4 }}>OT</div>
                 </div>
               </Card>
             </Col>
@@ -216,11 +217,10 @@ const DashboardPage: React.FC = () => {
             <Col xs={12} sm={8} md={6}>
               <Card size="small">
                 <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                  <DollarOutlined style={{ fontSize: 32, color: '#52c41a' }} />
-                  <div style={{ fontSize: 24, fontWeight: 600, marginTop: 8 }}>
+                  <div style={{ fontSize: 24, fontWeight: 600 }}>
                     {formatCOP(metricas.totalGastado)}
                   </div>
-                  <div style={{ color: '#8c8c8c', fontSize: 12, marginTop: 4 }}>Costo OT</div>
+                  <div style={{ color: '#595959', fontSize: 14, marginTop: 4 }}>OT Cerradas</div>
                 </div>
               </Card>
             </Col>
@@ -228,11 +228,10 @@ const DashboardPage: React.FC = () => {
             <Col xs={12} sm={8} md={4}>
               <Card size="small">
                 <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                  <ThunderboltOutlined style={{ fontSize: 32, color: '#faad14' }} />
-                  <div style={{ fontSize: 24, fontWeight: 600, marginTop: 8 }}>
+                  <div style={{ fontSize: 24, fontWeight: 600 }}>
                     {metricas.totalEventos}
                   </div>
-                  <div style={{ color: '#8c8c8c', fontSize: 12, marginTop: 4 }}>Eventos</div>
+                  <div style={{ color: '#595959', fontSize: 14, marginTop: 4 }}>Eventos</div>
                 </div>
               </Card>
             </Col>
@@ -240,11 +239,10 @@ const DashboardPage: React.FC = () => {
             <Col xs={12} sm={8} md={6}>
               <Card size="small">
                 <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                  <DollarOutlined style={{ fontSize: 32, color: '#722ed1' }} />
-                  <div style={{ fontSize: 24, fontWeight: 600, marginTop: 8 }}>
+                  <div style={{ fontSize: 24, fontWeight: 600 }}>
                     {formatCOP(metricas.totalGastadoEventos)}
                   </div>
-                  <div style={{ color: '#8c8c8c', fontSize: 12, marginTop: 4 }}>Costo Eventos</div>
+                  <div style={{ color: '#595959', fontSize: 14, marginTop: 4 }}>Eventos</div>
                 </div>
               </Card>
             </Col>
@@ -252,11 +250,10 @@ const DashboardPage: React.FC = () => {
             <Col xs={12} sm={8} md={4}>
               <Card size="small">
                 <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                  <ToolOutlined style={{ fontSize: 32, color: '#1890ff' }} />
-                  <div style={{ fontSize: 24, fontWeight: 600, marginTop: 8 }}>
+                  <div style={{ fontSize: 24, fontWeight: 600 }}>
                     {metricas.totalActivos}
                   </div>
-                  <div style={{ color: '#8c8c8c', fontSize: 12, marginTop: 4 }}>Activos</div>
+                  <div style={{ color: '#595959', fontSize: 14, marginTop: 4 }}>Activos</div>
                 </div>
               </Card>
             </Col>
@@ -271,16 +268,24 @@ const DashboardPage: React.FC = () => {
             }
             size="small"
           >
-            <ResponsiveContainer width="100%" height={isMobile ? 300 : 400}>
-              <BarChart data={datosGrafico} barCategoryGap="20%" barGap={4}>
+            <ResponsiveContainer width="100%" height={isMobile ? 250 : 320}>
+              <BarChart data={datosGrafico} barCategoryGap={ubicacionId ? '40%' : '20%'} barGap={2}>
                 <defs>
-                  <linearGradient id="gradCantidad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#1890ff" stopOpacity={1} />
-                    <stop offset="100%" stopColor="#096dd9" stopOpacity={0.8} />
+                  <linearGradient id="gradOT" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#8d9bab" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#7a8a9e" stopOpacity={0.85} />
                   </linearGradient>
-                  <linearGradient id="gradCosto" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ff4d4f" stopOpacity={1} />
-                    <stop offset="100%" stopColor="#cf1322" stopOpacity={0.8} />
+                  <linearGradient id="gradOTCerradas" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#a5b1be" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#95a3b2" stopOpacity={0.85} />
+                  </linearGradient>
+                  <linearGradient id="gradEventos" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#bcc6d0" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#adb9c5" stopOpacity={0.85} />
+                  </linearGradient>
+                  <linearGradient id="gradCostoEventos" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#d3dae1" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#c5ced7" stopOpacity={0.85} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
@@ -318,10 +323,11 @@ const DashboardPage: React.FC = () => {
                     padding: '12px 16px',
                   }}
                   formatter={(value: any, name: string) => {
-                    if (name === 'Costo') return [formatCOP(value), name];
+                    if (name === 'OT Cerradas' || name === 'Costo Eventos') return [formatCOP(value), name];
                     return [value, name];
                   }}
-                  labelStyle={{ fontWeight: 600, marginBottom: 6, color: '#262626' }}
+                  labelFormatter={() => ''}
+                  labelStyle={{ display: 'none' }}
                   itemStyle={{ padding: '2px 0' }}
                 />
                 <Legend
@@ -331,19 +337,35 @@ const DashboardPage: React.FC = () => {
                 />
                 <Bar
                   yAxisId="left"
-                  dataKey="cantidad"
-                  fill="url(#gradCantidad)"
-                  name="Cantidad OT"
+                  dataKey="cantidadOT"
+                  fill="url(#gradOT)"
+                  name="OT"
                   radius={[6, 6, 0, 0]}
-                  maxBarSize={50}
+                  maxBarSize={40}
                 />
                 <Bar
                   yAxisId="right"
-                  dataKey="costo"
-                  fill="url(#gradCosto)"
-                  name="Costo"
+                  dataKey="costoOTCerradas"
+                  fill="url(#gradOTCerradas)"
+                  name="OT Cerradas"
                   radius={[6, 6, 0, 0]}
-                  maxBarSize={50}
+                  maxBarSize={40}
+                />
+                <Bar
+                  yAxisId="left"
+                  dataKey="cantidadEventos"
+                  fill="url(#gradEventos)"
+                  name="Eventos"
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={40}
+                />
+                <Bar
+                  yAxisId="right"
+                  dataKey="costoEventos"
+                  fill="url(#gradCostoEventos)"
+                  name="Costo Eventos"
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={40}
                 />
               </BarChart>
             </ResponsiveContainer>
