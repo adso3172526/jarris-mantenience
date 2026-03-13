@@ -101,13 +101,11 @@ const LocativeCategoriesPage: React.FC = () => {
         <>
           <Divider style={{ margin: '8px 0' }} />
           <Button
-            type="primary"
+            size="small"
+            type="link"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
-            block
-          >
-            Editar
-          </Button>
+          />
         </>
       )}
     </Card>

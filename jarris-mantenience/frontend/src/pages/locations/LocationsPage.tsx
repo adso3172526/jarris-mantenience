@@ -117,13 +117,11 @@ const LocationsPage: React.FC = () => {
 
       {canEdit && (
         <Button
-          type="primary"
+          size="small"
+          type="link"
           icon={<EditOutlined />}
           onClick={() => handleEdit(record)}
-          block
-        >
-          Editar
-        </Button>
+        />
       )}
     </Card>
   );

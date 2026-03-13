@@ -313,16 +313,7 @@ const EventsPage: React.FC = () => {
         )}
 
         {canEdit && (
-          <div style={{ display: 'flex', gap: 8, marginTop: 8, borderTop: '1px solid #f0f0f0', paddingTop: 8 }}>
-            <Button
-              type="link"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => { setSelectedEvent(record); setEditModalOpen(true); }}
-              style={{ padding: 0 }}
-            >
-              Editar
-            </Button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8, borderTop: '1px solid #f0f0f0', paddingTop: 8 }}>
             <Button
               type="link"
               size="small"
@@ -330,9 +321,14 @@ const EventsPage: React.FC = () => {
               icon={<DeleteOutlined />}
               onClick={() => { setSelectedEvent(record); setVoidModalOpen(true); }}
               style={{ padding: 0 }}
-            >
-              Anular
-            </Button>
+            />
+            <Button
+              type="link"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => { setSelectedEvent(record); setEditModalOpen(true); }}
+              style={{ padding: 0 }}
+            />
           </div>
         )}
       </div>

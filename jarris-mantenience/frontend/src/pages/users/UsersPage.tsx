@@ -202,13 +202,11 @@ const UsersPage: React.FC = () => {
 
       <Space style={{ width: '100%' }} size="small">
         <Button
-          type="primary"
+          size="small"
+          type="link"
           icon={<EditOutlined />}
           onClick={() => handleEdit(record)}
-          style={{ flex: 1 }}
-        >
-          Editar
-        </Button>
+        />
         <Button
           icon={<LockOutlined />}
           onClick={() => handleResetPassword(record)}

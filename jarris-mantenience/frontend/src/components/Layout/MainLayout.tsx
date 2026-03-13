@@ -297,27 +297,6 @@ const MainLayout: React.FC = () => {
             {menuItems.map(renderSidebarItem)}
           </div>
 
-          {/* Logout at bottom */}
-          <div
-            onClick={handleLogout}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '12px 4px',
-              cursor: 'pointer',
-              color: 'rgba(255,255,255,0.45)',
-              borderTop: '1px solid rgba(255,255,255,0.1)',
-              flexShrink: 0,
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = '#ff4d4f'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; }}
-          >
-            <LogoutOutlined style={{ fontSize: 20, marginBottom: 3 }} />
-            <span style={{ fontSize: 10 }}>Salir</span>
-          </div>
         </div>
       )}
 
