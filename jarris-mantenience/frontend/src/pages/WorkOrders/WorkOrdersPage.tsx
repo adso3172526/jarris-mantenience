@@ -453,6 +453,16 @@ const WorkOrdersPage: React.FC = () => {
   // Desktop Table Columns
   const allColumns: ColumnsType<WorkOrder> = [
     {
+      title: 'Creada',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 100,
+      ellipsis: true,
+      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      defaultSortOrder: 'descend',
+      render: (date) => new Date(date).toLocaleDateString('es-CO'),
+    },
+    {
       title: 'OT',
       dataIndex: 'id',
       key: 'id',
@@ -463,6 +473,14 @@ const WorkOrdersPage: React.FC = () => {
           {id.substring(0, 8)}
         </span>
       ),
+    },
+    {
+      title: 'Ubicación',
+      dataIndex: ['location', 'name'],
+      key: 'location',
+      width: 120,
+      ellipsis: true,
+      sorter: (a, b) => (a.location?.name || '').localeCompare(b.location?.name || ''),
     },
     {
       title: 'Estado',
@@ -513,22 +531,6 @@ const WorkOrdersPage: React.FC = () => {
       },
     },
     {
-      title: 'Solicitud',
-      dataIndex: 'title',
-      key: 'title',
-      width: 150,
-      ellipsis: true,
-      sorter: (a, b) => (a.title || '').localeCompare(b.title || ''),
-    },
-    {
-      title: 'Ubicación',
-      dataIndex: ['location', 'name'],
-      key: 'location',
-      width: 120,
-      ellipsis: true,
-      sorter: (a, b) => (a.location?.name || '').localeCompare(b.location?.name || ''),
-    },
-    {
       title: 'Asignado a',
       key: 'assignee',
       width: 120,
@@ -540,6 +542,14 @@ const WorkOrdersPage: React.FC = () => {
         ),
     },
     {
+      title: 'Solicitud',
+      dataIndex: 'title',
+      key: 'title',
+      width: 150,
+      ellipsis: true,
+      sorter: (a, b) => (a.title || '').localeCompare(b.title || ''),
+    },
+    {
       title: 'Costo',
       dataIndex: 'cost',
       key: 'cost',
@@ -547,16 +557,6 @@ const WorkOrdersPage: React.FC = () => {
       ellipsis: true,
       sorter: (a, b) => Number(a.cost || 0) - Number(b.cost || 0),
       render: (cost) => formatCOP(cost),
-    },
-    {
-      title: 'Creada',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 100,
-      ellipsis: true,
-      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      defaultSortOrder: 'descend',
-      render: (date) => new Date(date).toLocaleDateString('es-CO'),
     },
     {
       title: 'Acciones',

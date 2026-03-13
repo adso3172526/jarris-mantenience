@@ -182,6 +182,16 @@ const LocativePage: React.FC = () => {
 
   const columns: ColumnsType<WorkOrder> = [
     {
+      title: 'Creada',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 100,
+      ellipsis: true,
+      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      defaultSortOrder: 'descend',
+      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+    },
+    {
       title: 'OT',
       dataIndex: 'id',
       key: 'id',
@@ -200,17 +210,6 @@ const LocativePage: React.FC = () => {
       width: 120,
       ellipsis: true,
       sorter: (a, b) => (a.location?.name || '').localeCompare(b.location?.name || ''),
-    },
-    {
-      title: 'Asignado a',
-      key: 'assignee',
-      width: 120,
-      ellipsis: true,
-      sorter: (a, b) => (a.assigneeName || '').localeCompare(b.assigneeName || ''),
-      render: (_: any, record: WorkOrder) =>
-        record.assigneeName ? record.assigneeName : (
-          <span style={{ color: '#8c8c8c' }}>Sin asignar</span>
-        ),
     },
     {
       title: 'Estado',
@@ -237,6 +236,17 @@ const LocativePage: React.FC = () => {
       ),
     },
     {
+      title: 'Asignado a',
+      key: 'assignee',
+      width: 120,
+      ellipsis: true,
+      sorter: (a, b) => (a.assigneeName || '').localeCompare(b.assigneeName || ''),
+      render: (_: any, record: WorkOrder) =>
+        record.assigneeName ? record.assigneeName : (
+          <span style={{ color: '#8c8c8c' }}>Sin asignar</span>
+        ),
+    },
+    {
       title: 'Solicitud',
       dataIndex: 'title',
       key: 'title',
@@ -254,16 +264,6 @@ const LocativePage: React.FC = () => {
       render: (cost: number) => cost ? formatCOP(cost) : '-',
     },
     {
-      title: 'Creada',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 100,
-      ellipsis: true,
-      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      defaultSortOrder: 'descend',
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
-    },
-    {
       title: 'Acciones',
       key: 'actions',
       width: 80,
@@ -274,7 +274,6 @@ const LocativePage: React.FC = () => {
           onClick={() => handleView(record)}
           size="small"
         />
-
       ),
     },
   ];
@@ -421,10 +420,10 @@ const LocativePage: React.FC = () => {
                 allowClear
                 size={isMobile ? 'large' : 'middle'}
               >
-                <Select.Option value="CREADA">Creada</Select.Option>
+                <Select.Option value="NUEVA">Nueva</Select.Option>
                 <Select.Option value="ASIGNADA">Asignada</Select.Option>
-                <Select.Option value="EN_PROGRESO">En Progreso</Select.Option>
-                <Select.Option value="FINALIZADA">Finalizada</Select.Option>
+                <Select.Option value="EN_PROCESO">En Proceso</Select.Option>
+                <Select.Option value="TERMINADA">Terminada</Select.Option>
                 <Select.Option value="CERRADA">Cerrada</Select.Option>
                 <Select.Option value="RECHAZADA">Rechazada</Select.Option>
               </Select>
