@@ -124,7 +124,7 @@ const DashboardPage: React.FC = () => {
   return (
     <div style={{ padding: '0' }}>
       <Card 
-        title="Dashboard de Mantenimiento"
+        title="Dashboard"
         styles={{
           body: { padding: isMobile ? 12 : 24 }
         }}
