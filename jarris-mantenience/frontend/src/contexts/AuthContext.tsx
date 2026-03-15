@@ -96,10 +96,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // ⭐ NUEVO: Determinar ruta de redirección según rol
       if (userData.roles.includes('ADMIN') || userData.roles.includes('JEFE_MANTENIMIENTO')) {
         return '/dashboard';
-      } else if (userData.roles.includes('TECNICO_INTERNO')) {
-        return '/assets';
       } else {
-        // CONTRATISTA o PDV
+        // TECNICO_INTERNO, CONTRATISTA, PDV
         return '/work-orders';
       }
     } catch (error: any) {

@@ -21,8 +21,32 @@ import MainLayout from './components/Layout/MainLayout';
 // Pages
 import LoginPage from './pages/Login/LoginPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
-import AssetsPage from './pages/Assets/AssetsPage'; 
+import AssetsPage from './pages/Assets/AssetsPage';
 
+// Redirige según el rol del usuario
+const RoleRedirect: React.FC = () => {
+  const { user } = useAuth();
+
+  if (!user) return <Navigate to="/login" replace />;
+
+  if (user.roles.includes('ADMIN') || user.roles.includes('JEFE_MANTENIMIENTO')) {
+    return <Navigate to="/dashboard" replace />;
+  } else {
+    // TECNICO_INTERNO, CONTRATISTA, PDV
+    return <Navigate to="/work-orders" replace />;
+  }
+};
+
+// Protege rutas por rol: si no tiene permiso, redirige a su página principal
+const RoleRoute: React.FC<{ roles: string[]; children: React.ReactElement }> = ({ roles, children }) => {
+  const { hasRole } = useAuth();
+
+  if (!hasRole(roles)) {
+    return <RoleRedirect />;
+  }
+
+  return children;
+};
 
 function App() {
   return (
@@ -47,33 +71,73 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              
-              <Route path="assets" element={<AssetsPage />} />  {/* 👈 CAMBIADO */}
-              
+              <Route index element={<RoleRedirect />} />
+              <Route path="dashboard" element={
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']}>
+                  <DashboardPage />
+                </RoleRoute>
+              } />
+              <Route path="assets" element={
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']}>
+                  <AssetsPage />
+                </RoleRoute>
+              } />
               <Route path="work-orders" element={<WorkOrdersPage />} />
-              <Route path="events" element={<EventsPage />} />
-              <Route path="locative" element={<LocativePage />} />
-              <Route path="eventos" element={<EventosPage />} />
-              <Route path="bajas" element={<BajasPage />} />
-              <Route path="locative-categories" element={<LocativeCategoriesPage />} />
-              
-              <Route path="users" element={<UsersPage />} />
-              <Route path="reports" element={<ReportsPage />} />
-			  <Route path="categories" element={<CategoriesPage />} />
-              <Route path="locations" element={<LocationsPage />} />
-			  <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/reports" element={<ReportsPage />} />
+              <Route path="events" element={
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']}>
+                  <EventsPage />
+                </RoleRoute>
+              } />
+              <Route path="locative" element={
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']}>
+                  <LocativePage />
+                </RoleRoute>
+              } />
+              <Route path="eventos" element={
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']}>
+                  <EventosPage />
+                </RoleRoute>
+              } />
+              <Route path="bajas" element={
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']}>
+                  <BajasPage />
+                </RoleRoute>
+              } />
+              <Route path="locative-categories" element={
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']}>
+                  <LocativeCategoriesPage />
+                </RoleRoute>
+              } />
+              <Route path="users" element={
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']}>
+                  <UsersPage />
+                </RoleRoute>
+              } />
+              <Route path="reports" element={
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']}>
+                  <ReportsPage />
+                </RoleRoute>
+              } />
+              <Route path="categories" element={
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']}>
+                  <CategoriesPage />
+                </RoleRoute>
+              } />
+              <Route path="locations" element={
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']}>
+                  <LocationsPage />
+                </RoleRoute>
+              } />
             </Route>
 
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<RoleRedirect />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>
     </ConfigProvider>
   );
 }
+
 // Componente para rutas protegidas
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -91,16 +155,21 @@ const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }
 
 // Componente para rutas públicas (redirige si ya está autenticado)
 const PublicRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, hasRole } = useAuth();
 
   if (loading) {
     return <div>Cargando...</div>;
   }
 
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO'])) {
+      return <Navigate to="/dashboard" replace />;
+    } else {
+      return <Navigate to="/work-orders" replace />;
+    }
   }
 
   return children;
 };
+
 export default App;
