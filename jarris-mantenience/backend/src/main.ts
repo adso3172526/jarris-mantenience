@@ -19,7 +19,10 @@ async function bootstrap() {
     credentials: true,
   });
   
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  }));
   
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',

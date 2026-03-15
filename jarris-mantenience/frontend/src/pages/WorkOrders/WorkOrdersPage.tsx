@@ -140,7 +140,8 @@ const WorkOrdersPage: React.FC = () => {
         response = await workOrdersApi.getAll();
       }
 
-      setWorkOrders(response.data);
+      const showAll = isPDV || isContratista;
+      setWorkOrders(showAll ? response.data : response.data.filter((wo: any) => wo.maintenanceType === 'EQUIPO'));
     } catch (error: any) {
       console.error('Error loading work orders:', error);
       message.error('Error al cargar ordenes de trabajo');

@@ -15,6 +15,7 @@ import { FinishWorkOrderDto } from './dto/finish-work-order.dto';
 import { CloseWorkOrderDto } from './dto/close-work-order.dto';
 import { StartWorkOrderDto } from './dto/start-work-order.dto';
 import { RejectWorkOrderDto } from './dto/reject-work-order.dto';
+import { EditClosedWorkOrderDto } from './dto/edit-closed-work-order.dto';
 import { UserEntity } from '../entities/user.entity';
 
 import { MailService } from '../mail/mail.service';
@@ -655,7 +656,7 @@ Fecha: ${new Date().toLocaleString('es-CO')}
   }
 
   // Editar OT cerrada (ADMIN/JEFE)
-  async editClosed(id: string, dto: any) {
+  async editClosed(id: string, dto: EditClosedWorkOrderDto) {
     const wo = await this.woRepo.findOne({
       where: { id },
       relations: ['asset', 'location'],

@@ -21,6 +21,7 @@ import { FinishWorkOrderDto } from './dto/finish-work-order.dto';
 import { CloseWorkOrderDto } from './dto/close-work-order.dto';
 import { StartWorkOrderDto } from './dto/start-work-order.dto';
 import { RejectWorkOrderDto } from './dto/reject-work-order.dto';
+import { EditClosedWorkOrderDto } from './dto/edit-closed-work-order.dto';
 import { WorkOrderStatus } from '../entities/work-order.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -112,7 +113,7 @@ export class WorkOrdersController {
   // Editar OT cerrada: SOLO ADMIN y JEFE
   @Patch(':id/edit-closed')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  editClosed(@Param('id') id: string, @Body() dto: any) {
+  editClosed(@Param('id') id: string, @Body() dto: EditClosedWorkOrderDto) {
     return this.service.editClosed(id, dto);
   }
 
