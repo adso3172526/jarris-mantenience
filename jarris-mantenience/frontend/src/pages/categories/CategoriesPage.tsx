@@ -76,8 +76,13 @@ const CategoriesPage: React.FC = () => {
   const handleSubmit = async (values: any) => {
     try {
       if (editingCategory) {
-        await categoriesApi.update(editingCategory.id, values);
-        message.success('Categoría actualizada exitosamente');
+        const res = await categoriesApi.update(editingCategory.id, values);
+        const updated = res.data.updatedAssets;
+        if (updated > 0) {
+          message.success(`Categoría actualizada. Se actualizaron ${updated} activo(s).`);
+        } else {
+          message.success('Categoría actualizada exitosamente');
+        }
       } else {
         await categoriesApi.create(values);
         message.success('Categoría creada exitosamente');
@@ -137,6 +142,7 @@ const CategoriesPage: React.FC = () => {
     {
       title: 'Categoria',
       key: 'category',
+      sorter: (a, b) => a.name.localeCompare(b.name),
       render: (_, record) => (
         <div>
           <div style={{ fontWeight: 600, fontSize: 13 }}>{record.name}</div>
@@ -152,6 +158,7 @@ const CategoriesPage: React.FC = () => {
       key: 'codePrefix',
       width: 120,
       align: 'center',
+      sorter: (a, b) => a.codePrefix.localeCompare(b.codePrefix),
       render: (prefix) => (
         <span style={{ fontFamily: 'monospace', fontWeight: 500 }}>{prefix}</span>
       ),
@@ -162,6 +169,7 @@ const CategoriesPage: React.FC = () => {
       key: 'nextSequence',
       width: 120,
       align: 'center',
+      sorter: (a, b) => a.nextSequence - b.nextSequence,
       render: (seq) => (
         <span style={{ fontFamily: 'monospace' }}>
           {String(seq).padStart(4, '0')}
@@ -174,6 +182,7 @@ const CategoriesPage: React.FC = () => {
       key: 'active',
       width: 100,
       align: 'center',
+      sorter: (a, b) => Number(a.active) - Number(b.active),
       render: (active) => (
         <Badge status={active ? 'success' : 'default'} text={active ? 'Activa' : 'Inactiva'} />
       ),

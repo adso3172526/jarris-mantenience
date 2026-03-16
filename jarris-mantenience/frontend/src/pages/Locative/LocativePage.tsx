@@ -11,6 +11,7 @@ import {
   Col,
   Button,
   Divider,
+  Tooltip,
   message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -19,12 +20,27 @@ import {
   SearchOutlined,
   ClearOutlined,
   EyeOutlined,
+  UserAddOutlined,
+  PlayCircleOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  CloseSquareOutlined,
+  CameraOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { workOrdersApi, locationsApi, usersApi } from '../../services/api';
 import { workOrderStatusColors } from '../../config/theme';
+import { useAuth } from '../../contexts/AuthContext';
 import ViewWorkOrderModal from '../WorkOrders/ViewWorkOrderModal';
+import AssignWorkOrderModal from '../WorkOrders/AssignWorkOrderModal';
+import StartWorkOrderModal from '../WorkOrders/StartWorkOrderModal';
+import FinishWorkOrderModal from '../WorkOrders/FinishWorkOrderModal';
+import CloseWorkOrderModal from '../WorkOrders/CloseWorkOrderModal';
+import RejectWorkOrderModal from '../WorkOrders/RejectWorkOrderModal';
+import UploadPhotosModal from '../WorkOrders/UploadPhotosModal';
+import EditClosedWorkOrderModal from '../WorkOrders/EditClosedWorkOrderModal';
 
 const { RangePicker } = DatePicker;
 
@@ -53,18 +69,6 @@ interface WorkOrder {
   workDoneDescription?: string;
 }
 
-const locativeCategoryLabels: Record<string, string> = {
-  PINTURA: 'Pintura y Acabados',
-  ELECTRICO: 'Sistema Eléctrico',
-  ESTRUCTURAL: 'Estructura y Obra Civil',
-  PLOMERIA: 'Plomería e Hidráulica',
-  HVAC: 'Climatización (HVAC)',
-  PISOS: 'Pisos y Revestimientos',
-  FACHADA: 'Fachada Exterior',
-  CARPINTERIA: 'Carpintería y Mobiliario',
-  OTROS: 'Otros',
-};
-
 const formatCOP = (value: number) => {
   return `$${Math.round(value).toLocaleString('es-CO')}`;
 };
@@ -77,9 +81,22 @@ const LocativePage: React.FC = () => {
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  // Modal
+  // Modals
   const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [startModalOpen, setStartModalOpen] = useState(false);
+  const [finishModalOpen, setFinishModalOpen] = useState(false);
+  const [closeModalOpen, setCloseModalOpen] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [photosModalOpen, setPhotosModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
+
+  // Auth
+  const { user, hasRole } = useAuth();
+  const isJefe = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
+  const isTecnico = hasRole('TECNICO_INTERNO');
+  const isContratista = hasRole('CONTRATISTA');
 
   // Filtros
   const [searchText, setSearchText] = useState('');
@@ -175,9 +192,184 @@ const LocativePage: React.FC = () => {
 
   const hasActiveFilters = searchText || filterAssignee || filterStatus || filterLocation || dateRange;
 
+  // Handlers
   const handleView = (record: WorkOrder) => {
     setSelectedOrder(record);
     setViewModalOpen(true);
+  };
+
+  const handleAssign = (record: WorkOrder) => {
+    setSelectedOrder(record);
+    setAssignModalOpen(true);
+  };
+
+  const handleStart = (record: WorkOrder) => {
+    setSelectedOrder(record);
+    setStartModalOpen(true);
+  };
+
+  const handleFinish = (record: WorkOrder) => {
+    setSelectedOrder(record);
+    setFinishModalOpen(true);
+  };
+
+  const handleClose = (record: WorkOrder) => {
+    setSelectedOrder(record);
+    setCloseModalOpen(true);
+  };
+
+  const handleReject = (record: WorkOrder) => {
+    setSelectedOrder(record);
+    setRejectModalOpen(true);
+  };
+
+  const handlePhotos = (record: WorkOrder) => {
+    setSelectedOrder(record);
+    setPhotosModalOpen(true);
+  };
+
+  const getActionButtons = (record: WorkOrder, isMobileView = false) => {
+    const buttons = [];
+
+    // Ver siempre disponible
+    buttons.push(
+      <Tooltip key="view" title="Ver detalles">
+        <Button
+          type={isMobileView ? 'default' : 'text'}
+          icon={<EyeOutlined style={{ color: '#1890ff' }} />}
+          onClick={() => handleView(record)}
+          block={isMobileView}
+        >
+          {isMobileView && 'Ver'}
+        </Button>
+      </Tooltip>
+    );
+
+    // Subir fotos
+    if (record.status !== 'CERRADA' && record.status !== 'RECHAZADA') {
+      buttons.push(
+        <Tooltip key="photos" title="Subir fotos">
+          <Button
+            type={isMobileView ? 'default' : 'text'}
+            icon={<CameraOutlined />}
+            onClick={() => handlePhotos(record)}
+            style={{ color: '#722ed1' }}
+            block={isMobileView}
+          >
+            {isMobileView && 'Fotos'}
+          </Button>
+        </Tooltip>
+      );
+    }
+
+    // Rechazar
+    if (isJefe && record.status === 'NUEVA') {
+      buttons.push(
+        <Tooltip key="reject" title="Rechazar">
+          <Button
+            type={isMobileView ? 'default' : 'text'}
+            danger
+            icon={<CloseSquareOutlined />}
+            onClick={() => handleReject(record)}
+            block={isMobileView}
+          >
+            {isMobileView && 'Rechazar'}
+          </Button>
+        </Tooltip>
+      );
+    }
+
+    // Asignar
+    if (isJefe && record.status === 'NUEVA') {
+      buttons.push(
+        <Tooltip key="assign" title="Asignar">
+          <Button
+            type={isMobileView ? 'primary' : 'text'}
+            icon={<UserAddOutlined />}
+            onClick={() => handleAssign(record)}
+            block={isMobileView}
+          >
+            {isMobileView && 'Asignar'}
+          </Button>
+        </Tooltip>
+      );
+    }
+
+    // Reasignar
+    if (isJefe && record.status === 'ASIGNADA') {
+      buttons.push(
+        <Tooltip key="reassign" title="Reasignar">
+          <Button
+            type={isMobileView ? 'default' : 'text'}
+            icon={<UserAddOutlined />}
+            onClick={() => handleAssign(record)}
+            style={{ color: '#faad14' }}
+            block={isMobileView}
+          >
+            {isMobileView && 'Reasignar'}
+          </Button>
+        </Tooltip>
+      );
+    }
+
+    // Iniciar
+    if ((isTecnico || isContratista) && record.status === 'ASIGNADA') {
+      buttons.push(
+        <Tooltip key="start" title="Iniciar">
+          <Button
+            type={isMobileView ? 'primary' : 'text'}
+            icon={<PlayCircleOutlined />}
+            onClick={() => handleStart(record)}
+            style={!isMobileView ? { color: '#52c41a' } : { backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+            block={isMobileView}
+          >
+            {isMobileView && 'Iniciar'}
+          </Button>
+        </Tooltip>
+      );
+    }
+
+    // Finalizar
+    if ((isTecnico || isContratista) && record.status === 'EN_PROCESO') {
+      buttons.push(
+        <Tooltip key="finish" title="Finalizar">
+          <Button
+            type={isMobileView ? 'primary' : 'text'}
+            icon={<CheckCircleOutlined />}
+            onClick={() => handleFinish(record)}
+            style={!isMobileView ? { color: '#faad14' } : { backgroundColor: '#faad14', borderColor: '#faad14' }}
+            block={isMobileView}
+          >
+            {isMobileView && 'Finalizar'}
+          </Button>
+        </Tooltip>
+      );
+    }
+
+    // Cerrar
+    if (isJefe && record.status === 'TERMINADA') {
+      buttons.push(
+        <Tooltip key="close" title="Cerrar OT">
+          <Button
+            type={isMobileView ? 'primary' : 'text'}
+            icon={<CloseCircleOutlined />}
+            onClick={() => handleClose(record)}
+            style={!isMobileView ? { color: '#E60012' } : { backgroundColor: '#E60012', borderColor: '#E60012' }}
+            block={isMobileView}
+          >
+            {isMobileView && 'Cerrar'}
+          </Button>
+        </Tooltip>
+      );
+    }
+
+    return isMobileView ? (
+      <Space direction="vertical" style={{ width: '100%' }} size="small">
+        {buttons}
+      </Space>
+    ) : (
+      <Space size="small">{buttons}</Space>
+    );
   };
 
   const columns: ColumnsType<WorkOrder> = [
@@ -230,9 +422,9 @@ const LocativePage: React.FC = () => {
       key: 'maintenanceType',
       width: 90,
       ellipsis: true,
-      render: (type: string) => (
-        <Tag color="green">
-          <HomeOutlined /> {type}
+      render: () => (
+        <Tag color="purple-inverse">
+          <HomeOutlined /> LOCATIVO
         </Tag>
       ),
     },
@@ -243,9 +435,7 @@ const LocativePage: React.FC = () => {
       width: 140,
       ellipsis: true,
       sorter: (a, b) => (a.locativeCategory || '').localeCompare(b.locativeCategory || ''),
-      render: (cat: string) => (
-        <Tag color="blue">{locativeCategoryLabels[cat] || cat}</Tag>
-      ),
+      render: (cat: string) => cat || '-',
     },
     {
       title: 'Asignado a',
@@ -278,15 +468,8 @@ const LocativePage: React.FC = () => {
     {
       title: 'Acciones',
       key: 'actions',
-      width: 80,
-      render: (_: any, record: WorkOrder) => (
-        <Button
-          type="link"
-          icon={<EyeOutlined />}
-          onClick={() => handleView(record)}
-          size="small"
-        />
-      ),
+      width: 160,
+      render: (_: any, record: WorkOrder) => getActionButtons(record, false),
     },
   ];
 
@@ -326,9 +509,10 @@ const LocativePage: React.FC = () => {
         </div>
 
         <div style={{ marginBottom: 8 }}>
-          <Tag color="blue">
-            <HomeOutlined /> {locativeCategoryLabels[record.locativeCategory || ''] || record.locativeCategory}
+          <Tag color="purple-inverse">
+            <HomeOutlined /> LOCATIVO
           </Tag>
+          <div style={{ fontSize: 12, marginTop: 4 }}>{record.locativeCategory}</div>
         </div>
 
         <div style={{ fontSize: 13, marginBottom: 4, wordBreak: 'break-word' }}>
@@ -347,16 +531,7 @@ const LocativePage: React.FC = () => {
 
         <Divider style={{ margin: '8px 0' }} />
 
-        <div style={{ textAlign: 'center' }}>
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() => handleView(record)}
-            size="small"
-          >
-            Ver
-          </Button>
-        </div>
+        {getActionButtons(record, true)}
       </div>
     </Card>
   );
@@ -556,16 +731,69 @@ const LocativePage: React.FC = () => {
         )}
       </Card>
 
-      {/* Modal Ver OT */}
+      {/* Modals */}
       {selectedOrder && (
-        <ViewWorkOrderModal
-          open={viewModalOpen}
-          onClose={() => {
-            setViewModalOpen(false);
-            setSelectedOrder(null);
-          }}
-          workOrder={selectedOrder}
-        />
+        <>
+          <ViewWorkOrderModal
+            open={viewModalOpen}
+            onClose={() => setViewModalOpen(false)}
+            workOrder={selectedOrder}
+            showEditButton={isJefe && selectedOrder.status === 'CERRADA'}
+            onEdit={() => {
+              setViewModalOpen(false);
+              setEditModalOpen(true);
+            }}
+          />
+
+          <AssignWorkOrderModal
+            open={assignModalOpen}
+            onClose={() => setAssignModalOpen(false)}
+            onSuccess={loadData}
+            workOrder={selectedOrder}
+          />
+
+          <StartWorkOrderModal
+            open={startModalOpen}
+            onClose={() => setStartModalOpen(false)}
+            onSuccess={loadData}
+            workOrder={selectedOrder}
+          />
+
+          <FinishWorkOrderModal
+            open={finishModalOpen}
+            onClose={() => setFinishModalOpen(false)}
+            onSuccess={loadData}
+            workOrder={selectedOrder}
+          />
+
+          <CloseWorkOrderModal
+            open={closeModalOpen}
+            onClose={() => setCloseModalOpen(false)}
+            onSuccess={loadData}
+            workOrder={selectedOrder}
+          />
+
+          <RejectWorkOrderModal
+            open={rejectModalOpen}
+            onClose={() => setRejectModalOpen(false)}
+            onSuccess={loadData}
+            workOrder={selectedOrder}
+          />
+
+          <UploadPhotosModal
+            open={photosModalOpen}
+            onClose={() => setPhotosModalOpen(false)}
+            onSuccess={loadData}
+            workOrder={selectedOrder}
+          />
+
+          <EditClosedWorkOrderModal
+            open={editModalOpen}
+            onClose={() => setEditModalOpen(false)}
+            onSuccess={loadData}
+            workOrder={selectedOrder}
+          />
+        </>
       )}
     </div>
   );

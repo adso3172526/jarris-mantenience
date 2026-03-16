@@ -232,6 +232,7 @@ const UsersPage: React.FC = () => {
       title: 'Usuario',
       key: 'user',
       width: 280,
+      sorter: (a, b) => (a.name || a.email).localeCompare(b.name || b.email),
       render: (_, record) => (
         <div>
           <div style={{ fontWeight: 600, fontSize: 13 }}>{record.name || record.email.split('@')[0]}</div>
@@ -248,6 +249,7 @@ const UsersPage: React.FC = () => {
       dataIndex: 'roles',
       key: 'roles',
       width: 280,
+      sorter: (a, b) => (a.roles?.[0] || '').localeCompare(b.roles?.[0] || ''),
       render: (roles: string[]) => (
         <Space wrap size={4}>
           {roles.map((role) => (
@@ -264,6 +266,7 @@ const UsersPage: React.FC = () => {
       key: 'active',
       width: 100,
       align: 'center',
+      sorter: (a, b) => Number(a.active) - Number(b.active),
       render: (active) => (
         <Badge status={active ? 'success' : 'default'} text={active ? 'Activo' : 'Inactivo'} />
       ),

@@ -10,22 +10,20 @@ import {
   Row,
   Col,
   Button,
+  Divider,
   message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
-  SwapOutlined,
+  UnorderedListOutlined,
   SearchOutlined,
   ClearOutlined,
-  EditOutlined,
-  DeleteOutlined,
+  EyeOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import { assetEventsApi, locationsApi } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
-import EditTransferModal from './EditTransferModal';
-import VoidTransferModal from './VoidTransferModal';
+import { assetEventsApi, locationsApi, usersApi, workOrdersApi } from '../../services/api';
+import ViewWorkOrderModal from '../WorkOrders/ViewWorkOrderModal';
 
 const { RangePicker } = DatePicker;
 
@@ -33,14 +31,18 @@ interface AssetEvent {
   id: string;
   type: string;
   description: string;
-  createdBy?: string;
-  createdAt: string;
   cost: number;
+  createdAt: string;
+  createdBy?: string;
   workOrderId?: string;
-  asset: {
+  asset?: {
     id: string;
     code: string;
     description: string;
+    location?: {
+      id: string;
+      name: string;
+    };
   };
   fromLocation?: {
     id: string;
@@ -50,32 +52,36 @@ interface AssetEvent {
     id: string;
     name: string;
   };
+  workOrder?: {
+    id: string;
+    finishedBy?: string;
+    assigneeName?: string;
+    assigneeEmail?: string;
+  };
 }
 
 const formatCOP = (value: number) => {
   return `$${Math.round(value).toLocaleString('es-CO')}`;
 };
 
-const RELEVANT_TYPES = ['TRASLADO'];
-
 const EventsPage: React.FC = () => {
   const [events, setEvents] = useState<AssetEvent[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<AssetEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [locations, setLocations] = useState<any[]>([]);
+  const [technicians, setTechnicians] = useState<any[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  const { hasRole } = useAuth();
-  const canEdit = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
-
-  // Modals
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [voidModalOpen, setVoidModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<AssetEvent | null>(null);
+  // Modal
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState<any | null>(null);
+  const [loadingWO, setLoadingWO] = useState(false);
 
   // Filtros
   const [searchText, setSearchText] = useState('');
+  const [filterType, setFilterType] = useState<string | undefined>();
   const [filterLocation, setFilterLocation] = useState<string | undefined>();
+  const [filterTechnician, setFilterTechnician] = useState<string | undefined>();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
 
   useEffect(() => {
@@ -93,15 +99,18 @@ const EventsPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [eventsRes, locationsRes] = await Promise.all([
+      const [eventsRes, locationsRes, techRes] = await Promise.all([
         assetEventsApi.getAll(),
         locationsApi.getAll(),
+        usersApi.getTechniciansAndContractors(),
       ]);
-      const relevantEvents = eventsRes.data.filter(
-        (e: AssetEvent) => RELEVANT_TYPES.includes(e.type)
+      // Filtrar solo MANTENIMIENTO y REPARACION
+      const maintenanceEvents = eventsRes.data.filter(
+        (e: AssetEvent) => e.type === 'MANTENIMIENTO' || e.type === 'REPARACION'
       );
-      setEvents(relevantEvents);
+      setEvents(maintenanceEvents);
       setLocations(locationsRes.data);
+      setTechnicians(techRes.data);
     } catch (error: any) {
       console.error('Error loading events:', error);
       message.error('Error al cargar eventos');
@@ -112,7 +121,7 @@ const EventsPage: React.FC = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [events, searchText, filterLocation, dateRange]);
+  }, [events, searchText, filterType, filterLocation, filterTechnician, dateRange]);
 
   const applyFilters = () => {
     let filtered = [...events];
@@ -122,17 +131,24 @@ const EventsPage: React.FC = () => {
       filtered = filtered.filter(
         (e) =>
           e.id?.toLowerCase().includes(search) ||
+          e.description?.toLowerCase().includes(search) ||
           e.asset?.code?.toLowerCase().includes(search) ||
           e.asset?.description?.toLowerCase().includes(search) ||
-          e.description?.toLowerCase().includes(search) ||
-          e.createdBy?.toLowerCase().includes(search)
+          e.createdBy?.toLowerCase().includes(search) ||
+          e.fromLocation?.name?.toLowerCase().includes(search)
       );
     }
 
+    if (filterType) {
+      filtered = filtered.filter((e) => e.type === filterType);
+    }
+
     if (filterLocation) {
-      filtered = filtered.filter(
-        (e) => e.toLocation?.id === filterLocation
-      );
+      filtered = filtered.filter((e) => e.fromLocation?.id === filterLocation);
+    }
+
+    if (filterTechnician) {
+      filtered = filtered.filter((e) => e.workOrder?.assigneeEmail === filterTechnician);
     }
 
     if (dateRange && dateRange[0] && dateRange[1]) {
@@ -149,11 +165,30 @@ const EventsPage: React.FC = () => {
 
   const handleClearFilters = () => {
     setSearchText('');
+    setFilterType(undefined);
     setFilterLocation(undefined);
+    setFilterTechnician(undefined);
     setDateRange(null);
   };
 
-  const hasActiveFilters = searchText || filterLocation || dateRange;
+  const hasActiveFilters = searchText || filterType || filterLocation || filterTechnician || dateRange;
+
+  const handleView = async (record: AssetEvent) => {
+    if (!record.workOrderId) {
+      message.info('Este evento no tiene una orden de trabajo asociada');
+      return;
+    }
+    try {
+      setLoadingWO(true);
+      const res = await workOrdersApi.getById(record.workOrderId);
+      setSelectedWorkOrder(res.data);
+      setViewModalOpen(true);
+    } catch (error: any) {
+      message.error('Error al cargar la orden de trabajo');
+    } finally {
+      setLoadingWO(false);
+    }
+  };
 
   const columns: ColumnsType<AssetEvent> = [
     {
@@ -167,18 +202,56 @@ const EventsPage: React.FC = () => {
       render: (date: string) => new Date(date).toLocaleDateString('es-CO'),
     },
     {
+      title: 'OT',
+      key: 'workOrderId',
+      width: 80,
+      ellipsis: true,
+      render: (_: any, record: AssetEvent) =>
+        record.workOrderId ? (
+          <span style={{ fontFamily: 'monospace', fontSize: 13 }}>
+            {record.workOrderId.substring(0, 8)}
+          </span>
+        ) : (
+          <span style={{ color: '#8c8c8c' }}>-</span>
+        ),
+    },
+    {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
       width: 80,
       ellipsis: true,
       render: (id: string) => (
-        <span style={{ fontFamily: 'monospace', fontSize: 13 }}>{id.substring(0, 8)}</span>
+        <span style={{ fontFamily: 'monospace', fontSize: 13 }}>
+          {id.substring(0, 8)}
+        </span>
+      ),
+    },
+    {
+      title: 'Ubicación',
+      key: 'location',
+      width: 120,
+      ellipsis: true,
+      sorter: (a, b) => (a.fromLocation?.name || '').localeCompare(b.fromLocation?.name || ''),
+      render: (_: any, record: AssetEvent) =>
+        record.fromLocation?.name || '-',
+    },
+    {
+      title: 'Tipo',
+      dataIndex: 'type',
+      key: 'type',
+      width: 110,
+      ellipsis: true,
+      sorter: (a, b) => a.type.localeCompare(b.type),
+      render: (type: string) => (
+        <Tag color={type === 'MANTENIMIENTO' ? 'volcano-inverse' : 'yellow-inverse'}>
+          {type === 'MANTENIMIENTO' ? 'Mantenimiento' : 'Reparación'}
+        </Tag>
       ),
     },
     {
       title: 'Activo',
-      key: 'asset',
+      key: 'asset_code',
       width: 100,
       ellipsis: true,
       sorter: (a, b) => (a.asset?.code || '').localeCompare(b.asset?.code || ''),
@@ -186,21 +259,15 @@ const EventsPage: React.FC = () => {
         record.asset?.code || <span style={{ color: '#8c8c8c' }}>N/A</span>,
     },
     {
-      title: 'Tipo',
-      dataIndex: 'type',
-      key: 'type',
-      width: 100,
-      ellipsis: true,
-      render: (type: string) => <Tag color="blue">{type}</Tag>,
-    },
-    {
-      title: 'Registrado por',
-      dataIndex: 'createdBy',
-      key: 'createdBy',
+      title: 'Técnico',
+      key: 'technician',
       width: 120,
       ellipsis: true,
-      sorter: (a, b) => (a.createdBy || '').localeCompare(b.createdBy || ''),
-      render: (email: string) => email || '-',
+      sorter: (a, b) => (a.workOrder?.assigneeName || '').localeCompare(b.workOrder?.assigneeName || ''),
+      render: (_: any, record: AssetEvent) =>
+        record.workOrder?.assigneeName || (
+          <span style={{ color: '#8c8c8c' }}>-</span>
+        ),
     },
     {
       title: 'Descripción',
@@ -211,123 +278,96 @@ const EventsPage: React.FC = () => {
       sorter: (a, b) => (a.description || '').localeCompare(b.description || ''),
     },
     {
-      title: 'Origen',
-      key: 'fromLocation',
-      width: 120,
-      ellipsis: true,
-      sorter: (a, b) => (a.fromLocation?.name || '').localeCompare(b.fromLocation?.name || ''),
-      render: (_: any, record: AssetEvent) => record.fromLocation?.name || '-',
-    },
-    {
-      title: 'Destino',
-      key: 'toLocation',
-      width: 120,
-      ellipsis: true,
-      sorter: (a, b) => (a.toLocation?.name || '').localeCompare(b.toLocation?.name || ''),
-      render: (_: any, record: AssetEvent) => record.toLocation?.name || '-',
-    },
-    {
       title: 'Costo',
       dataIndex: 'cost',
       key: 'cost',
       width: 100,
       ellipsis: true,
-      sorter: (a, b) => (a.cost || 0) - (b.cost || 0),
+      sorter: (a, b) => Number(a.cost || 0) - Number(b.cost || 0),
       render: (cost: number) => cost ? formatCOP(cost) : '-',
     },
-    ...(canEdit ? [{
+    {
       title: 'Acciones',
       key: 'actions',
       width: 80,
       render: (_: any, record: AssetEvent) => (
-        <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => { setSelectedEvent(record); setEditModalOpen(true); }}
-          />
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => { setSelectedEvent(record); setVoidModalOpen(true); }}
-          />
-        </Space>
+        <Button
+          type="link"
+          icon={<EyeOutlined />}
+          onClick={() => handleView(record)}
+          size="small"
+          disabled={!record.workOrderId}
+          loading={loadingWO}
+        />
       ),
-    }] : []),
+    },
   ];
 
   const renderMobileCard = (record: AssetEvent) => (
     <Card key={record.id} style={{ marginBottom: 12 }} size="small">
       <div>
+        {record.workOrderId && (
+          <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 4 }}>
+            OT-{record.workOrderId.substring(0, 8)}
+          </div>
+        )}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
           marginBottom: 8,
         }}>
-          <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 14 }}>
+          <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 600 }}>
             {record.asset?.code || 'N/A'}
           </span>
-          <Tag color="blue">Traslado</Tag>
+          <Tag color={record.type === 'MANTENIMIENTO' ? 'volcano-inverse' : 'yellow-inverse'}>
+            {record.type === 'MANTENIMIENTO' ? 'Mantenimiento' : 'Reparación'}
+          </Tag>
         </div>
 
-        <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>
-          <span style={{ fontFamily: 'monospace' }}>{record.id.substring(0, 8)}</span>
-          {' · '}
-          {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}
+        {record.asset && (
+          <div style={{ fontSize: 12, marginBottom: 4 }}>
+            <strong>Activo:</strong> {record.asset.description}
+          </div>
+        )}
+
+        <div style={{ fontSize: 12, color: '#595959', marginBottom: 4 }}>
+          <strong>Ubicación:</strong> {record.fromLocation?.name || '-'}
         </div>
 
-        {record.description && (
-          <div style={{ fontSize: 13, marginBottom: 8, wordBreak: 'break-word' }}>
-            {record.description}
+        <div style={{ fontSize: 12, marginBottom: 4 }}>
+          <strong>Técnico:</strong> {record.workOrder?.assigneeName || '-'}
+        </div>
+
+        <div style={{ fontSize: 13, marginBottom: 4, wordBreak: 'break-word' }}>
+          <strong>Descripción:</strong> {record.description}
+        </div>
+
+        {Number(record.cost) > 0 && (
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#E60012', marginBottom: 4 }}>
+            {formatCOP(Number(record.cost))}
           </div>
         )}
 
-        {(record.fromLocation || record.toLocation) && (
-          <div style={{ fontSize: 12, color: '#595959', marginBottom: 4 }}>
-            {record.fromLocation && (
-              <span><strong>De:</strong> {record.fromLocation.name}</span>
-            )}
-            {record.fromLocation && record.toLocation && ' → '}
-            {record.toLocation && (
-              <span><strong>A:</strong> {record.toLocation.name}</span>
-            )}
-          </div>
-        )}
+        <div style={{ fontSize: 11, color: '#8c8c8c' }}>
+          {dayjs(record.createdAt).format('DD/MM/YYYY')}
+        </div>
 
-        {record.cost > 0 && (
-          <div style={{ fontSize: 12, color: '#595959', marginTop: 4 }}>
-            <strong>Costo:</strong> {formatCOP(record.cost)}
-          </div>
-        )}
-
-        {record.createdBy && (
-          <div style={{ fontSize: 11, color: '#8c8c8c', marginTop: 4 }}>
-            Registrado por: {record.createdBy}
-          </div>
-        )}
-
-        {canEdit && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8, borderTop: '1px solid #f0f0f0', paddingTop: 8 }}>
-            <Button
-              type="link"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => { setSelectedEvent(record); setVoidModalOpen(true); }}
-              style={{ padding: 0 }}
-            />
-            <Button
-              type="link"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => { setSelectedEvent(record); setEditModalOpen(true); }}
-              style={{ padding: 0 }}
-            />
-          </div>
+        {record.workOrderId && (
+          <>
+            <Divider style={{ margin: '8px 0' }} />
+            <div style={{ textAlign: 'center' }}>
+              <Button
+                type="link"
+                icon={<EyeOutlined />}
+                onClick={() => handleView(record)}
+                size="small"
+                loading={loadingWO}
+              >
+                Ver
+              </Button>
+            </div>
+          </>
         )}
       </div>
     </Card>
@@ -357,9 +397,9 @@ const EventsPage: React.FC = () => {
         }}
         title={
           <Space>
-            <SwapOutlined style={{ fontSize: 18, color: '#E60012' }} />
+            <UnorderedListOutlined style={{ fontSize: 18, color: '#E60012' }} />
             <span style={{ fontSize: isMobile ? 16 : 18, fontWeight: 600 }}>
-              Traslados
+              Eventos
             </span>
           </Space>
         }
@@ -367,9 +407,9 @@ const EventsPage: React.FC = () => {
         {/* Filtros */}
         <Card size="small" style={{ marginBottom: 16, background: '#fafafa' }}>
           <Row gutter={[8, 8]}>
-            <Col xs={24} sm={12} md={6}>
+            <Col xs={24} sm={12} md={4}>
               <Input
-                placeholder={isMobile ? 'Buscar...' : 'Buscar por código, descripción...'}
+                placeholder={isMobile ? 'Buscar...' : 'Buscar por activo, descripción...'}
                 prefix={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
@@ -377,9 +417,27 @@ const EventsPage: React.FC = () => {
                 size={isMobile ? 'large' : 'middle'}
               />
             </Col>
-            <Col xs={24} sm={12} md={5}>
+            <Col xs={24} sm={12} md={4}>
               <Select
-                placeholder="Destino"
+                placeholder="Técnico/Contratista"
+                style={{ width: '100%' }}
+                value={filterTechnician}
+                onChange={setFilterTechnician}
+                allowClear
+                showSearch
+                optionFilterProp="children"
+                size={isMobile ? 'large' : 'middle'}
+              >
+                {technicians.map((t: any) => (
+                  <Select.Option key={t.email} value={t.email}>
+                    {t.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Col>
+            <Col xs={24} sm={12} md={4}>
+              <Select
+                placeholder="Ubicación"
                 style={{ width: '100%' }}
                 value={filterLocation}
                 onChange={setFilterLocation}
@@ -395,29 +453,20 @@ const EventsPage: React.FC = () => {
                 ))}
               </Select>
             </Col>
-            {!isMobile && (
-              <Col sm={12} md={6}>
-                <RangePicker
-                  style={{ width: '100%' }}
-                  value={dateRange}
-                  onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs] | null)}
-                  format="DD/MM/YYYY"
-                  size="middle"
-                />
-              </Col>
-            )}
             <Col xs={24} sm={12} md={3}>
-              <Button
-                icon={<ClearOutlined />}
-                onClick={handleClearFilters}
-                disabled={!hasActiveFilters}
-                block
+              <Select
+                placeholder="Tipo"
+                style={{ width: '100%' }}
+                value={filterType}
+                onChange={setFilterType}
+                allowClear
                 size={isMobile ? 'large' : 'middle'}
               >
-                Limpiar
-              </Button>
+                <Select.Option value="MANTENIMIENTO">Mantenimiento</Select.Option>
+                <Select.Option value="REPARACION">Reparación</Select.Option>
+              </Select>
             </Col>
-            {isMobile && (
+            {isMobile ? (
               <>
                 <Col xs={12}>
                   <DatePicker
@@ -442,7 +491,28 @@ const EventsPage: React.FC = () => {
                   />
                 </Col>
               </>
+            ) : (
+              <Col sm={12} md={4}>
+                <RangePicker
+                  style={{ width: '100%' }}
+                  value={dateRange}
+                  onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs] | null)}
+                  format="DD/MM/YYYY"
+                  size="middle"
+                />
+              </Col>
             )}
+            <Col xs={24} sm={12} md={3}>
+              <Button
+                icon={<ClearOutlined />}
+                onClick={handleClearFilters}
+                disabled={!hasActiveFilters}
+                block
+                size={isMobile ? 'large' : 'middle'}
+              >
+                Limpiar
+              </Button>
+            </Col>
           </Row>
           {hasActiveFilters && (
             <div style={{ marginTop: 8, color: '#1890ff', fontSize: isMobile ? 11 : 12 }}>
@@ -469,7 +539,7 @@ const EventsPage: React.FC = () => {
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>
-              No hay eventos registrados
+              No hay eventos de mantenimiento registrados
             </div>
           )
         ) : (
@@ -494,22 +564,16 @@ const EventsPage: React.FC = () => {
         )}
       </Card>
 
-      {selectedEvent && (
-        <>
-          <EditTransferModal
-            open={editModalOpen}
-            onClose={() => { setEditModalOpen(false); setSelectedEvent(null); }}
-            onSuccess={loadData}
-            event={selectedEvent}
-            locations={locations}
-          />
-          <VoidTransferModal
-            open={voidModalOpen}
-            onClose={() => { setVoidModalOpen(false); setSelectedEvent(null); }}
-            onSuccess={loadData}
-            event={selectedEvent}
-          />
-        </>
+      {/* Modal Ver OT */}
+      {selectedWorkOrder && (
+        <ViewWorkOrderModal
+          open={viewModalOpen}
+          onClose={() => {
+            setViewModalOpen(false);
+            setSelectedWorkOrder(null);
+          }}
+          workOrder={selectedWorkOrder}
+        />
       )}
     </div>
   );

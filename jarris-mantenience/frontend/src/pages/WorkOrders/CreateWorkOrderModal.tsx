@@ -213,9 +213,9 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
 
   const typeCardStyle = (type: string): React.CSSProperties => ({
     cursor: 'pointer',
-    borderColor: maintenanceType === type ? (type === 'EQUIPO' ? '#1890ff' : '#52c41a') : '#d9d9d9',
+    borderColor: maintenanceType === type ? (type === 'EQUIPO' ? '#1890ff' : '#722ed1') : '#d9d9d9',
     borderWidth: maintenanceType === type ? 2 : 1,
-    background: maintenanceType === type ? (type === 'EQUIPO' ? '#e6f7ff' : '#f6ffed') : '#fff',
+    background: maintenanceType === type ? (type === 'EQUIPO' ? '#e6f7ff' : '#f9f0ff') : '#fff',
     transition: 'all 0.2s',
   });
 
@@ -290,7 +290,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
                 styles={{ body: { padding: '12px 16px', textAlign: 'center' } }}
                 onClick={() => form.setFieldsValue({ maintenanceType: 'LOCATIVO', assetId: undefined, locativeCategory: undefined })}
               >
-                <HomeOutlined style={{ fontSize: 22, color: maintenanceType === 'LOCATIVO' ? '#52c41a' : '#8c8c8c', display: 'block', marginBottom: 4 }} />
+                <HomeOutlined style={{ fontSize: 22, color: maintenanceType === 'LOCATIVO' ? '#722ed1' : '#8c8c8c', display: 'block', marginBottom: 4 }} />
                 <div style={{ fontWeight: 600, fontSize: 13 }}>Locativo</div>
               </Card>
             </Col>

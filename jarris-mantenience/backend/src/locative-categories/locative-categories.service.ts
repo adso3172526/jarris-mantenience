@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LocativeCategoryEntity } from '../entities/locative-category.entity';
+import { WorkOrderEntity } from '../entities/work-order.entity';
 import { CreateLocativeCategoryDto } from './dto/create-locative-category.dto';
 import { UpdateLocativeCategoryDto } from './dto/update-locative-category.dto';
 
@@ -22,6 +23,8 @@ export class LocativeCategoriesService implements OnModuleInit {
   constructor(
     @InjectRepository(LocativeCategoryEntity)
     private readonly repo: Repository<LocativeCategoryEntity>,
+    @InjectRepository(WorkOrderEntity)
+    private readonly woRepo: Repository<WorkOrderEntity>,
   ) {}
 
   async onModuleInit() {
@@ -58,8 +61,24 @@ export class LocativeCategoriesService implements OnModuleInit {
 
   async update(id: string, dto: UpdateLocativeCategoryDto) {
     const item = await this.findOne(id);
+    const oldName = item.name;
+
     if (dto.name !== undefined) item.name = dto.name.trim().toUpperCase();
     if (dto.active !== undefined) item.active = dto.active;
-    return this.repo.save(item);
+
+    const savedCategory = await this.repo.save(item);
+
+    let updatedWorkOrders = 0;
+    const nameChanged = dto.name !== undefined && savedCategory.name !== oldName;
+
+    if (nameChanged) {
+      const result = await this.woRepo.update(
+        { locativeCategory: oldName },
+        { locativeCategory: savedCategory.name },
+      );
+      updatedWorkOrders = result.affected || 0;
+    }
+
+    return { ...savedCategory, updatedWorkOrders };
   }
 }

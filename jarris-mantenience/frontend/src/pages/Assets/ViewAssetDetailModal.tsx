@@ -181,7 +181,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
           <span style={{ fontFamily: 'monospace', fontSize: 18, color: '#8c8c8c' }}>
             {record.id.substring(0, 8)}
           </span>
-          <Tag color="blue">Mantenimiento</Tag>
+          <Tag color="orange-inverse">Mantenimiento</Tag>
         </div>
         <div style={{ fontSize: 12, color: '#595959', marginBottom: 4 }}>
           <strong>Ubicación:</strong> {record.location?.name || asset?.location?.name || '-'}
@@ -202,12 +202,12 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
 
   const renderEventCard = (record: any) => {
     const colors: any = {
-      COMPRA: 'green',
-      TRANSFERENCIA: 'blue',
-      TRASLADO: 'blue',
-      BAJA: 'red',
-      REACTIVACION: 'lime',
-      REPARACION: 'orange',
+      COMPRA: 'green-inverse',
+      TRANSFERENCIA: 'blue-inverse',
+      TRASLADO: 'pink-inverse',
+      BAJA: 'red-inverse',
+      REACTIVACION: 'green-inverse',
+      REPARACION: 'yellow-inverse',
     };
     const numCost = Number(record.cost || 0);
 
@@ -270,7 +270,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       key: 'type',
       width: 100,
       ellipsis: true,
-      render: () => <Tag color="blue">Mantenimiento</Tag>,
+      render: () => <Tag color="orange-inverse">Mantenimiento</Tag>,
     },
     {
       title: 'Ubicación',
@@ -322,7 +322,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
 
   const eventColumns = [
     {
-      title: 'ID',
+      title: 'ID OT',
       key: 'id',
       width: 70,
       ellipsis: true,
@@ -345,12 +345,12 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       sorter: (a: any, b: any) => (a.type || '').localeCompare(b.type || ''),
       render: (type: string) => {
         const colors: any = {
-          COMPRA: 'green',
-          TRANSFERENCIA: 'blue',
-          TRASLADO: 'blue',
-          BAJA: 'red',
-          REACTIVACION: 'lime',
-          REPARACION: 'orange',
+          COMPRA: 'green-inverse',
+          TRANSFERENCIA: 'blue-inverse',
+          TRASLADO: 'pink-inverse',
+          BAJA: 'red-inverse',
+          REACTIVACION: 'green-inverse',
+          REPARACION: 'yellow-inverse',
         };
         return <Tag color={colors[type] || 'default'}>{type}</Tag>;
       },
@@ -416,12 +416,12 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
   ];
 
   const transferTypeColors: Record<string, string> = {
-    TRASLADO: 'blue',
+    TRASLADO: 'pink-inverse',
   };
 
   const bajaTypeColors: Record<string, string> = {
-    BAJA: 'red',
-    REACTIVACION: 'lime',
+    BAJA: 'red-inverse',
+    REACTIVACION: 'green-inverse',
   };
 
   const bajaTypeLabels: Record<string, string> = {
@@ -760,11 +760,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
     },
     {
       key: 'history',
-      label: isMobile ? 'Mantto' : (
-        <span>
-          <HistoryOutlined /> Mantenimientos
-        </span>
-      ),
+      label: isMobile ? 'Mantto' : 'Mantenimientos',
       children: (
         <div>
           {isMobile ? (
@@ -800,11 +796,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
     },
     {
       key: 'events',
-      label: isMobile ? 'Reparaciones' : (
-        <span>
-          <EnvironmentOutlined /> Reparaciones
-        </span>
-      ),
+      label: isMobile ? 'Reparaciones' : 'Reparaciones',
       children: (
         <div>
           {isMobile ? (
@@ -840,11 +832,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
     },
     {
       key: 'transfers',
-      label: isMobile ? 'Traslados' : (
-        <span>
-          <SwapOutlined /> Traslados
-        </span>
-      ),
+      label: isMobile ? 'Traslados' : 'Traslados',
       children: (
         <div>
           {isMobile ? (
@@ -880,11 +868,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
     },
     {
       key: 'bajas',
-      label: isMobile ? 'Bajas' : (
-        <span>
-          <StopOutlined /> Historial Bajas
-        </span>
-      ),
+      label: isMobile ? 'Bajas' : 'Historial Bajas',
       children: (
         <div>
           {isMobile ? (

@@ -72,8 +72,13 @@ const LocativeCategoriesPage: React.FC = () => {
   const handleSubmit = async (values: any) => {
     try {
       if (editingCategory) {
-        await locativeCategoriesApi.update(editingCategory.id, values);
-        message.success('Categoría locativa actualizada');
+        const res = await locativeCategoriesApi.update(editingCategory.id, values);
+        const updated = res.data.updatedWorkOrders;
+        if (updated > 0) {
+          message.success(`Categoría locativa actualizada. Se actualizaron ${updated} OT(s).`);
+        } else {
+          message.success('Categoría locativa actualizada');
+        }
       } else {
         await locativeCategoriesApi.create(values);
         message.success('Categoría locativa creada');
@@ -116,6 +121,7 @@ const LocativeCategoriesPage: React.FC = () => {
       title: 'Nombre',
       dataIndex: 'name',
       key: 'name',
+      sorter: (a, b) => a.name.localeCompare(b.name),
       render: (name) => <span style={{ fontWeight: 600 }}>{name}</span>,
     },
     {
@@ -124,6 +130,7 @@ const LocativeCategoriesPage: React.FC = () => {
       key: 'active',
       width: 120,
       align: 'center',
+      sorter: (a, b) => Number(a.active) - Number(b.active),
       render: (active) => (
         <Badge status={active ? 'success' : 'default'} text={active ? 'Activa' : 'Inactiva'} />
       ),

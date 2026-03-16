@@ -50,8 +50,8 @@ interface AssetEvent {
 const RELEVANT_TYPES = ['BAJA', 'REACTIVACION'];
 
 const eventTypeColors: Record<string, string> = {
-  BAJA: 'red',
-  REACTIVACION: 'lime',
+  BAJA: 'red-inverse',
+  REACTIVACION: 'green-inverse',
 };
 
 const eventTypeLabels: Record<string, string> = {

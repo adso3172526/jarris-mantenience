@@ -396,7 +396,7 @@ const WorkOrdersPage: React.FC = () => {
         </div>
         
         <div style={{ marginBottom: 8 }}>
-          <Tag color={record.maintenanceType === 'EQUIPO' ? 'blue' : 'green'} style={{ marginBottom: 4 }}>
+          <Tag color={record.maintenanceType === 'EQUIPO' ? 'blue-inverse' : 'purple-inverse'} style={{ marginBottom: 4 }}>
             {record.maintenanceType === 'EQUIPO' ? (
               <><ToolOutlined /> EQUIPO</>
             ) : (
@@ -504,7 +504,7 @@ const WorkOrdersPage: React.FC = () => {
       ellipsis: true,
       sorter: (a, b) => (a.maintenanceType || '').localeCompare(b.maintenanceType || ''),
       render: (type) => (
-        <Tag color={type === 'EQUIPO' ? 'blue' : 'green'}>
+        <Tag color={type === 'EQUIPO' ? 'blue-inverse' : 'purple-inverse'}>
           {type === 'EQUIPO' ? (
             <><ToolOutlined /> EQUIPO</>
           ) : (

@@ -71,7 +71,7 @@ export const workOrderStatusColors = {
 
 // Estados de Assets con colores
 export const assetStatusColors = {
-  ACTIVO: 'success',
+  ACTIVO: 'green-inverse',
   FUERA_SERVICIO: 'warning',
-  BAJA: 'default',
+  BAJA: 'red-inverse',
 } as const;

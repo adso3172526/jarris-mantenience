@@ -131,6 +131,7 @@ const LocationsPage: React.FC = () => {
     {
       title: 'Ubicación',
       key: 'location',
+      sorter: (a, b) => a.name.localeCompare(b.name),
       render: (_, record) => (
         <div>
           <div style={{ fontWeight: 600, fontSize: 13 }}>{record.name}</div>
@@ -146,6 +147,7 @@ const LocationsPage: React.FC = () => {
       key: 'active',
       width: 100,
       align: 'center',
+      sorter: (a, b) => Number(a.active) - Number(b.active),
       render: (active) => (
         <Badge status={active ? 'success' : 'default'} text={active ? 'Activa' : 'Inactiva'} />
       ),
@@ -156,6 +158,7 @@ const LocationsPage: React.FC = () => {
       key: 'createdAt',
       width: 120,
       align: 'center',
+      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       render: (date) => new Date(date).toLocaleDateString('es-CO'),
     },
     {
@@ -189,7 +192,7 @@ const LocationsPage: React.FC = () => {
             gap: 8,
           }}>
             <span style={{ fontSize: 16, fontWeight: 600 }}>
-              Gestión de Ubicaciones
+              Ubicaciones
             </span>
             {canEdit && (
               <Button

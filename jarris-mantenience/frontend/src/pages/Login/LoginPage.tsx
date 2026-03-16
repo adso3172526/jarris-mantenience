@@ -58,9 +58,10 @@ const LoginPage: React.FC = () => {
         minHeight: '100vh',
         display: 'flex',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'flex-start',
+        paddingTop: isMobile ? '15vh' : '20vh',
         background: '#2c3e50',
-        padding: isMobile ? '20px' : '0',
+        padding: isMobile ? '15vh 20px 0' : '20vh 0 0',
       }}
     >
       <Card

@@ -11,7 +11,7 @@ import ReportsPage from './pages/Reports/ReportsPage';
 import UsersPage from './pages/Users/UsersPage';
 import EventsPage from './pages/Events/EventsPage';
 import LocativePage from './pages/Locative/LocativePage';
-import EventosPage from './pages/Eventos/EventosPage';
+import TrasladosPage from './pages/Traslados/TrasladosPage';
 import BajasPage from './pages/Bajas/BajasPage';
 import LocativeCategoriesPage from './pages/LocativeCategories/LocativeCategoriesPage';
 
@@ -93,9 +93,9 @@ function App() {
                   <LocativePage />
                 </RoleRoute>
               } />
-              <Route path="eventos" element={
+              <Route path="traslados" element={
                 <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']}>
-                  <EventosPage />
+                  <TrasladosPage />
                 </RoleRoute>
               } />
               <Route path="bajas" element={

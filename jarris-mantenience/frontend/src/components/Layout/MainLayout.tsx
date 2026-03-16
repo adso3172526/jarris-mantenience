@@ -96,10 +96,10 @@ const MainLayout: React.FC = () => {
 
     if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'])) {
       items.push({
-        key: '/eventos',
+        key: '/events',
         icon: <UnorderedListOutlined />,
         label: 'Eventos',
-        onClick: () => navigate('/eventos'),
+        onClick: () => navigate('/events'),
       });
     }
 
@@ -114,10 +114,10 @@ const MainLayout: React.FC = () => {
 
     if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'])) {
       items.push({
-        key: '/events',
+        key: '/traslados',
         icon: <SwapOutlined />,
         label: 'Traslados',
-        onClick: () => navigate('/events'),
+        onClick: () => navigate('/traslados'),
       });
     }
 

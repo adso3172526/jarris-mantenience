@@ -203,11 +203,11 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
         <div style={{ marginBottom: 8 }}>
           <Text type="secondary" style={{ fontSize: 12 }}>Tipo:</Text>
           <div style={{ marginTop: 4 }}>
-            <Tag color={workOrder.maintenanceType === 'EQUIPO' ? 'blue' : 'green'}>
+            <Tag color={workOrder.maintenanceType === 'EQUIPO' ? 'blue-inverse' : 'purple-inverse'}>
               {workOrder.maintenanceType === 'EQUIPO' ? (
-                <><ToolOutlined /> Mantenimiento de Equipo</>
+                <><ToolOutlined /> Equipo</>
               ) : (
-                <><HomeOutlined /> Mantenimiento Locativo</>
+                <><HomeOutlined /> Locativo</>
               )}
             </Tag>
           </div>
@@ -233,9 +233,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
         {workOrder.maintenanceType === 'LOCATIVO' && (
           <div style={{ marginBottom: 8 }}>
             <Text type="secondary" style={{ fontSize: 12 }}>Categoría Locativa:</Text>
-            <div style={{ marginTop: 4 }}>
-              <Tag color="green">{workOrder.locativeCategory}</Tag>
-            </div>
+            <div>{workOrder.locativeCategory}</div>
           </div>
         )}
 
@@ -433,11 +431,11 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
       <Title level={5}>Información General</Title>
       <Descriptions bordered size="small" column={2}>
         <Descriptions.Item label="Tipo" span={2}>
-          <Tag color={workOrder.maintenanceType === 'EQUIPO' ? 'blue' : 'green'} style={{ fontSize: 14 }}>
+          <Tag color={workOrder.maintenanceType === 'EQUIPO' ? 'blue-inverse' : 'purple-inverse'} style={{ fontSize: 14 }}>
             {workOrder.maintenanceType === 'EQUIPO' ? (
-              <><ToolOutlined /> Mantenimiento de Equipo</>
+              <><ToolOutlined /> Equipo</>
             ) : (
-              <><HomeOutlined /> Mantenimiento Locativo</>
+              <><HomeOutlined /> Locativo</>
             )}
           </Tag>
         </Descriptions.Item>
@@ -458,9 +456,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
 
         {workOrder.maintenanceType === 'LOCATIVO' && (
           <Descriptions.Item label="Categoría Locativa" span={2}>
-            <Tag color="green" style={{ fontSize: 14 }}>
-              {workOrder.locativeCategory}
-            </Tag>
+            {workOrder.locativeCategory}
           </Descriptions.Item>
         )}
 
