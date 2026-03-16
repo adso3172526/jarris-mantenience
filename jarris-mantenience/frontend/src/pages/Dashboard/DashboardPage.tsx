@@ -29,12 +29,10 @@ const DashboardPage: React.FC = () => {
 
   // Datos
   const [metricas, setMetricas] = useState<any>({
-    totalOT: 0,
-    totalEventos: 0,
-    totalGastado: 0,
-    totalGastadoEventos: 0,
-    totalActivos: 0,
-    eventosEspeciales: 0,
+    cantidadOTEquipo: 0,
+    valorOTEquipo: 0,
+    cantidadOTLocativo: 0,
+    valorOTLocativo: 0,
   });
   const [datosGrafico, setDatosGrafico] = useState<any[]>([]);
   const [vistaGrafico, setVistaGrafico] = useState<'cantidades' | 'costos'>('cantidades');
@@ -87,20 +85,20 @@ const DashboardPage: React.FC = () => {
         setDatosGrafico(
           res.data.porMes.map((item: any) => ({
             nombre: dayjs(item.mes).format('MMM YYYY'),
-            cantidadOT: item.cantidadOT,
-            costoOTCerradas: item.costoOTCerradas,
-            cantidadEventos: item.cantidadEventos,
-            costoEventos: item.costoEventos,
+            cantidadEquipo: item.cantidadEquipo,
+            costoEquipo: item.costoEquipo,
+            cantidadLocativo: item.cantidadLocativo,
+            costoLocativo: item.costoLocativo,
           }))
         );
       } else {
         setDatosGrafico(
           res.data.porUbicacion.map((item: any) => ({
             nombre: item.ubicacion,
-            cantidadOT: item.cantidadOT,
-            costoOTCerradas: item.costoOTCerradas,
-            cantidadEventos: item.cantidadEventos,
-            costoEventos: item.costoEventos,
+            cantidadEquipo: item.cantidadEquipo,
+            costoEquipo: item.costoEquipo,
+            cantidadLocativo: item.cantidadLocativo,
+            costoLocativo: item.costoLocativo,
           }))
         );
       }
@@ -199,57 +197,46 @@ const DashboardPage: React.FC = () => {
         <Spin spinning={loading} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           {/* Métricas */}
           <Row gutter={[8, 8]} style={{ marginBottom: 8 }}>
-            <Col xs={12} sm={8} md={4}>
-              <Card size="small" styles={{ body: { padding: '6px 8px' } }}>
+            <Col xs={12} sm={12} md={6}>
+              <Card size="small" styles={{ body: { padding: '6px 8px' } }} style={{ borderLeft: '3px solid #1890ff' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 600 }}>
-                    {metricas.totalOT}
+                    {metricas.cantidadOTEquipo}
                   </div>
-                  <div style={{ color: '#595959', fontSize: 12 }}>OT</div>
+                  <div style={{ color: '#595959', fontSize: 12 }}>OT Equipo Cerradas</div>
                 </div>
               </Card>
             </Col>
 
-            <Col xs={12} sm={8} md={6}>
-              <Card size="small" styles={{ body: { padding: '6px 8px' } }}>
+            <Col xs={12} sm={12} md={6}>
+              <Card size="small" styles={{ body: { padding: '6px 8px' } }} style={{ borderLeft: '3px solid #1890ff' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 600 }}>
-                    {formatCOP(metricas.totalGastado)}
+                    {formatCOP(metricas.valorOTEquipo)}
                   </div>
-                  <div style={{ color: '#595959', fontSize: 12 }}>OT Cerradas</div>
+                  <div style={{ color: '#595959', fontSize: 12 }}>Valor OT Equipo</div>
                 </div>
               </Card>
             </Col>
 
-            <Col xs={12} sm={8} md={4}>
-              <Card size="small" styles={{ body: { padding: '6px 8px' } }}>
+            <Col xs={12} sm={12} md={6}>
+              <Card size="small" styles={{ body: { padding: '6px 8px' } }} style={{ borderLeft: '3px solid #722ed1' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 600 }}>
-                    {metricas.totalEventos}
+                    {metricas.cantidadOTLocativo}
                   </div>
-                  <div style={{ color: '#595959', fontSize: 12 }}>Eventos</div>
+                  <div style={{ color: '#595959', fontSize: 12 }}>OT Locativo Cerradas</div>
                 </div>
               </Card>
             </Col>
 
-            <Col xs={12} sm={8} md={6}>
-              <Card size="small" styles={{ body: { padding: '6px 8px' } }}>
+            <Col xs={12} sm={12} md={6}>
+              <Card size="small" styles={{ body: { padding: '6px 8px' } }} style={{ borderLeft: '3px solid #722ed1' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 600 }}>
-                    {formatCOP(metricas.totalGastadoEventos)}
+                    {formatCOP(metricas.valorOTLocativo)}
                   </div>
-                  <div style={{ color: '#595959', fontSize: 12 }}>Eventos</div>
-                </div>
-              </Card>
-            </Col>
-
-            <Col xs={12} sm={8} md={4}>
-              <Card size="small" styles={{ body: { padding: '6px 8px' } }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 20, fontWeight: 600 }}>
-                    {metricas.totalActivos}
-                  </div>
-                  <div style={{ color: '#595959', fontSize: 12 }}>Activos</div>
+                  <div style={{ color: '#595959', fontSize: 12 }}>Valor OT Locativo</div>
                 </div>
               </Card>
             </Col>
@@ -319,17 +306,30 @@ const DashboardPage: React.FC = () => {
                 />
                 <Tooltip
                   cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 4 }}
-                  contentStyle={{
-                    backgroundColor: '#fff',
-                    border: 'none',
-                    borderRadius: 10,
-                    boxShadow: '0 6px 24px rgba(0,0,0,0.12)',
-                    padding: '10px 14px',
+                  content={({ payload }) => {
+                    if (!payload?.length) return null;
+                    const seen = new Set<string>();
+                    const items = payload.filter((entry: any) => {
+                      if (seen.has(entry.dataKey)) return false;
+                      seen.add(entry.dataKey);
+                      return true;
+                    });
+                    return (
+                      <div style={{
+                        backgroundColor: '#fff',
+                        borderRadius: 10,
+                        boxShadow: '0 6px 24px rgba(0,0,0,0.12)',
+                        padding: '10px 14px',
+                      }}>
+                        {items.map((entry: any, i: number) => (
+                          <div key={i} style={{ padding: '2px 0', color: entry.color, fontSize: 13 }}>
+                            <span style={{ fontWeight: 500 }}>{entry.name}: </span>
+                            {vistaGrafico === 'costos' ? formatCOP(entry.value) : entry.value}
+                          </div>
+                        ))}
+                      </div>
+                    );
                   }}
-                  formatter={vistaGrafico === 'costos' ? (value: any, name: string) => [formatCOP(value), name] : undefined}
-                  labelFormatter={() => ''}
-                  labelStyle={{ display: 'none' }}
-                  itemStyle={{ padding: '2px 0' }}
                 />
                 <Legend
                   wrapperStyle={{ fontSize: isMobile ? 11 : 13, paddingTop: 8 }}
@@ -339,75 +339,75 @@ const DashboardPage: React.FC = () => {
                 {vistaGrafico === 'cantidades' ? (
                   <>
                     <Bar
-                      dataKey="cantidadOT"
+                      dataKey="cantidadEquipo"
                       fill="url(#gradOT)"
-                      name="OT"
+                      name="Equipo"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={50}
                     />
                     <Bar
-                      dataKey="cantidadEventos"
+                      dataKey="cantidadLocativo"
                       fill="url(#gradEventos)"
-                      name="Eventos"
+                      name="Locativo"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={50}
                     />
                     <Line
                       type="monotone"
-                      dataKey="cantidadOT"
+                      dataKey="cantidadEquipo"
                       stroke="#1890ff"
                       strokeWidth={2}
                       dot={{ fill: '#1890ff', r: 3 }}
                       activeDot={{ r: 5 }}
                       connectNulls
-                      name="Tendencia OT"
+                      legendType="none"
                     />
                     <Line
                       type="monotone"
-                      dataKey="cantidadEventos"
+                      dataKey="cantidadLocativo"
                       stroke="#722ed1"
                       strokeWidth={2}
                       dot={{ fill: '#722ed1', r: 3 }}
                       activeDot={{ r: 5 }}
                       connectNulls
-                      name="Tendencia Eventos"
+                      legendType="none"
                     />
                   </>
                 ) : (
                   <>
                     <Bar
-                      dataKey="costoOTCerradas"
+                      dataKey="costoEquipo"
                       fill="url(#gradOTCerradas)"
-                      name="OT Cerradas"
+                      name="Equipo"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={50}
                     />
                     <Bar
-                      dataKey="costoEventos"
+                      dataKey="costoLocativo"
                       fill="url(#gradCostoEventos)"
-                      name="Costo Eventos"
+                      name="Locativo"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={50}
                     />
                     <Line
                       type="monotone"
-                      dataKey="costoOTCerradas"
+                      dataKey="costoEquipo"
                       stroke="#1890ff"
                       strokeWidth={2}
                       dot={{ fill: '#1890ff', r: 3 }}
                       activeDot={{ r: 5 }}
                       connectNulls
-                      name="Tendencia OT Cerradas"
+                      legendType="none"
                     />
                     <Line
                       type="monotone"
-                      dataKey="costoEventos"
+                      dataKey="costoLocativo"
                       stroke="#722ed1"
                       strokeWidth={2}
                       dot={{ fill: '#722ed1', r: 3 }}
                       activeDot={{ r: 5 }}
                       connectNulls
-                      name="Tendencia Costo Eventos"
+                      legendType="none"
                     />
                   </>
                 )}

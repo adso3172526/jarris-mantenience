@@ -98,6 +98,7 @@ export class ReportsService {
       SELECT
         tipo_registro,
         estado,
+        categoria,
         ubicacion_id,
         ubicacion_nombre,
         costo,
@@ -137,35 +138,45 @@ export class ReportsService {
     const totalGastadoEventos = rawData.filter(x => x.tipo_registro === 'EVENTO').reduce((sum, x) => sum + Number(x.costo || 0), 0);
     const eventosEspeciales = rawData.filter(x => x.es_evento_especial === 1).length;
 
+    // Métricas por tipo de OT
+    const otEquipoCerradas = rawData.filter(x => x.tipo_registro === 'OT' && x.categoria === 'EQUIPO' && x.estado === 'CERRADA');
+    const otLocativoCerradas = rawData.filter(x => x.tipo_registro === 'OT' && x.categoria === 'LOCATIVO' && x.estado === 'CERRADA');
+    const cantidadOTEquipo = otEquipoCerradas.length;
+    const valorOTEquipo = otEquipoCerradas.reduce((sum, x) => sum + Number(x.costo || 0), 0);
+    const cantidadOTLocativo = otLocativoCerradas.length;
+    const valorOTLocativo = otLocativoCerradas.reduce((sum, x) => sum + Number(x.costo || 0), 0);
+
     // Agrupar por ubicación
     const porUbicacion = {};
     rawData.forEach(row => {
+      if (row.tipo_registro !== 'OT' || row.estado !== 'CERRADA') return;
       const key = row.ubicacion_nombre || 'Sin ubicación';
       if (!porUbicacion[key]) {
-        porUbicacion[key] = { cantidadOT: 0, costoOTCerradas: 0, cantidadEventos: 0, costoEventos: 0 };
+        porUbicacion[key] = { cantidadEquipo: 0, costoEquipo: 0, cantidadLocativo: 0, costoLocativo: 0 };
       }
-      if (row.tipo_registro === 'OT') {
-        porUbicacion[key].cantidadOT++;
-        if (row.estado === 'CERRADA') porUbicacion[key].costoOTCerradas += Number(row.costo || 0);
-      } else {
-        porUbicacion[key].cantidadEventos++;
-        porUbicacion[key].costoEventos += Number(row.costo || 0);
+      if (row.categoria === 'EQUIPO') {
+        porUbicacion[key].cantidadEquipo++;
+        porUbicacion[key].costoEquipo += Number(row.costo || 0);
+      } else if (row.categoria === 'LOCATIVO') {
+        porUbicacion[key].cantidadLocativo++;
+        porUbicacion[key].costoLocativo += Number(row.costo || 0);
       }
     });
 
     // Agrupar por mes
     const porMes = {};
     rawData.forEach(row => {
+      if (row.tipo_registro !== 'OT' || row.estado !== 'CERRADA') return;
       const mes = new Date(row.mes).toISOString();
       if (!porMes[mes]) {
-        porMes[mes] = { cantidadOT: 0, costoOTCerradas: 0, cantidadEventos: 0, costoEventos: 0 };
+        porMes[mes] = { cantidadEquipo: 0, costoEquipo: 0, cantidadLocativo: 0, costoLocativo: 0 };
       }
-      if (row.tipo_registro === 'OT') {
-        porMes[mes].cantidadOT++;
-        if (row.estado === 'CERRADA') porMes[mes].costoOTCerradas += Number(row.costo || 0);
-      } else {
-        porMes[mes].cantidadEventos++;
-        porMes[mes].costoEventos += Number(row.costo || 0);
+      if (row.categoria === 'EQUIPO') {
+        porMes[mes].cantidadEquipo++;
+        porMes[mes].costoEquipo += Number(row.costo || 0);
+      } else if (row.categoria === 'LOCATIVO') {
+        porMes[mes].cantidadLocativo++;
+        porMes[mes].costoLocativo += Number(row.costo || 0);
       }
     });
 
@@ -178,21 +189,25 @@ export class ReportsService {
         totalGastadoEventos,
         totalActivos,
         eventosEspeciales,
+        cantidadOTEquipo,
+        valorOTEquipo,
+        cantidadOTLocativo,
+        valorOTLocativo,
       },
       porUbicacion: Object.entries(porUbicacion).map(([nombre, datos]: [string, any]) => ({
         ubicacion: nombre,
-        cantidadOT: datos.cantidadOT,
-        costoOTCerradas: datos.costoOTCerradas,
-        cantidadEventos: datos.cantidadEventos,
-        costoEventos: datos.costoEventos,
+        cantidadEquipo: datos.cantidadEquipo,
+        costoEquipo: datos.costoEquipo,
+        cantidadLocativo: datos.cantidadLocativo,
+        costoLocativo: datos.costoLocativo,
       })),
       porMes: Object.entries(porMes)
         .map(([mes, datos]: [string, any]) => ({
           mes,
-          cantidadOT: datos.cantidadOT,
-          costoOTCerradas: datos.costoOTCerradas,
-          cantidadEventos: datos.cantidadEventos,
-          costoEventos: datos.costoEventos,
+          cantidadEquipo: datos.cantidadEquipo,
+          costoEquipo: datos.costoEquipo,
+          cantidadLocativo: datos.cantidadLocativo,
+          costoLocativo: datos.costoLocativo,
         }))
         .sort((a, b) => new Date(a.mes).getTime() - new Date(b.mes).getTime()),
     };
