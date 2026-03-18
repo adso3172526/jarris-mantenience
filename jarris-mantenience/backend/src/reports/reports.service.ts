@@ -99,6 +99,7 @@ export class ReportsService {
         tipo_registro,
         estado,
         categoria,
+        tipo_mantenimiento,
         ubicacion_id,
         ubicacion_nombre,
         costo,
@@ -146,15 +147,25 @@ export class ReportsService {
     const cantidadOTLocativo = otLocativoCerradas.length;
     const valorOTLocativo = otLocativoCerradas.reduce((sum, x) => sum + Number(x.costo || 0), 0);
 
+    // Métricas de traslados
+    const traslados = rawData.filter(x => x.tipo_registro === 'EVENTO' && x.tipo_mantenimiento === 'TRASLADO');
+    const cantidadTraslados = traslados.length;
+    const valorTraslados = traslados.reduce((sum, x) => sum + Number(x.costo || 0), 0);
+
     // Agrupar por ubicación
     const porUbicacion = {};
     rawData.forEach(row => {
-      if (row.tipo_registro !== 'OT' || row.estado !== 'CERRADA') return;
+      const esOTCerrada = row.tipo_registro === 'OT' && row.estado === 'CERRADA';
+      const esTraslado = row.tipo_registro === 'EVENTO' && row.tipo_mantenimiento === 'TRASLADO';
+      if (!esOTCerrada && !esTraslado) return;
       const key = row.ubicacion_nombre || 'Sin ubicación';
       if (!porUbicacion[key]) {
-        porUbicacion[key] = { cantidadEquipo: 0, costoEquipo: 0, cantidadLocativo: 0, costoLocativo: 0 };
+        porUbicacion[key] = { cantidadEquipo: 0, costoEquipo: 0, cantidadLocativo: 0, costoLocativo: 0, cantidadTraslados: 0, costoTraslados: 0 };
       }
-      if (row.categoria === 'EQUIPO') {
+      if (esTraslado) {
+        porUbicacion[key].cantidadTraslados++;
+        porUbicacion[key].costoTraslados += Number(row.costo || 0);
+      } else if (row.categoria === 'EQUIPO') {
         porUbicacion[key].cantidadEquipo++;
         porUbicacion[key].costoEquipo += Number(row.costo || 0);
       } else if (row.categoria === 'LOCATIVO') {
@@ -166,12 +177,17 @@ export class ReportsService {
     // Agrupar por mes
     const porMes = {};
     rawData.forEach(row => {
-      if (row.tipo_registro !== 'OT' || row.estado !== 'CERRADA') return;
+      const esOTCerrada = row.tipo_registro === 'OT' && row.estado === 'CERRADA';
+      const esTraslado = row.tipo_registro === 'EVENTO' && row.tipo_mantenimiento === 'TRASLADO';
+      if (!esOTCerrada && !esTraslado) return;
       const mes = new Date(row.mes).toISOString();
       if (!porMes[mes]) {
-        porMes[mes] = { cantidadEquipo: 0, costoEquipo: 0, cantidadLocativo: 0, costoLocativo: 0 };
+        porMes[mes] = { cantidadEquipo: 0, costoEquipo: 0, cantidadLocativo: 0, costoLocativo: 0, cantidadTraslados: 0, costoTraslados: 0 };
       }
-      if (row.categoria === 'EQUIPO') {
+      if (esTraslado) {
+        porMes[mes].cantidadTraslados++;
+        porMes[mes].costoTraslados += Number(row.costo || 0);
+      } else if (row.categoria === 'EQUIPO') {
         porMes[mes].cantidadEquipo++;
         porMes[mes].costoEquipo += Number(row.costo || 0);
       } else if (row.categoria === 'LOCATIVO') {
@@ -193,6 +209,8 @@ export class ReportsService {
         valorOTEquipo,
         cantidadOTLocativo,
         valorOTLocativo,
+        cantidadTraslados,
+        valorTraslados,
       },
       porUbicacion: Object.entries(porUbicacion).map(([nombre, datos]: [string, any]) => ({
         ubicacion: nombre,
@@ -200,6 +218,8 @@ export class ReportsService {
         costoEquipo: datos.costoEquipo,
         cantidadLocativo: datos.cantidadLocativo,
         costoLocativo: datos.costoLocativo,
+        cantidadTraslados: datos.cantidadTraslados,
+        costoTraslados: datos.costoTraslados,
       })),
       porMes: Object.entries(porMes)
         .map(([mes, datos]: [string, any]) => ({
@@ -208,6 +228,8 @@ export class ReportsService {
           costoEquipo: datos.costoEquipo,
           cantidadLocativo: datos.cantidadLocativo,
           costoLocativo: datos.costoLocativo,
+          cantidadTraslados: datos.cantidadTraslados,
+          costoTraslados: datos.costoTraslados,
         }))
         .sort((a, b) => new Date(a.mes).getTime() - new Date(b.mes).getTime()),
     };

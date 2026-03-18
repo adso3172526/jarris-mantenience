@@ -33,6 +33,8 @@ const DashboardPage: React.FC = () => {
     valorOTEquipo: 0,
     cantidadOTLocativo: 0,
     valorOTLocativo: 0,
+    cantidadTraslados: 0,
+    valorTraslados: 0,
   });
   const [datosGrafico, setDatosGrafico] = useState<any[]>([]);
   const [vistaGrafico, setVistaGrafico] = useState<'cantidades' | 'costos'>('cantidades');
@@ -89,6 +91,8 @@ const DashboardPage: React.FC = () => {
             costoEquipo: item.costoEquipo,
             cantidadLocativo: item.cantidadLocativo,
             costoLocativo: item.costoLocativo,
+            cantidadTraslados: item.cantidadTraslados,
+            costoTraslados: item.costoTraslados,
           }))
         );
       } else {
@@ -99,6 +103,8 @@ const DashboardPage: React.FC = () => {
             costoEquipo: item.costoEquipo,
             cantidadLocativo: item.cantidadLocativo,
             costoLocativo: item.costoLocativo,
+            cantidadTraslados: item.cantidadTraslados,
+            costoTraslados: item.costoTraslados,
           }))
         );
       }
@@ -240,6 +246,28 @@ const DashboardPage: React.FC = () => {
                 </div>
               </Card>
             </Col>
+
+            <Col xs={12} sm={12} md={6}>
+              <Card size="small" styles={{ body: { padding: '6px 8px' } }} style={{ borderLeft: '3px solid #eb2f96' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 600 }}>
+                    {metricas.cantidadTraslados}
+                  </div>
+                  <div style={{ color: '#595959', fontSize: 12 }}>Traslados</div>
+                </div>
+              </Card>
+            </Col>
+
+            <Col xs={12} sm={12} md={6}>
+              <Card size="small" styles={{ body: { padding: '6px 8px' } }} style={{ borderLeft: '3px solid #eb2f96' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 600 }}>
+                    {formatCOP(metricas.valorTraslados)}
+                  </div>
+                  <div style={{ color: '#595959', fontSize: 12 }}>Valor Traslados</div>
+                </div>
+              </Card>
+            </Col>
           </Row>
 
           {/* Gráfico único con toggle */}
@@ -285,6 +313,10 @@ const DashboardPage: React.FC = () => {
                   <linearGradient id="gradCostoEventos" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#b37feb" stopOpacity={1} />
                     <stop offset="100%" stopColor="#9254de" stopOpacity={0.85} />
+                  </linearGradient>
+                  <linearGradient id="gradTraslados" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ff85c0" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#eb2f96" stopOpacity={0.85} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
@@ -352,6 +384,13 @@ const DashboardPage: React.FC = () => {
                       radius={[6, 6, 0, 0]}
                       maxBarSize={50}
                     />
+                    <Bar
+                      dataKey="cantidadTraslados"
+                      fill="url(#gradTraslados)"
+                      name="Traslados"
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={50}
+                    />
                     <Line
                       type="monotone"
                       dataKey="cantidadEquipo"
@@ -368,6 +407,16 @@ const DashboardPage: React.FC = () => {
                       stroke="#722ed1"
                       strokeWidth={2}
                       dot={{ fill: '#722ed1', r: 3 }}
+                      activeDot={{ r: 5 }}
+                      connectNulls
+                      legendType="none"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="cantidadTraslados"
+                      stroke="#eb2f96"
+                      strokeWidth={2}
+                      dot={{ fill: '#eb2f96', r: 3 }}
                       activeDot={{ r: 5 }}
                       connectNulls
                       legendType="none"
@@ -389,6 +438,13 @@ const DashboardPage: React.FC = () => {
                       radius={[6, 6, 0, 0]}
                       maxBarSize={50}
                     />
+                    <Bar
+                      dataKey="costoTraslados"
+                      fill="url(#gradTraslados)"
+                      name="Traslados"
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={50}
+                    />
                     <Line
                       type="monotone"
                       dataKey="costoEquipo"
@@ -405,6 +461,16 @@ const DashboardPage: React.FC = () => {
                       stroke="#722ed1"
                       strokeWidth={2}
                       dot={{ fill: '#722ed1', r: 3 }}
+                      activeDot={{ r: 5 }}
+                      connectNulls
+                      legendType="none"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="costoTraslados"
+                      stroke="#eb2f96"
+                      strokeWidth={2}
+                      dot={{ fill: '#eb2f96', r: 3 }}
                       activeDot={{ r: 5 }}
                       connectNulls
                       legendType="none"
