@@ -132,8 +132,8 @@ const WorkOrdersPage: React.FC = () => {
       setLoading(true);
       let response;
       
-      if (isPDV && user?.email) {
-        response = await workOrdersApi.getByLocation(user.locationId!);
+      if (isPDV && user?.locationId) {
+        response = await workOrdersApi.getByLocation(user.locationId);
       } else if ((isTecnico || isContratista) && user?.email) {
         response = await workOrdersApi.getByAssignee(user.email);
       } else {

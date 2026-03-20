@@ -103,7 +103,7 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'])) {
+    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV'])) {
       items.push({
         key: '/assets',
         icon: <ToolOutlined />,

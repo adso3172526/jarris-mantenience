@@ -78,7 +78,7 @@ function App() {
                 </RoleRoute>
               } />
               <Route path="assets" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV']}>
                   <AssetsPage />
                 </RoleRoute>
               } />

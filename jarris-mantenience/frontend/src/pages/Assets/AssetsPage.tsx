@@ -90,6 +90,7 @@ const AssetsPage: React.FC = () => {
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
 
   const { hasRole, user } = useAuth();
+  const isPDV = hasRole(['PDV']);
   const canEdit = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']);
   const canDeactivate = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
 
@@ -108,7 +109,7 @@ const AssetsPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [isPDV, user?.locationId]);
 
   useEffect(() => {
     applyFilters();
@@ -117,12 +118,15 @@ const AssetsPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      const assetsRequest = isPDV && user?.locationId
+        ? assetsApi.getByLocation(user.locationId)
+        : assetsApi.getAll();
       const [assetsRes, locationsRes, categoriesRes] = await Promise.all([
-        assetsApi.getAll(),
+        assetsRequest,
         locationsApi.getAll(),
         categoriesApi.getAll(),
       ]);
-      
+
       setAssets(assetsRes.data);
       setFilteredAssets(assetsRes.data);
       setLocations(locationsRes.data);
@@ -302,7 +306,7 @@ const AssetsPage: React.FC = () => {
           Ver Historial
         </Button>
 
-        {record.status === 'BAJA' ? (
+        {!isPDV && (record.status === 'BAJA' ? (
           canDeactivate && (
             <Popconfirm
               title="Reactivar este activo?"
@@ -369,7 +373,7 @@ const AssetsPage: React.FC = () => {
               </>
             )}
           </>
-        )}
+        ))}
       </Space>
     </Card>
   );
@@ -470,7 +474,7 @@ const AssetsPage: React.FC = () => {
             />
           </Tooltip>
 
-          {record.status === 'BAJA' ? (
+          {!isPDV && (record.status === 'BAJA' ? (
             canDeactivate && (
               <Tooltip title="Reactivar">
                 <Popconfirm
@@ -526,7 +530,7 @@ const AssetsPage: React.FC = () => {
                 </>
               )}
             </>
-          )}
+          ))}
         </Space>
       ),
     },
@@ -547,22 +551,24 @@ const AssetsPage: React.FC = () => {
               size={isMobile ? "large" : "middle"}
             />
           </Col>
-          <Col xs={24} sm={12} md={4}>
-            <Select
-              placeholder="Ubicacion"
-              style={{ width: '100%' }}
-              value={filterLocation}
-              onChange={setFilterLocation}
-              allowClear
-              size={isMobile ? "large" : "middle"}
-            >
-              {locations.map((loc) => (
-                <Select.Option key={loc.id} value={loc.id}>
-                  {loc.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Col>
+          {!isPDV && (
+            <Col xs={24} sm={12} md={4}>
+              <Select
+                placeholder="Ubicacion"
+                style={{ width: '100%' }}
+                value={filterLocation}
+                onChange={setFilterLocation}
+                allowClear
+                size={isMobile ? "large" : "middle"}
+              >
+                {locations.map((loc) => (
+                  <Select.Option key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Col>
+          )}
           <Col xs={24} sm={12} md={4}>
             <Select
               placeholder="Categoria"
