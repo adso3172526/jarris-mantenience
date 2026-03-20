@@ -115,13 +115,16 @@ const LocativePage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [isTecnico, isContratista, user?.email]);
 
   const loadData = async () => {
     try {
       setLoading(true);
+      const ordersRequest = (isTecnico || isContratista) && user?.email
+        ? workOrdersApi.getByAssignee(user.email)
+        : workOrdersApi.getAll();
       const [ordersRes, locationsRes, techRes] = await Promise.all([
-        workOrdersApi.getAll(),
+        ordersRequest,
         locationsApi.getAll(),
         usersApi.getTechniciansAndContractors(),
       ]);
@@ -509,7 +512,7 @@ const LocativePage: React.FC = () => {
         </div>
 
         <div style={{ marginBottom: 8 }}>
-          <Tag color="purple-inverse">
+          <Tag color={isContratista ? undefined : 'purple-inverse'}>
             <HomeOutlined /> LOCATIVO
           </Tag>
           <div style={{ fontSize: 12, marginTop: 4 }}>{record.locativeCategory}</div>
@@ -580,24 +583,26 @@ const LocativePage: React.FC = () => {
                 size={isMobile ? 'large' : 'middle'}
               />
             </Col>
-            <Col xs={24} sm={12} md={4}>
-              <Select
-                placeholder="Técnico/Contratista"
-                style={{ width: '100%' }}
-                value={filterAssignee}
-                onChange={setFilterAssignee}
-                allowClear
-                showSearch
-                optionFilterProp="children"
-                size={isMobile ? 'large' : 'middle'}
-              >
-                {technicians.map((t: any) => (
-                  <Select.Option key={t.email} value={t.email}>
-                    {t.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Col>
+            {!isTecnico && !isContratista && (
+              <Col xs={24} sm={12} md={4}>
+                <Select
+                  placeholder="Técnico/Contratista"
+                  style={{ width: '100%' }}
+                  value={filterAssignee}
+                  onChange={setFilterAssignee}
+                  allowClear
+                  showSearch
+                  optionFilterProp="children"
+                  size={isMobile ? 'large' : 'middle'}
+                >
+                  {technicians.map((t: any) => (
+                    <Select.Option key={t.email} value={t.email}>
+                      {t.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Col>
+            )}
             <Col xs={24} sm={12} md={3}>
               <Select
                 placeholder="Estado"

@@ -22,6 +22,7 @@ import { CloseWorkOrderDto } from './dto/close-work-order.dto';
 import { StartWorkOrderDto } from './dto/start-work-order.dto';
 import { RejectWorkOrderDto } from './dto/reject-work-order.dto';
 import { EditClosedWorkOrderDto } from './dto/edit-closed-work-order.dto';
+import { ChangeAssetDto } from './dto/change-asset.dto';
 import { WorkOrderStatus } from '../entities/work-order.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -115,6 +116,12 @@ export class WorkOrdersController {
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
   editClosed(@Param('id') id: string, @Body() dto: EditClosedWorkOrderDto) {
     return this.service.editClosed(id, dto);
+  }
+
+  @Patch(':id/change-asset')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
+  changeAsset(@Param('id') id: string, @Body() dto: ChangeAssetDto) {
+    return this.service.changeAsset(id, dto.assetId);
   }
 
   // ✅ NUEVO: Reemplazar factura en OT cerrada

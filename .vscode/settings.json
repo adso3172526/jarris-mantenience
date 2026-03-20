@@ -1,0 +1,31 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "192.168.123.7",
+            "port": 3306,
+            "driver": "MariaDB",
+            "name": "JARRIS",
+            "database": "jarris",
+            "username": "dev"
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "44.199.211.138",
+            "port": 34925,
+            "driver": "MariaDB",
+            "name": "jarris EC2",
+            "database": "jarris",
+            "username": "sistemas",
+            "password": "e2|^j4z3King0`bB"
+        }
+    ]
+}

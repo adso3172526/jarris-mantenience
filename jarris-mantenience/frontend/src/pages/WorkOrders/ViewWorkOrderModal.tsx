@@ -239,7 +239,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
 
         <div style={{ marginBottom: 8 }}>
           <Text type="secondary" style={{ fontSize: 12 }}>Ubicación:</Text>
-          <div>{workOrder.location.name}</div>
+          <div style={{ fontWeight: 700 }}>{workOrder.location.name}</div>
         </div>
       </div>
 

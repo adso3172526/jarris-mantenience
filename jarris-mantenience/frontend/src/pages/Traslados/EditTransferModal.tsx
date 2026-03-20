@@ -75,6 +75,14 @@ const EditTransferModal: React.FC<EditTransferModalProps> = ({
       />
 
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        <Form.Item label="Origen">
+          <Input
+            value={event?.fromLocation?.name || 'Sin origen'}
+            disabled
+            size={isMobile ? 'large' : 'middle'}
+          />
+        </Form.Item>
+
         <Form.Item
           label="Destino"
           name="toLocationId"
@@ -86,7 +94,7 @@ const EditTransferModal: React.FC<EditTransferModalProps> = ({
             placeholder="Seleccionar destino"
             size={isMobile ? 'large' : 'middle'}
           >
-            {locations.map((loc: any) => (
+            {locations.filter((loc: any) => loc.id !== event?.fromLocation?.id).map((loc: any) => (
               <Select.Option key={loc.id} value={loc.id}>
                 {loc.name}
               </Select.Option>

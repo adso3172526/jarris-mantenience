@@ -192,19 +192,19 @@ const MainLayout: React.FC = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '10px 4px',
+          padding: '10px 6px',
           cursor: 'pointer',
-          borderRadius: 8,
-          margin: '2px 8px',
-          background: isActive ? 'rgba(230, 0, 18, 0.15)' : 'transparent',
-          color: isActive ? '#ff4d4f' : 'rgba(255,255,255,0.65)',
+          borderRadius: 12,
+          margin: '3px 8px',
+          background: isActive ? '#E60012' : 'rgba(255,255,255,0.04)',
+          color: isActive ? '#ffffff' : 'rgba(255,255,255,0.65)',
           transition: 'all 0.2s',
         }}
         onMouseEnter={(e) => {
-          if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+          if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
         }}
         onMouseLeave={(e) => {
-          if (!isActive) e.currentTarget.style.background = 'transparent';
+          if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
         }}
       >
         <span style={{ fontSize: 22, lineHeight: 1, marginBottom: 3 }}>
@@ -224,7 +224,7 @@ const MainLayout: React.FC = () => {
     );
   };
 
-  // Mobile drawer menu items (full text, vertical list)
+  // Mobile drawer menu items (botones con icono + texto)
   const renderMobileMenuItem = (item: SidebarItem) => {
     const isActive = location.pathname === item.key;
     return (
@@ -233,19 +233,29 @@ const MainLayout: React.FC = () => {
         onClick={item.onClick}
         style={{
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          gap: 12,
-          padding: '12px 20px',
+          justifyContent: 'center',
+          gap: 6,
+          padding: '16px 8px',
           cursor: 'pointer',
-          background: isActive ? '#fff1f0' : 'transparent',
-          color: isActive ? '#E60012' : '#333',
+          borderRadius: 12,
+          background: isActive ? '#E60012' : 'rgba(255,255,255,0.05)',
+          color: isActive ? '#fff' : 'rgba(255,255,255,0.75)',
           fontWeight: isActive ? 600 : 400,
-          fontSize: 14,
-          borderRight: isActive ? '3px solid #E60012' : '3px solid transparent',
+          fontSize: 12,
+          transition: 'all 0.2s',
+          textAlign: 'center',
+        }}
+        onMouseEnter={(e) => {
+          if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+        }}
+        onMouseLeave={(e) => {
+          if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
         }}
       >
-        <span style={{ fontSize: 18 }}>{item.icon}</span>
-        <span>{item.label}</span>
+        <span style={{ fontSize: 24, lineHeight: 1 }}>{item.icon}</span>
+        <span style={{ lineHeight: 1.2, wordBreak: 'break-word', maxWidth: '100%' }}>{item.label}</span>
       </div>
     );
   };
@@ -266,32 +276,20 @@ const MainLayout: React.FC = () => {
             left: 0,
             bottom: 0,
             zIndex: 101,
-            overflowY: 'auto',
+            overflowY: 'hidden',
             overflowX: 'hidden',
           }}
         >
           {/* Logo */}
           <div
             style={{
-              height: 64,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: 20,
-              fontWeight: 800,
-              letterSpacing: 2,
-              fontFamily: "'Segoe UI', Arial, sans-serif",
-              textTransform: 'uppercase',
-              textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+              height: 24,
               flexShrink: 0,
             }}
-          >
-            J´S
-          </div>
+          />
 
           {/* Menu items */}
-          <div style={{ flex: 1, paddingTop: 4 }}>
+          <div style={{ flex: 1, paddingTop: 16, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', paddingBottom: 80 }}>
             {menuItems.map(renderSidebarItem)}
           </div>
 
@@ -371,38 +369,19 @@ const MainLayout: React.FC = () => {
       {/* Mobile Menu Drawer */}
       <Drawer
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
-              width: 40,
-              height: 40,
-              background: '#E60012',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontWeight: 700,
-              fontSize: 18,
-            }}>
-              J
-            </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 16 }}>JARRIS</div>
-              <div style={{ fontSize: 12, color: '#8c8c8c' }}>Mantenimiento</div>
-            </div>
-          </div>
+          <span style={{ fontWeight: 700, fontSize: 16 }}>JARRIS</span>
         }
         placement="left"
         onClose={() => setMobileMenuOpen(false)}
         open={mobileMenuOpen}
         width={280}
-        styles={{ body: { padding: 0 } }}
+        styles={{ body: { padding: 0, background: '#1a2733' }, header: { background: '#1a2733', borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#fff' }, content: { background: '#1a2733' } }}
       >
         {/* User Info */}
         <div style={{
           padding: '16px',
-          background: '#f5f5f5',
-          borderBottom: '1px solid #d9d9d9',
+          background: 'rgba(255,255,255,0.05)',
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
           marginBottom: 8,
         }}>
           <Space align="center">
@@ -410,10 +389,10 @@ const MainLayout: React.FC = () => {
               {user?.email.charAt(0).toUpperCase()}
             </Avatar>
             <div>
-              <div style={{ fontWeight: 500, fontSize: 14 }}>
+              <div style={{ fontWeight: 500, fontSize: 14, color: '#fff' }}>
                 {user?.email.split('@')[0]}
               </div>
-              <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
                 {user?.roles && getRoleLabel(user.roles)}
               </div>
             </div>
@@ -421,7 +400,7 @@ const MainLayout: React.FC = () => {
         </div>
 
         {/* Menu Items */}
-        <div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '12px 16px' }}>
           {menuItems.map(renderMobileMenuItem)}
         </div>
 
@@ -431,7 +410,7 @@ const MainLayout: React.FC = () => {
           bottom: 0,
           left: 0,
           right: 0,
-          borderTop: '1px solid #d9d9d9',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
           padding: '12px 16px',
         }}>
           <Button
@@ -439,7 +418,7 @@ const MainLayout: React.FC = () => {
             icon={<LogoutOutlined />}
             onClick={handleLogout}
             block
-            style={{ textAlign: 'left' }}
+            style={{ textAlign: 'left', color: 'rgba(255,255,255,0.65)' }}
           >
             Cerrar Sesión
           </Button>

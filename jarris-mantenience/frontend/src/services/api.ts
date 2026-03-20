@@ -123,6 +123,7 @@ export const workOrdersApi = {
   finish: (id: string, data: any) => api.patch(`/work-orders/${id}/finish`, data),
   close: (id: string, data: any) => api.patch(`/work-orders/${id}/close`, data),
   editClosed: (id: string, data: any) => api.patch(`/work-orders/${id}/edit-closed`, data),
+  changeAsset: (id: string, assetId: string) => api.patch(`/work-orders/${id}/change-asset`, { assetId }),
   
   // Fotos
   uploadPhotos: (id: string, formData: FormData) =>

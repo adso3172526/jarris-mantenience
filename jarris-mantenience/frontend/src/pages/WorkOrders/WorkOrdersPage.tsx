@@ -44,6 +44,7 @@ import CloseWorkOrderModal from './CloseWorkOrderModal';
 import RejectWorkOrderModal from './RejectWorkOrderModal';
 import UploadPhotosModal from './UploadPhotosModal';
 import EditClosedWorkOrderModal from './EditClosedWorkOrderModal';
+import ChangeAssetModal from './ChangeAssetModal';
 import { message } from 'antd';
 
 
@@ -95,6 +96,7 @@ const WorkOrdersPage: React.FC = () => {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [photosModalOpen, setPhotosModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [changeAssetModalOpen, setChangeAssetModalOpen] = useState(false);
   
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
 
@@ -121,7 +123,7 @@ const WorkOrdersPage: React.FC = () => {
     loadWorkOrders();
     usersApi.getTechniciansAndContractors().then((res) => setTechnicians(res.data)).catch(() => {});
     locationsApi.getAll().then((res) => setLocations(res.data)).catch(() => {});
-  }, []);
+  }, [isTecnico, isContratista, isPDV, user?.email, user?.locationId]);
 
   useEffect(() => {
     applyFilters();
@@ -369,6 +371,23 @@ const WorkOrdersPage: React.FC = () => {
       );
     }
 
+    // Cambiar activo (solo JEFE, solo OT de EQUIPO, antes de CERRADA/RECHAZADA)
+    if (isJefe && record.maintenanceType === 'EQUIPO' && record.status !== 'CERRADA' && record.status !== 'RECHAZADA') {
+      buttons.push(
+        <Tooltip key="change-asset" title="Activo">
+          <Button
+            type={isMobileView ? 'default' : 'text'}
+            icon={<EditOutlined />}
+            onClick={() => { setSelectedOrder(record); setChangeAssetModalOpen(true); }}
+            style={{ color: '#1890ff' }}
+            block={isMobileView}
+          >
+            {isMobileView && 'Activo'}
+          </Button>
+        </Tooltip>
+      );
+    }
+
     return isMobileView ? (
       <Space direction="vertical" style={{ width: '100%' }} size="small">
         {buttons}
@@ -411,16 +430,16 @@ const WorkOrdersPage: React.FC = () => {
             <div style={{ fontSize: 12, color: '#8c8c8c' }}>{record.asset.description}</div>
           </div>
         ) : (
-          <Tag color="green" style={{ marginBottom: 8 }}>
+          <span style={{ fontSize: 12, marginBottom: 8, display: 'inline-block' }}>
             {record.locativeCategory || 'LOCATIVO'}
-          </Tag>
+          </span>
         )}
 
         <div style={{ fontSize: 13, marginBottom: 4 }}>
           <strong>Solicitud:</strong> {record.title}
         </div>
 
-        <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>
+        <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4, fontWeight: 700 }}>
            {record.location.name}
         </div>
 
@@ -846,6 +865,15 @@ const WorkOrdersPage: React.FC = () => {
             onClose={() => setEditModalOpen(false)}
             onSuccess={loadWorkOrders}
             workOrder={selectedOrder}
+          />
+
+          <ChangeAssetModal
+            open={changeAssetModalOpen}
+            onClose={() => setChangeAssetModalOpen(false)}
+            onSuccess={loadWorkOrders}
+            workOrderId={selectedOrder.id}
+            locationId={selectedOrder.location.id}
+            currentAssetId={selectedOrder.asset?.id}
           />
         </>
       )}

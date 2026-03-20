@@ -912,4 +912,28 @@ Fecha: ${new Date().toLocaleString('es-CO')}
 
     return this.woRepo.save(wo);
   }
+
+  async changeAsset(id: string, assetId: string) {
+    const wo = await this.woRepo.findOne({
+      where: { id },
+      relations: ['asset', 'location'],
+    });
+    if (!wo) throw new NotFoundException('Work order not found');
+
+    const blockedStatuses = [WorkOrderStatus.CERRADA, WorkOrderStatus.RECHAZADA];
+    if (blockedStatuses.includes(wo.status)) {
+      throw new BadRequestException('No se puede cambiar el activo de una OT cerrada o rechazada');
+    }
+
+    const asset = await this.assetRepo.findOne({
+      where: { id: assetId },
+      relations: ['location'],
+    });
+    if (!asset) throw new NotFoundException('Activo no encontrado');
+
+    wo.asset = asset;
+    wo.location = asset.location;
+
+    return this.woRepo.save(wo);
+  }
 }
