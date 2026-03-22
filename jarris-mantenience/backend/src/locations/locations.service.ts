@@ -73,7 +73,7 @@ export class LocationsService {
         status: WorkOrderStatus.CERRADA,
         maintenanceType: MaintenanceType.LOCATIVO,
       },
-      relations: ['location'],
+      relations: ['location', 'locativeCategory'],
       order: { closedAt: 'DESC' },
     });
 

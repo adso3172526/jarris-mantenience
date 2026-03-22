@@ -77,7 +77,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
 
   const handleLocationChange = (locationId: string) => {
     setSelectedLocationId(locationId);
-    form.setFieldsValue({ assetId: undefined, locativeCategory: undefined });
+    form.setFieldsValue({ assetId: undefined, locativeCategoryId: undefined });
     setAssets([]);
     if (locationId) {
       loadAssetsByLocation(locationId);
@@ -277,7 +277,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
                 size="small"
                 style={typeCardStyle('EQUIPO')}
                 styles={{ body: { padding: '12px 16px', textAlign: 'center' } }}
-                onClick={() => { form.setFieldsValue({ maintenanceType: 'EQUIPO', assetId: undefined, locativeCategory: undefined }); if (isAdminOrJefe && selectedLocationId) loadAssetsByLocation(selectedLocationId); }}
+                onClick={() => { form.setFieldsValue({ maintenanceType: 'EQUIPO', assetId: undefined, locativeCategoryId: undefined }); if (isAdminOrJefe && selectedLocationId) loadAssetsByLocation(selectedLocationId); }}
               >
                 <ToolOutlined style={{ fontSize: 22, color: maintenanceType === 'EQUIPO' ? '#1890ff' : '#8c8c8c', display: 'block', marginBottom: 4 }} />
                 <div style={{ fontWeight: 600, fontSize: 13 }}>Equipo</div>
@@ -288,7 +288,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
                 size="small"
                 style={typeCardStyle('LOCATIVO')}
                 styles={{ body: { padding: '12px 16px', textAlign: 'center' } }}
-                onClick={() => form.setFieldsValue({ maintenanceType: 'LOCATIVO', assetId: undefined, locativeCategory: undefined })}
+                onClick={() => form.setFieldsValue({ maintenanceType: 'LOCATIVO', assetId: undefined, locativeCategoryId: undefined })}
               >
                 <HomeOutlined style={{ fontSize: 22, color: maintenanceType === 'LOCATIVO' ? '#722ed1' : '#8c8c8c', display: 'block', marginBottom: 4 }} />
                 <div style={{ fontWeight: 600, fontSize: 13 }}>Locativo</div>
@@ -336,7 +336,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
         {maintenanceType === 'LOCATIVO' && (
           <Form.Item
             label="Categoría"
-            name="locativeCategory"
+            name="locativeCategoryId"
             rules={[{ required: true, message: 'Selecciona una categoría' }]}
           >
             <Select
@@ -347,7 +347,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
               optionFilterProp="children"
             >
               {locativeCategories.map((cat) => (
-                <Select.Option key={cat.id} value={cat.name}>
+                <Select.Option key={cat.id} value={cat.id}>
                   {cat.name}
                 </Select.Option>
               ))}

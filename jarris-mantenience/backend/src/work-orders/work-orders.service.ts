@@ -8,6 +8,7 @@ import { WorkOrderEntity, WorkOrderStatus, AssigneeType, MaintenanceType } from 
 import { AssetEntity } from '../entities/asset.entity';
 import { LocationEntity } from '../entities/location.entity';
 import { AssetEventEntity, AssetEventType } from '../entities/asset-event.entity';
+import { LocativeCategoryEntity } from '../entities/locative-category.entity';
 
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { AssignWorkOrderDto } from './dto/assign-work-order.dto';
@@ -38,6 +39,9 @@ export class WorkOrdersService {
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
 
+    @InjectRepository(LocativeCategoryEntity)
+    private readonly locativeCategoryRepo: Repository<LocativeCategoryEntity>,
+
     private readonly dataSource: DataSource,
     private readonly mail: MailService,
   ) {}
@@ -58,7 +62,7 @@ async create(dto: CreateWorkOrderDto) {
   }
 
   // ? VALIDACIÓN 3: Si es LOCATIVO, debe tener categoría
-  if (dto.maintenanceType === MaintenanceType.LOCATIVO && !dto.locativeCategory) {
+  if (dto.maintenanceType === MaintenanceType.LOCATIVO && !dto.locativeCategoryId) {
     throw new BadRequestException(
       'Mantenimiento LOCATIVO requiere categoría'
     );
@@ -115,12 +119,20 @@ async create(dto: CreateWorkOrderDto) {
     }
   }
 
+  // Resolver categoría locativa si viene
+  let locativeCategory: LocativeCategoryEntity | undefined;
+  if (dto.locativeCategoryId) {
+    const found = await this.locativeCategoryRepo.findOne({ where: { id: dto.locativeCategoryId } });
+    if (!found) throw new NotFoundException('Locative category not found');
+    locativeCategory = found;
+  }
+
   // Crear OT
   const wo = this.woRepo.create({
     asset,  // Puede ser undefined para LOCATIVO
     location,
     maintenanceType: dto.maintenanceType || MaintenanceType.EQUIPO,
-    locativeCategory: dto.locativeCategory,
+    locativeCategory,
     title: dto.title.trim(),
     requestDescription: dto.requestDescription,
     status: WorkOrderStatus.NUEVA,
@@ -134,7 +146,7 @@ async create(dto: CreateWorkOrderDto) {
  async assign(id: string, dto: AssignWorkOrderDto) {
   const wo = await this.woRepo.findOne({
     where: { id },
-    relations: ['asset', 'location'],
+    relations: ['asset', 'location', 'locativeCategory'],
   });
   if (!wo) throw new NotFoundException('Work order not found');
   if (![WorkOrderStatus.NUEVA, WorkOrderStatus.ASIGNADA].includes(wo.status)) {
@@ -176,7 +188,7 @@ Nueva Orden de Trabajo Asignada
 OT: ${saved.id}
 ${asset ? `Equipo: ${asset.code} - ${asset.description}
 Categoría: ${asset.category?.name ?? ''}` : `Tipo: Mantenimiento Locativo
-Categoría: ${wo.locativeCategory ?? ''}`}
+Categoría: ${wo.locativeCategory?.name ?? ''}`}
 Ubicación: ${wo.location?.name ?? ''}
 
 Descripción del Trabajo:
@@ -392,7 +404,7 @@ Cuando termine, suba la factura (PDF/JPG/PNG) si aplica.
           </div>
           <div class="info-row">
             <div class="info-label">Categoría:</div>
-            <div class="info-value">${wo.locativeCategory ?? 'N/A'}</div>
+            <div class="info-value">${wo.locativeCategory?.name ?? 'N/A'}</div>
           </div>
           `}
           <div class="info-row">
@@ -461,7 +473,7 @@ Cuando termine, suba la factura (PDF/JPG/PNG) si aplica.
   async start(id: string, dto: StartWorkOrderDto) {
     const wo = await this.woRepo.findOne({
       where: { id },
-      relations: ['asset', 'location'],
+      relations: ['asset', 'location', 'locativeCategory'],
     });
     if (!wo) throw new NotFoundException('Work order not found');
 
@@ -478,7 +490,7 @@ Cuando termine, suba la factura (PDF/JPG/PNG) si aplica.
   async finish(id: string, dto: FinishWorkOrderDto) {
     const wo = await this.woRepo.findOne({
       where: { id },
-      relations: ['asset', 'location'],
+      relations: ['asset', 'location', 'locativeCategory'],
     });
     if (!wo) throw new NotFoundException('Work order not found');
 
@@ -612,7 +624,7 @@ Cuando termine, suba la factura (PDF/JPG/PNG) si aplica.
   async reject(id: string, dto: RejectWorkOrderDto) {
     const wo = await this.woRepo.findOne({
       where: { id },
-      relations: ['asset', 'location'],
+      relations: ['asset', 'location', 'locativeCategory'],
     });
     if (!wo) throw new NotFoundException('Work order not found');
 
@@ -634,7 +646,7 @@ Cuando termine, suba la factura (PDF/JPG/PNG) si aplica.
 `Su solicitud de mantenimiento ha sido rechazada
 
 OT: ${wo.id}
-${wo.asset ? `Equipo: ${wo.asset.code} - ${wo.asset.description}` : `Tipo: Mantenimiento Locativo - ${wo.locativeCategory ?? ''}`}
+${wo.asset ? `Equipo: ${wo.asset.code} - ${wo.asset.description}` : `Tipo: Mantenimiento Locativo - ${wo.locativeCategory?.name ?? ''}`}
 Ubicación: ${wo.location.name}
 
 Motivo del rechazo:
@@ -659,7 +671,7 @@ Fecha: ${new Date().toLocaleString('es-CO')}
   async editClosed(id: string, dto: EditClosedWorkOrderDto) {
     const wo = await this.woRepo.findOne({
       where: { id },
-      relations: ['asset', 'location'],
+      relations: ['asset', 'location', 'locativeCategory'],
     });
 
     if (!wo) throw new NotFoundException('Work order not found');
@@ -691,7 +703,7 @@ Fecha: ${new Date().toLocaleString('es-CO')}
   return this.dataSource.transaction(async (manager) => {
     const wo = await manager.findOne(WorkOrderEntity, {
       where: { id },
-      relations: ['asset', 'location', 'asset.location'],
+      relations: ['asset', 'location', 'asset.location', 'locativeCategory'],
     });
 
     if (!wo) throw new NotFoundException('Work order not found');
@@ -737,17 +749,17 @@ Fecha: ${new Date().toLocaleString('es-CO')}
 
   findAll() {
     return this.woRepo.find({
-      relations: ['asset', 'location'],
+      relations: ['asset', 'location', 'locativeCategory'],
       order: { createdAt: 'DESC' },
     });
   }
   async findByAsset(assetId: string) {
   return this.woRepo.find({
-    where: { 
+    where: {
       asset: { id: assetId },
       status: WorkOrderStatus.CERRADA,
     },
-    relations: ['asset', 'asset.category', 'location'],
+    relations: ['asset', 'asset.category', 'location', 'locativeCategory'],
     order: { closedAt: 'DESC' },
   });
 }
@@ -755,7 +767,7 @@ Fecha: ${new Date().toLocaleString('es-CO')}
   async findOne(id: string) {
     const wo = await this.woRepo.findOne({
       where: { id },
-      relations: ['asset', 'location'],
+      relations: ['asset', 'location', 'locativeCategory'],
     });
     if (!wo) throw new NotFoundException('Work order not found');
     return wo;
@@ -764,7 +776,7 @@ Fecha: ${new Date().toLocaleString('es-CO')}
   async findByStatus(status: WorkOrderStatus) {
     return this.woRepo.find({
       where: { status },
-      relations: ['asset', 'asset.category', 'asset.location', 'location'],
+      relations: ['asset', 'asset.category', 'asset.location', 'location', 'locativeCategory'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -772,7 +784,7 @@ Fecha: ${new Date().toLocaleString('es-CO')}
   async findByLocation(locationId: string) {
     return this.woRepo.find({
       where: { location: { id: locationId } },
-      relations: ['asset', 'asset.category', 'location'],
+      relations: ['asset', 'asset.category', 'location', 'locativeCategory'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -780,7 +792,7 @@ Fecha: ${new Date().toLocaleString('es-CO')}
   async findByAssignee(assigneeEmail: string) {
     return this.woRepo.find({
       where: { assigneeEmail },
-      relations: ['asset', 'asset.category', 'location'],
+      relations: ['asset', 'asset.category', 'location', 'locativeCategory'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -789,7 +801,7 @@ Fecha: ${new Date().toLocaleString('es-CO')}
   async findByCreator(creatorEmail: string) {
     return this.woRepo.find({
       where: { createdBy: creatorEmail },
-      relations: ['asset', 'asset.category', 'location'],
+      relations: ['asset', 'asset.category', 'location', 'locativeCategory'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -916,7 +928,7 @@ Fecha: ${new Date().toLocaleString('es-CO')}
   async changeAsset(id: string, assetId: string) {
     const wo = await this.woRepo.findOne({
       where: { id },
-      relations: ['asset', 'location'],
+      relations: ['asset', 'location', 'locativeCategory'],
     });
     if (!wo) throw new NotFoundException('Work order not found');
 

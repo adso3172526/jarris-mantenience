@@ -8,14 +8,15 @@ import { WorkOrderEntity } from '../entities/work-order.entity';
 import { AssetEntity } from '../entities/asset.entity';
 import { LocationEntity } from '../entities/location.entity';
 import { AssetEventEntity } from '../entities/asset-event.entity';
+import { LocativeCategoryEntity } from '../entities/locative-category.entity';
 
-import { MailModule } from '../mail/mail.module'; // ✅
+import { MailModule } from '../mail/mail.module';
 import { UserEntity } from '../entities/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([WorkOrderEntity, AssetEntity, LocationEntity, AssetEventEntity,UserEntity,]),
-    MailModule, // ✅ CLAVE
+    TypeOrmModule.forFeature([WorkOrderEntity, AssetEntity, LocationEntity, AssetEventEntity, UserEntity, LocativeCategoryEntity]),
+    MailModule,
   ],
   controllers: [WorkOrdersController],
   providers: [WorkOrdersService],

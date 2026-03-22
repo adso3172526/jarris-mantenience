@@ -26,7 +26,7 @@ export class ReportsService {
         wo.status::text AS estado,
         wo.maintenance_type::text AS categoria,
         COALESCE(wo.event_type::text, ev.type::text) AS tipo_mantenimiento,
-        wo.locative_category::text AS categoria_locativa,
+        lc.name AS categoria_locativa,
         wo.title AS solicitud,
         l.name AS ubicacion_nombre,
         l.id AS ubicacion_id,
@@ -49,6 +49,7 @@ export class ReportsService {
       LEFT JOIN locations l ON wo.location_id = l.id
       LEFT JOIN assets a ON wo.asset_id = a.id
       LEFT JOIN categories c ON a."categoryId" = c.id
+      LEFT JOIN locative_categories lc ON lc.id = wo.locative_category_id
       LEFT JOIN asset_events ev ON ev."workOrderId" = wo.id
       UNION ALL
 

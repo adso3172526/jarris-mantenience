@@ -62,7 +62,7 @@ const CloseWorkOrderModal: React.FC<CloseWorkOrderModalProps> = ({
               <strong>{workOrder.asset ? 'Equipo:' : 'Tipo:'}</strong>{' '}
               {workOrder.asset 
                 ? `${workOrder.asset.code} - ${workOrder.asset.description}` 
-                : `Mantenimiento Locativo - ${workOrder.locativeCategory || ''}`}
+                : `Mantenimiento Locativo - ${workOrder.locativeCategory?.name || ''}`}
             </p>
             <p><strong>Trabajo realizado:</strong> {workOrder.workDoneDescription}</p>
             <p><strong>Costo:</strong> ${workOrder.cost.toLocaleString()}</p>

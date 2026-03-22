@@ -233,7 +233,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
         {workOrder.maintenanceType === 'LOCATIVO' && (
           <div style={{ marginBottom: 8 }}>
             <Text type="secondary" style={{ fontSize: 12 }}>Categoría Locativa:</Text>
-            <div>{workOrder.locativeCategory}</div>
+            <div>{workOrder.locativeCategory?.name}</div>
           </div>
         )}
 
@@ -456,7 +456,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
 
         {workOrder.maintenanceType === 'LOCATIVO' && (
           <Descriptions.Item label="Categoría Locativa" span={2}>
-            {workOrder.locativeCategory}
+            {workOrder.locativeCategory?.name}
           </Descriptions.Item>
         )}
 

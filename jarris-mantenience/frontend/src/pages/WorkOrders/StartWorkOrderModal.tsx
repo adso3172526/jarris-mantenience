@@ -67,7 +67,7 @@ const StartWorkOrderModal: React.FC<StartWorkOrderModalProps> = ({
               <strong>{workOrder.asset ? 'Equipo:' : 'Tipo:'}</strong>{' '}
               {workOrder.asset 
                 ? `${workOrder.asset.code} - ${workOrder.asset.description}` 
-                : `Mantenimiento Locativo - ${workOrder.locativeCategory || ''}`}
+                : `Mantenimiento Locativo - ${workOrder.locativeCategory?.name || ''}`}
             </p>
             <p style={{ marginBottom: 12 }}>
               <strong>Ubicación:</strong> {workOrder.location.name}

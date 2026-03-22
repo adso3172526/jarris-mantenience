@@ -53,7 +53,7 @@ interface WorkOrder {
   title: string;
   status: string;
   maintenanceType?: string;
-  locativeCategory?: string;
+  locativeCategory?: { id: string; name: string };
   assigneeType?: string;
   assigneeName?: string;
   assigneeEmail?: string;
@@ -173,7 +173,7 @@ const WorkOrdersPage: React.FC = () => {
           wo.title.toLowerCase().includes(search) ||
           (wo.asset?.code?.toLowerCase().includes(search)) ||
           (wo.asset?.description?.toLowerCase().includes(search)) ||
-          (wo.locativeCategory?.toLowerCase().includes(search))
+          (wo.locativeCategory?.name?.toLowerCase().includes(search))
       );
     }
 
@@ -431,7 +431,7 @@ const WorkOrdersPage: React.FC = () => {
           </div>
         ) : (
           <span style={{ fontSize: 12, marginBottom: 8, display: 'inline-block' }}>
-            {record.locativeCategory || 'LOCATIVO'}
+            {record.locativeCategory?.name || 'LOCATIVO'}
           </span>
         )}
 
@@ -538,15 +538,15 @@ const WorkOrdersPage: React.FC = () => {
       width: 150,
       ellipsis: true,
       sorter: (a, b) => {
-        const aVal = a.asset?.code || a.locativeCategory || '';
-        const bVal = b.asset?.code || b.locativeCategory || '';
+        const aVal = a.asset?.code || a.locativeCategory?.name || '';
+        const bVal = b.asset?.code || b.locativeCategory?.name || '';
         return aVal.localeCompare(bVal);
       },
       render: (_, record) => {
         if (record.maintenanceType === 'EQUIPO' && record.asset) {
           return record.asset.code;
         } else {
-          return record.locativeCategory || 'LOCATIVO';
+          return record.locativeCategory?.name || 'LOCATIVO';
         }
       },
     },

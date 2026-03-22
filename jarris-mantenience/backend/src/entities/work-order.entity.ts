@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { AssetEntity } from './asset.entity';
 import { LocationEntity } from './location.entity';
+import { LocativeCategoryEntity } from './locative-category.entity';
 
 export enum WorkOrderStatus {
   NUEVA = 'NUEVA',
@@ -54,14 +55,10 @@ export class WorkOrderEntity {
   })
   maintenanceType: MaintenanceType;
 
-  // ✅ NUEVO: Categoría locativa (solo si es LOCATIVO)
-  @Column({
-    type: 'varchar',
-    length: 50,
-    nullable: true,
-    name: 'locative_category',
-  })
-  locativeCategory?: string;
+  // Categoría locativa (solo si es LOCATIVO) - FK a locative_categories
+  @ManyToOne(() => LocativeCategoryEntity, { nullable: true })
+  @JoinColumn({ name: 'locative_category_id' })
+  locativeCategory?: LocativeCategoryEntity;
 
   @Column({ length: 200 })
   title: string;

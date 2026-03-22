@@ -12,11 +12,11 @@ export class CreateWorkOrderDto {
   @IsEnum(MaintenanceType)
   maintenanceType?: MaintenanceType;
 
-  // ✅ NUEVO: Categoría locativa (requerida solo si maintenanceType === LOCATIVO)
+  // Categoría locativa (requerida solo si maintenanceType === LOCATIVO)
   @ValidateIf(o => o.maintenanceType === MaintenanceType.LOCATIVO)
-  @IsString()
+  @IsUUID()
   @IsNotEmpty()
-  locativeCategory?: string;
+  locativeCategoryId?: string;
 
   @IsString()
   @IsNotEmpty()

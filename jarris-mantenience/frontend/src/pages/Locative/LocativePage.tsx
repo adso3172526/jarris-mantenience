@@ -49,7 +49,7 @@ interface WorkOrder {
   title: string;
   status: string;
   maintenanceType?: string;
-  locativeCategory?: string;
+  locativeCategory?: { id: string; name: string };
   assigneeType?: string;
   assigneeName?: string;
   assigneeEmail?: string;
@@ -155,7 +155,7 @@ const LocativePage: React.FC = () => {
         (wo) =>
           wo.id?.toLowerCase().includes(search) ||
           wo.title?.toLowerCase().includes(search) ||
-          wo.locativeCategory?.toLowerCase().includes(search) ||
+          wo.locativeCategory?.name?.toLowerCase().includes(search) ||
           wo.assigneeName?.toLowerCase().includes(search) ||
           wo.location?.name?.toLowerCase().includes(search)
       );
@@ -437,8 +437,8 @@ const LocativePage: React.FC = () => {
       key: 'locativeCategory',
       width: 140,
       ellipsis: true,
-      sorter: (a, b) => (a.locativeCategory || '').localeCompare(b.locativeCategory || ''),
-      render: (cat: string) => cat || '-',
+      sorter: (a, b) => (a.locativeCategory?.name || '').localeCompare(b.locativeCategory?.name || ''),
+      render: (_: any, record: WorkOrder) => record.locativeCategory?.name || '-',
     },
     {
       title: 'Asignado a',
@@ -515,7 +515,7 @@ const LocativePage: React.FC = () => {
           <Tag color={isContratista ? undefined : 'purple-inverse'}>
             <HomeOutlined /> LOCATIVO
           </Tag>
-          <div style={{ fontSize: 12, marginTop: 4 }}>{record.locativeCategory}</div>
+          <div style={{ fontSize: 12, marginTop: 4 }}>{record.locativeCategory?.name}</div>
         </div>
 
         <div style={{ fontSize: 13, marginBottom: 4, wordBreak: 'break-word' }}>

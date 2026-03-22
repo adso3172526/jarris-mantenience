@@ -73,7 +73,7 @@ const ViewLocationExpensesModal: React.FC<ViewLocationExpensesModalProps> = ({
             #{record.id.substring(0, 8)}
           </span>
           <Tag color="green" icon={<HomeOutlined />} style={{ margin: 0 }}>
-            {record.locativeCategory || 'Locativo'}
+            {record.locativeCategory?.name || 'Locativo'}
           </Tag>
         </div>
 
@@ -119,7 +119,7 @@ const ViewLocationExpensesModal: React.FC<ViewLocationExpensesModalProps> = ({
       width: 150,
       render: (_: any, record: any) => (
         <Tag color="green" icon={<HomeOutlined />}>
-          {record.locativeCategory || 'Locativo'}
+          {record.locativeCategory?.name || 'Locativo'}
         </Tag>
       ),
     },
