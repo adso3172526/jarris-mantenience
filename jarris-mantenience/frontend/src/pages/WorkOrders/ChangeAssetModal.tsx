@@ -19,9 +19,15 @@ const ChangeAssetModal: React.FC<Props> = ({ open, onClose, onSuccess, workOrder
   useEffect(() => {
     if (open && locationId) {
       assetsApi.getByLocation(locationId).then((res) => {
-        setAssets(res.data.filter((a: any) => a.status === 'ACTIVO'));
+        const activeAssets = res.data.filter((a: any) => a.status === 'ACTIVO');
+        setAssets(activeAssets);
+        // Solo pre-seleccionar si el activo actual está en la lista
+        if (currentAssetId && activeAssets.some((a: any) => a.id === currentAssetId)) {
+          setSelectedAssetId(currentAssetId);
+        } else {
+          setSelectedAssetId(undefined);
+        }
       }).catch(() => message.error('Error al cargar activos'));
-      setSelectedAssetId(currentAssetId);
     }
   }, [open, locationId, currentAssetId]);
 
