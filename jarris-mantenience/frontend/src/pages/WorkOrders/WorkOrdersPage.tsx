@@ -12,6 +12,7 @@ import {
   Col,
   Divider,
   DatePicker,
+  Pagination,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -21,6 +22,7 @@ import {
   PlayCircleOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  SendOutlined,
   FileTextOutlined,
   SearchOutlined,
   CloseSquareOutlined,
@@ -29,6 +31,7 @@ import {
   HomeOutlined,
   EditOutlined,
   ClearOutlined,
+  FilterOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -85,7 +88,9 @@ const WorkOrdersPage: React.FC = () => {
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  
+  const [mobilePage, setMobilePage] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -199,6 +204,7 @@ const WorkOrdersPage: React.FC = () => {
     }
 
     setFilteredOrders(filtered);
+    setMobilePage(1);
   };
 
   const handleView = (order: WorkOrder) => {
@@ -270,34 +276,35 @@ const WorkOrdersPage: React.FC = () => {
       );
     }
 
-    // Rechazar
-    if (isJefe && record.status === 'NUEVA') {
-      buttons.push(
-        <Tooltip key="reject" title="Rechazar">
-          <Button
-            type={isMobileView ? "default" : "text"}
-            danger
-            icon={<CloseSquareOutlined />}
-            onClick={() => handleReject(record)}
-            block={isMobileView}
-          >
-            {isMobileView && "Rechazar"}
-          </Button>
-        </Tooltip>
-      );
-    }
-
     // Asignar
     if (isJefe && record.status === 'NUEVA') {
       buttons.push(
         <Tooltip key="assign" title="Asignar">
           <Button
-            type={isMobileView ? "primary" : "text"}
+            type={isMobileView ? "default" : "text"}
             icon={<UserAddOutlined />}
             onClick={() => handleAssign(record)}
             block={isMobileView}
+            style={isMobileView ? { color: '#faad14', background: '#fff' } : {}}
           >
             {isMobileView && "Asignar"}
+          </Button>
+        </Tooltip>
+      );
+    }
+
+    // Cambiar activo (solo JEFE, solo OT de EQUIPO, antes de CERRADA/RECHAZADA)
+    if (isJefe && record.maintenanceType === 'EQUIPO' && record.status !== 'CERRADA' && record.status !== 'RECHAZADA') {
+      buttons.push(
+        <Tooltip key="change-asset" title="Activo">
+          <Button
+            type={isMobileView ? 'default' : 'text'}
+            icon={<EditOutlined />}
+            onClick={() => { setSelectedOrder(record); setChangeAssetModalOpen(true); }}
+            style={{ color: '#1890ff' }}
+            block={isMobileView}
+          >
+            {isMobileView && 'Activo'}
           </Button>
         </Tooltip>
       );
@@ -359,10 +366,10 @@ const WorkOrdersPage: React.FC = () => {
       buttons.push(
         <Tooltip key="close" title="Cerrar OT">
           <Button
-            type={isMobileView ? "primary" : "text"}
-            icon={<CloseCircleOutlined />}
+            type={isMobileView ? "default" : "text"}
+            icon={<SendOutlined style={{ color: '#52c41a' }} />}
             onClick={() => handleClose(record)}
-            style={!isMobileView ? { color: '#E60012' } : { backgroundColor: '#E60012', borderColor: '#E60012' }}
+            style={!isMobileView ? { color: '#E60012' } : { color: '#E60012', background: '#fff' }}
             block={isMobileView}
           >
             {isMobileView && "Cerrar"}
@@ -371,18 +378,19 @@ const WorkOrdersPage: React.FC = () => {
       );
     }
 
-    // Cambiar activo (solo JEFE, solo OT de EQUIPO, antes de CERRADA/RECHAZADA)
-    if (isJefe && record.maintenanceType === 'EQUIPO' && record.status !== 'CERRADA' && record.status !== 'RECHAZADA') {
+    // Rechazar
+    if (isJefe && record.status === 'NUEVA') {
       buttons.push(
-        <Tooltip key="change-asset" title="Activo">
+        <Tooltip key="reject" title="Rechazar">
           <Button
-            type={isMobileView ? 'default' : 'text'}
-            icon={<EditOutlined />}
-            onClick={() => { setSelectedOrder(record); setChangeAssetModalOpen(true); }}
-            style={{ color: '#1890ff' }}
+            type={isMobileView ? "default" : "text"}
+            danger={!isMobileView}
+            icon={<CloseSquareOutlined />}
+            onClick={() => handleReject(record)}
             block={isMobileView}
+            style={isMobileView ? { color: '#ff4d4f', background: '#fff' } : {}}
           >
-            {isMobileView && 'Activo'}
+            {isMobileView && "Rechazar"}
           </Button>
         </Tooltip>
       );
@@ -598,8 +606,8 @@ const WorkOrdersPage: React.FC = () => {
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
             <Space>
-              <FileTextOutlined style={{ fontSize: 18, color: '#E60012' }} />
-              <span style={{ fontSize: isMobile ? 16 : 16, fontWeight: 600 }}>{isPDV ? 'Mis Solicitudes' : 'Ordenes de Trabajo'}</span>
+              <FileTextOutlined style={{ fontSize: isMobile ? 14 : 18, color: '#E60012' }} />
+              <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>{isPDV ? 'Mis Solicitudes' : 'Ordenes de Trabajo'}</span>
             </Space>
             {(isPDV || isJefe || hasRole('ADMIN')) && (
               <Button
@@ -613,152 +621,246 @@ const WorkOrdersPage: React.FC = () => {
             )}
           </div>
         }
-        styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'auto' : 'hidden' } }}
+        styles={{ header: isMobile ? { padding: '0 12px', minHeight: 40 } : {}, body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'auto' : 'hidden' } }}
         style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'auto' : 'hidden' }}
       >
         {/* Filtros */}
-        <Card size="small" style={{ marginBottom: 12, background: '#fafafa' }}>
-          <Row gutter={[8, 8]}>
-            <Col xs={24} sm={12} md={4}>
-              <Input
-                placeholder={isMobile ? 'Buscar...' : 'Buscar OT...'}
-                prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                allowClear
-                size={isMobile ? 'large' : 'middle'}
-              />
-            </Col>
-            <Col xs={24} sm={12} md={3}>
-              <Select
-                placeholder="Estado"
-                style={{ width: '100%' }}
-                value={filterStatus}
-                onChange={setFilterStatus}
-                allowClear
-                size={isMobile ? 'large' : 'middle'}
-              >
-                <Select.Option value="NUEVA">Nueva</Select.Option>
-                <Select.Option value="ASIGNADA">Asignada</Select.Option>
-                <Select.Option value="EN_PROCESO">En Proceso</Select.Option>
-                <Select.Option value="TERMINADA">Terminada</Select.Option>
-                <Select.Option value="CERRADA">Cerrada</Select.Option>
-                <Select.Option value="RECHAZADA">Rechazada</Select.Option>
-              </Select>
-            </Col>
-            {!isTecnico && !isContratista && !isPDV && (
-              <Col xs={24} sm={12} md={4}>
-                <Select
-                  placeholder="Técnico/Contratista"
-                  style={{ width: '100%' }}
-                  value={filterAssignee}
-                  onChange={setFilterAssignee}
+        {isMobile ? (
+          <div style={{ marginBottom: 12 }}>
+            <Button
+              icon={<FilterOutlined />}
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              block
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                background: '#fff',
+                color: hasActiveFilters ? '#E60012' : 'rgba(0,0,0,0.88)',
+                borderColor: hasActiveFilters ? '#E60012' : '#d9d9d9',
+              }}
+            >
+              Filtros{hasActiveFilters ? ` (${[searchText, filterStatus, filterAssignee, filterLocation, dateRange].filter(Boolean).length})` : ''}
+            </Button>
+            {filtersOpen && (
+              <Card size="small" style={{ marginTop: 8, background: '#fafafa' }}>
+                <Row gutter={[8, 8]}>
+                  <Col xs={24}>
+                    <Input
+                      placeholder="Buscar..."
+                      prefix={<SearchOutlined />}
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      allowClear
+                      size="large"
+                    />
+                  </Col>
+                  <Col xs={24}>
+                    <Select
+                      placeholder="Estado"
+                      style={{ width: '100%' }}
+                      value={filterStatus}
+                      onChange={setFilterStatus}
+                      allowClear
+                      size="large"
+                    >
+                      <Select.Option value="NUEVA">Nueva</Select.Option>
+                      <Select.Option value="ASIGNADA">Asignada</Select.Option>
+                      <Select.Option value="EN_PROCESO">En Proceso</Select.Option>
+                      <Select.Option value="TERMINADA">Terminada</Select.Option>
+                      <Select.Option value="CERRADA">Cerrada</Select.Option>
+                      <Select.Option value="RECHAZADA">Rechazada</Select.Option>
+                    </Select>
+                  </Col>
+                  {!isTecnico && !isContratista && !isPDV && (
+                    <Col xs={24}>
+                      <Select
+                        placeholder="Técnico/Contratista"
+                        style={{ width: '100%' }}
+                        value={filterAssignee}
+                        onChange={setFilterAssignee}
+                        allowClear
+                        showSearch
+                        optionFilterProp="children"
+                        size="large"
+                      >
+                        {technicians
+                          .sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email))
+                          .map((tech) => (
+                            <Select.Option key={tech.id} value={tech.email}>
+                              {tech.name || tech.email.split('@')[0]}
+                            </Select.Option>
+                          ))}
+                      </Select>
+                    </Col>
+                  )}
+                  {!isPDV && (
+                    <Col xs={24}>
+                      <Select
+                        placeholder="Ubicación"
+                        style={{ width: '100%' }}
+                        value={filterLocation}
+                        onChange={setFilterLocation}
+                        allowClear
+                        showSearch
+                        optionFilterProp="children"
+                        size="large"
+                      >
+                        {locations
+                          .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                          .map((loc: any) => (
+                            <Select.Option key={loc.id} value={loc.id}>
+                              {loc.name}
+                            </Select.Option>
+                          ))}
+                      </Select>
+                    </Col>
+                  )}
+                  <Col xs={12}>
+                    <DatePicker
+                      style={{ width: '100%' }}
+                      placeholder="Desde"
+                      value={dateRange?.[0] || null}
+                      onChange={(date) => setDateRange(date ? [date, dateRange?.[1] || date] : null)}
+                      format="DD/MM/YYYY"
+                      size="large"
+                      placement="topLeft"
+                    />
+                  </Col>
+                  <Col xs={12}>
+                    <DatePicker
+                      style={{ width: '100%' }}
+                      placeholder="Hasta"
+                      value={dateRange?.[1] || null}
+                      onChange={(date) => setDateRange(date ? [dateRange?.[0] || date, date] : null)}
+                      format="DD/MM/YYYY"
+                      size="large"
+                      placement="topRight"
+                    />
+                  </Col>
+                  <Col xs={24}>
+                    <Button
+                      icon={<ClearOutlined />}
+                      onClick={handleClearFilters}
+                      disabled={!hasActiveFilters}
+                      block
+                      size="large"
+                    >
+                      Limpiar
+                    </Button>
+                  </Col>
+                </Row>
+                {hasActiveFilters && (
+                  <div style={{ marginTop: 8, color: '#1890ff', fontSize: 11 }}>
+                    Mostrando {filteredOrders.length} de {workOrders.length} órdenes
+                  </div>
+                )}
+              </Card>
+            )}
+          </div>
+        ) : (
+          <Card size="small" style={{ marginBottom: 12, background: '#fafafa' }}>
+            <Row gutter={[8, 8]}>
+              <Col sm={12} md={4}>
+                <Input
+                  placeholder="Buscar OT..."
+                  prefix={<SearchOutlined />}
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   allowClear
-                  showSearch
-                  optionFilterProp="children"
-                  size={isMobile ? 'large' : 'middle'}
+                  size="middle"
+                />
+              </Col>
+              <Col sm={12} md={3}>
+                <Select
+                  placeholder="Estado"
+                  style={{ width: '100%' }}
+                  value={filterStatus}
+                  onChange={setFilterStatus}
+                  allowClear
+                  size="middle"
                 >
-                  {technicians
-                    .sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email))
-                    .map((tech) => (
-                      <Select.Option key={tech.id} value={tech.email}>
-                        {tech.name || tech.email.split('@')[0]}
-                      </Select.Option>
-                    ))}
+                  <Select.Option value="NUEVA">Nueva</Select.Option>
+                  <Select.Option value="ASIGNADA">Asignada</Select.Option>
+                  <Select.Option value="EN_PROCESO">En Proceso</Select.Option>
+                  <Select.Option value="TERMINADA">Terminada</Select.Option>
+                  <Select.Option value="CERRADA">Cerrada</Select.Option>
+                  <Select.Option value="RECHAZADA">Rechazada</Select.Option>
                 </Select>
               </Col>
-            )}
-            {!isPDV && (
-              <Col xs={24} sm={12} md={4}>
-                <Select
-                  placeholder="Ubicación"
+              {!isTecnico && !isContratista && !isPDV && (
+                <Col sm={12} md={4}>
+                  <Select
+                    placeholder="Técnico/Contratista"
+                    style={{ width: '100%' }}
+                    value={filterAssignee}
+                    onChange={setFilterAssignee}
+                    allowClear
+                    showSearch
+                    optionFilterProp="children"
+                    size="middle"
+                  >
+                    {technicians
+                      .sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email))
+                      .map((tech) => (
+                        <Select.Option key={tech.id} value={tech.email}>
+                          {tech.name || tech.email.split('@')[0]}
+                        </Select.Option>
+                      ))}
+                  </Select>
+                </Col>
+              )}
+              {!isPDV && (
+                <Col sm={12} md={4}>
+                  <Select
+                    placeholder="Ubicación"
+                    style={{ width: '100%' }}
+                    value={filterLocation}
+                    onChange={setFilterLocation}
+                    allowClear
+                    showSearch
+                    optionFilterProp="children"
+                    size="middle"
+                  >
+                    {locations
+                      .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                      .map((loc: any) => (
+                        <Select.Option key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </Select.Option>
+                      ))}
+                  </Select>
+                </Col>
+              )}
+              <Col sm={12} md={4}>
+                <DatePicker.RangePicker
                   style={{ width: '100%' }}
-                  value={filterLocation}
-                  onChange={setFilterLocation}
-                  allowClear
-                  showSearch
-                  optionFilterProp="children"
-                  size={isMobile ? 'large' : 'middle'}
-                >
-                  {locations
-                    .sort((a: any, b: any) => a.name.localeCompare(b.name))
-                    .map((loc: any) => (
-                      <Select.Option key={loc.id} value={loc.id}>
-                        {loc.name}
-                      </Select.Option>
-                    ))}
-                </Select>
+                  value={dateRange}
+                  onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs] | null)}
+                  format="DD/MM/YYYY"
+                  size="middle"
+                />
               </Col>
-            )}
-            {isMobile && (
-              <Col xs={24}>
+              <Col sm={12} md={3}>
                 <Button
                   icon={<ClearOutlined />}
                   onClick={handleClearFilters}
                   disabled={!hasActiveFilters}
                   block
-                  size="large"
+                  size="middle"
                 >
                   Limpiar
                 </Button>
               </Col>
+            </Row>
+            {hasActiveFilters && (
+              <div style={{ marginTop: 8, color: '#1890ff', fontSize: 12 }}>
+                Mostrando {filteredOrders.length} de {workOrders.length} órdenes
+              </div>
             )}
-            {isMobile ? (
-              <>
-                <Col xs={12}>
-                  <DatePicker
-                    style={{ width: '100%' }}
-                    placeholder="Desde"
-                    value={dateRange?.[0] || null}
-                    onChange={(date) => setDateRange(date ? [date, dateRange?.[1] || date] : null)}
-                    format="DD/MM/YYYY"
-                    size="large"
-                    placement="topLeft"
-                  />
-                </Col>
-                <Col xs={12}>
-                  <DatePicker
-                    style={{ width: '100%' }}
-                    placeholder="Hasta"
-                    value={dateRange?.[1] || null}
-                    onChange={(date) => setDateRange(date ? [dateRange?.[0] || date, date] : null)}
-                    format="DD/MM/YYYY"
-                    size="large"
-                    placement="topRight"
-                  />
-                </Col>
-              </>
-            ) : (
-              <>
-                <Col sm={12} md={4}>
-                  <DatePicker.RangePicker
-                    style={{ width: '100%' }}
-                    value={dateRange}
-                    onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs] | null)}
-                    format="DD/MM/YYYY"
-                    size="middle"
-                  />
-                </Col>
-                <Col sm={12} md={3}>
-                  <Button
-                    icon={<ClearOutlined />}
-                    onClick={handleClearFilters}
-                    disabled={!hasActiveFilters}
-                    block
-                    size="middle"
-                  >
-                    Limpiar
-                  </Button>
-                </Col>
-              </>
-            )}
-          </Row>
-          {hasActiveFilters && (
-            <div style={{ marginTop: 8, color: '#1890ff', fontSize: isMobile ? 11 : 12 }}>
-              Mostrando {filteredOrders.length} de {workOrders.length} órdenes
-            </div>
-          )}
-        </Card>
+          </Card>
+        )}
 
         {/* Lista */}
         {isMobile ? (
@@ -766,10 +868,16 @@ const WorkOrdersPage: React.FC = () => {
             <div style={{ textAlign: 'center', padding: '40px 0' }}>Cargando...</div>
           ) : filteredOrders.length > 0 ? (
             <div style={{ background: '#E0E0E0', borderRadius: 10, padding: 12 }}>
-              {filteredOrders.map(renderMobileCard)}
-              <div style={{ textAlign: 'center', marginTop: 8, color: '#bdc3c7', fontSize: 12 }}>
-                Total: {filteredOrders.length} ordenes
-              </div>
+              {filteredOrders.slice((mobilePage - 1) * 5, mobilePage * 5).map(renderMobileCard)}
+              <Pagination
+                current={mobilePage}
+                pageSize={5}
+                total={filteredOrders.length}
+                onChange={(page) => setMobilePage(page)}
+                size="small"
+                simple
+                style={{ textAlign: 'center', marginTop: 8 }}
+              />
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>

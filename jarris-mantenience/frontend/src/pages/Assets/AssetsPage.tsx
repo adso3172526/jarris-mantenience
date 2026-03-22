@@ -16,6 +16,7 @@ import {
   Col,
   Divider,
   DatePicker,
+  Pagination,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -29,6 +30,7 @@ import {
   ClearOutlined,
   CheckCircleOutlined,
   ToolOutlined,
+  FilterOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -69,7 +71,9 @@ const AssetsPage: React.FC = () => {
   const [locations, setLocations] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  
+  const [mobilePage, setMobilePage] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -183,6 +187,7 @@ const AssetsPage: React.FC = () => {
     }
 
     setFilteredAssets(filtered);
+    setMobilePage(1);
   };
 
   const handleClearFilters = () => {
@@ -338,10 +343,11 @@ const AssetsPage: React.FC = () => {
             {canEdit && (
               <>
                 <Button
-                  type="primary"
-                  icon={<EditOutlined />}
+                  type="default"
+                  icon={<EditOutlined style={{ color: '#1890ff' }} />}
                   onClick={() => handleEdit(record)}
                   block
+                  style={{ color: '#1890ff', borderColor: '#1890ff', background: '#fff' }}
                 >
                   Editar
                 </Button>
@@ -539,100 +545,204 @@ const AssetsPage: React.FC = () => {
   const renderFiltersAndList = () => (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: isMobile ? 'visible' : 'hidden', minHeight: 0 }}>
       {/* Filtros */}
-      <Card size="small" style={{ marginBottom: 16, background: '#fafafa', flexShrink: 0 }}>
-        <Row gutter={[8, 8]}>
-          <Col xs={24} sm={12} md={6}>
-            <Input
-              placeholder={isMobile ? "Buscar..." : "Buscar codigo, descripcion, serial..."}
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              allowClear
-              size={isMobile ? "large" : "middle"}
-            />
-          </Col>
-          {!isPDV && (
+      {isMobile ? (
+        <div style={{ marginBottom: 12 }}>
+          <Button
+            icon={<FilterOutlined />}
+            onClick={() => setFiltersOpen(!filtersOpen)}
+            block
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              background: '#fff',
+              color: hasActiveFilters ? '#E60012' : 'rgba(0,0,0,0.88)',
+              borderColor: hasActiveFilters ? '#E60012' : '#d9d9d9',
+            }}
+          >
+            Filtros{hasActiveFilters ? ` (${[searchText, filterLocation, filterCategory, filterStatus, filterBrand, dateRange].filter(Boolean).length})` : ''}
+          </Button>
+          {filtersOpen && (
+            <Card size="small" style={{ marginTop: 8, background: '#fafafa' }}>
+              <Row gutter={[8, 8]}>
+                <Col xs={24}>
+                  <Input
+                    placeholder="Buscar..."
+                    prefix={<SearchOutlined />}
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    allowClear
+                    size="large"
+                  />
+                </Col>
+                {!isPDV && (
+                  <Col xs={24}>
+                    <Select
+                      placeholder="Ubicacion"
+                      style={{ width: '100%' }}
+                      value={filterLocation}
+                      onChange={setFilterLocation}
+                      allowClear
+                      size="large"
+                    >
+                      {locations.map((loc) => (
+                        <Select.Option key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Col>
+                )}
+                <Col xs={24}>
+                  <Select
+                    placeholder="Categoria"
+                    style={{ width: '100%' }}
+                    value={filterCategory}
+                    onChange={setFilterCategory}
+                    allowClear
+                    size="large"
+                  >
+                    {categories.map((cat) => (
+                      <Select.Option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Col>
+                <Col xs={24}>
+                  <Select
+                    placeholder="Estado"
+                    style={{ width: '100%' }}
+                    value={filterStatus}
+                    onChange={setFilterStatus}
+                    allowClear
+                    size="large"
+                  >
+                    <Select.Option value="ACTIVO">Activo</Select.Option>
+                    <Select.Option value="BAJA">Baja</Select.Option>
+                  </Select>
+                </Col>
+                <Col xs={24}>
+                  <Input
+                    placeholder="Filtrar por marca"
+                    value={filterBrand}
+                    onChange={(e) => setFilterBrand(e.target.value)}
+                    allowClear
+                    size="large"
+                  />
+                </Col>
+                <Col xs={12}>
+                  <DatePicker
+                    style={{ width: '100%' }}
+                    placeholder="Desde"
+                    value={dateRange?.[0] || null}
+                    onChange={(date) => setDateRange(date ? [date, dateRange?.[1] || date] : null)}
+                    format="DD/MM/YYYY"
+                    size="large"
+                    placement="topLeft"
+                  />
+                </Col>
+                <Col xs={12}>
+                  <DatePicker
+                    style={{ width: '100%' }}
+                    placeholder="Hasta"
+                    value={dateRange?.[1] || null}
+                    onChange={(date) => setDateRange(date ? [dateRange?.[0] || date, date] : null)}
+                    format="DD/MM/YYYY"
+                    size="large"
+                    placement="topRight"
+                  />
+                </Col>
+                <Col xs={24}>
+                  <Button
+                    icon={<ClearOutlined />}
+                    onClick={handleClearFilters}
+                    disabled={!hasActiveFilters}
+                    block
+                    size="large"
+                  >
+                    Limpiar
+                  </Button>
+                </Col>
+              </Row>
+              {hasActiveFilters && (
+                <div style={{ marginTop: 8, color: '#1890ff', fontSize: 11 }}>
+                  Mostrando {filteredAssets.length} de {assets.length} activos
+                </div>
+              )}
+            </Card>
+          )}
+        </div>
+      ) : (
+        <Card size="small" style={{ marginBottom: 16, background: '#fafafa', flexShrink: 0 }}>
+          <Row gutter={[8, 8]}>
+            <Col xs={24} sm={12} md={6}>
+              <Input
+                placeholder="Buscar codigo, descripcion, serial..."
+                prefix={<SearchOutlined />}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                allowClear
+                size="middle"
+              />
+            </Col>
+            {!isPDV && (
+              <Col xs={24} sm={12} md={4}>
+                <Select
+                  placeholder="Ubicacion"
+                  style={{ width: '100%' }}
+                  value={filterLocation}
+                  onChange={setFilterLocation}
+                  allowClear
+                  size="middle"
+                >
+                  {locations.map((loc) => (
+                    <Select.Option key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Col>
+            )}
             <Col xs={24} sm={12} md={4}>
               <Select
-                placeholder="Ubicacion"
+                placeholder="Categoria"
                 style={{ width: '100%' }}
-                value={filterLocation}
-                onChange={setFilterLocation}
+                value={filterCategory}
+                onChange={setFilterCategory}
                 allowClear
-                size={isMobile ? "large" : "middle"}
+                size="middle"
               >
-                {locations.map((loc) => (
-                  <Select.Option key={loc.id} value={loc.id}>
-                    {loc.name}
+                {categories.map((cat) => (
+                  <Select.Option key={cat.id} value={cat.id}>
+                    {cat.name}
                   </Select.Option>
                 ))}
               </Select>
             </Col>
-          )}
-          <Col xs={24} sm={12} md={4}>
-            <Select
-              placeholder="Categoria"
-              style={{ width: '100%' }}
-              value={filterCategory}
-              onChange={setFilterCategory}
-              allowClear
-              size={isMobile ? "large" : "middle"}
-            >
-              {categories.map((cat) => (
-                <Select.Option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Col>
-          <Col xs={24} sm={12} md={3}>
-            <Select
-              placeholder="Estado"
-              style={{ width: '100%' }}
-              value={filterStatus}
-              onChange={setFilterStatus}
-              allowClear
-              size={isMobile ? "large" : "middle"}
-            >
-              <Select.Option value="ACTIVO">Activo</Select.Option>
-              <Select.Option value="BAJA">Baja</Select.Option>
-            </Select>
-          </Col>
-          <Col xs={24} sm={12} md={3}>
-            <Input
-              placeholder="Filtrar por marca"
-              value={filterBrand}
-              onChange={(e) => setFilterBrand(e.target.value)}
-              allowClear
-              size={isMobile ? "large" : "middle"}
-            />
-          </Col>
-          {isMobile ? (
-            <>
-              <Col xs={12}>
-                <DatePicker
-                  style={{ width: '100%' }}
-                  placeholder="Desde"
-                  value={dateRange?.[0] || null}
-                  onChange={(date) => setDateRange(date ? [date, dateRange?.[1] || date] : null)}
-                  format="DD/MM/YYYY"
-                  size="large"
-                  placement="topLeft"
-                />
-              </Col>
-              <Col xs={12}>
-                <DatePicker
-                  style={{ width: '100%' }}
-                  placeholder="Hasta"
-                  value={dateRange?.[1] || null}
-                  onChange={(date) => setDateRange(date ? [dateRange?.[0] || date, date] : null)}
-                  format="DD/MM/YYYY"
-                  size="large"
-                  placement="topRight"
-                />
-              </Col>
-            </>
-          ) : (
+            <Col xs={24} sm={12} md={3}>
+              <Select
+                placeholder="Estado"
+                style={{ width: '100%' }}
+                value={filterStatus}
+                onChange={setFilterStatus}
+                allowClear
+                size="middle"
+              >
+                <Select.Option value="ACTIVO">Activo</Select.Option>
+                <Select.Option value="BAJA">Baja</Select.Option>
+              </Select>
+            </Col>
+            <Col xs={24} sm={12} md={3}>
+              <Input
+                placeholder="Filtrar por marca"
+                value={filterBrand}
+                onChange={(e) => setFilterBrand(e.target.value)}
+                allowClear
+                size="middle"
+              />
+            </Col>
             <Col sm={12} md={5}>
               <DatePicker.RangePicker
                 style={{ width: '100%' }}
@@ -642,25 +752,25 @@ const AssetsPage: React.FC = () => {
                 size="middle"
               />
             </Col>
+            <Col xs={24} sm={12} md={2}>
+              <Button
+                icon={<ClearOutlined />}
+                onClick={handleClearFilters}
+                disabled={!hasActiveFilters}
+                block
+                size="middle"
+              >
+                Limpiar
+              </Button>
+            </Col>
+          </Row>
+          {hasActiveFilters && (
+            <div style={{ marginTop: 8, color: '#1890ff', fontSize: 12 }}>
+              Mostrando {filteredAssets.length} de {assets.length} activos
+            </div>
           )}
-          <Col xs={24} sm={12} md={2}>
-            <Button
-              icon={<ClearOutlined />}
-              onClick={handleClearFilters}
-              disabled={!hasActiveFilters}
-              block
-              size={isMobile ? "large" : "middle"}
-            >
-              Limpiar
-            </Button>
-          </Col>
-        </Row>
-        {hasActiveFilters && (
-          <div style={{ marginTop: 8, color: '#1890ff', fontSize: isMobile ? 11 : 12 }}>
-            Mostrando {filteredAssets.length} de {assets.length} activos
-          </div>
-        )}
-      </Card>
+        </Card>
+      )}
 
       {/* Lista */}
       {isMobile ? (
@@ -668,10 +778,16 @@ const AssetsPage: React.FC = () => {
           <div style={{ textAlign: 'center', padding: '40px 0' }}>Cargando...</div>
         ) : filteredAssets.length > 0 ? (
           <div style={{ background: '#E0E0E0', borderRadius: 10, padding: 12 }}>
-            {filteredAssets.map(renderMobileCard)}
-            <div style={{ textAlign: 'center', marginTop: 8, color: '#8c8c8c', fontSize: 12 }}>
-              Total: {filteredAssets.length} activos
-            </div>
+            {filteredAssets.slice((mobilePage - 1) * 5, mobilePage * 5).map(renderMobileCard)}
+            <Pagination
+              current={mobilePage}
+              pageSize={5}
+              total={filteredAssets.length}
+              onChange={(page) => setMobilePage(page)}
+              size="small"
+              simple
+              style={{ textAlign: 'center', marginTop: 8 }}
+            />
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>
@@ -705,7 +821,7 @@ const AssetsPage: React.FC = () => {
     <div style={{ height: isMobile ? 'auto' : 'calc(100vh - 112px)', display: 'flex', flexDirection: 'column' }}>
       <Card
         style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'auto' : 'hidden' }}
-        styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'auto' : 'hidden' } }}
+        styles={{ header: isMobile ? { padding: '0 12px', minHeight: 40 } : {}, body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'auto' : 'hidden' } }}
         title={
           <div style={{
             display: 'flex',
@@ -715,8 +831,8 @@ const AssetsPage: React.FC = () => {
             gap: 8
           }}>
             <Space>
-              <ToolOutlined style={{ fontSize: 18, color: '#E60012' }} />
-              <span style={{ fontSize: isMobile ? 16 : 18, fontWeight: 600 }}>Activos</span>
+              <ToolOutlined style={{ fontSize: isMobile ? 14 : 18, color: '#E60012' }} />
+              <span style={{ fontSize: isMobile ? 14 : 18, fontWeight: 600 }}>Activos</span>
             </Space>
             {canEdit && (
               <Button

@@ -10,6 +10,7 @@ import {
   Row,
   Col,
   Button,
+  Pagination,
   message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -17,6 +18,7 @@ import {
   StopOutlined,
   SearchOutlined,
   ClearOutlined,
+  FilterOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -65,6 +67,8 @@ const BajasPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [locations, setLocations] = useState<any[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [mobilePage, setMobilePage] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Filtros
   const [searchText, setSearchText] = useState('');
@@ -143,6 +147,7 @@ const BajasPage: React.FC = () => {
     }
 
     setFilteredEvents(filtered);
+    setMobilePage(1);
   };
 
   const handleClearFilters = () => {
@@ -280,6 +285,7 @@ const BajasPage: React.FC = () => {
           overflow: isMobile ? 'auto' : 'hidden',
         }}
         styles={{
+          header: isMobile ? { padding: '0 12px', minHeight: 40 } : {},
           body: {
             padding: isMobile ? 12 : '12px 24px',
             flex: 1,
@@ -290,58 +296,162 @@ const BajasPage: React.FC = () => {
         }}
         title={
           <Space>
-            <StopOutlined style={{ fontSize: 18, color: '#E60012' }} />
-            <span style={{ fontSize: isMobile ? 16 : 18, fontWeight: 600 }}>
+            <StopOutlined style={{ fontSize: isMobile ? 14 : 18, color: '#E60012' }} />
+            <span style={{ fontSize: isMobile ? 14 : 18, fontWeight: 600 }}>
               Historial Bajas
             </span>
           </Space>
         }
       >
         {/* Filtros */}
-        <Card size="small" style={{ marginBottom: 16, background: '#fafafa' }}>
-          <Row gutter={[8, 8]}>
-            <Col xs={24} sm={12} md={6}>
-              <Input
-                placeholder={isMobile ? 'Buscar...' : 'Buscar por código, descripción...'}
-                prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                allowClear
-                size={isMobile ? 'large' : 'middle'}
-              />
-            </Col>
-            <Col xs={24} sm={12} md={4}>
-              <Select
-                placeholder="Tipo"
-                style={{ width: '100%' }}
-                value={filterType}
-                onChange={setFilterType}
-                allowClear
-                size={isMobile ? 'large' : 'middle'}
-              >
-                <Select.Option value="BAJA">Baja</Select.Option>
-                <Select.Option value="REACTIVACION">Reactivación</Select.Option>
-              </Select>
-            </Col>
-            <Col xs={24} sm={12} md={5}>
-              <Select
-                placeholder="Ubicación"
-                style={{ width: '100%' }}
-                value={filterLocation}
-                onChange={setFilterLocation}
-                allowClear
-                showSearch
-                optionFilterProp="children"
-                size={isMobile ? 'large' : 'middle'}
-              >
-                {locations.map((loc: any) => (
-                  <Select.Option key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Col>
-            {!isMobile && (
+        {isMobile ? (
+          <div style={{ marginBottom: 12 }}>
+            <Button
+              icon={<FilterOutlined />}
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              block
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                background: '#fff',
+                color: hasActiveFilters ? '#E60012' : 'rgba(0,0,0,0.88)',
+                borderColor: hasActiveFilters ? '#E60012' : '#d9d9d9',
+              }}
+            >
+              Filtros{hasActiveFilters ? ` (${[searchText, filterType, filterLocation, dateRange].filter(Boolean).length})` : ''}
+            </Button>
+            {filtersOpen && (
+              <Card size="small" style={{ marginTop: 8, background: '#fafafa' }}>
+                <Row gutter={[8, 8]}>
+                  <Col xs={24}>
+                    <Input
+                      placeholder="Buscar..."
+                      prefix={<SearchOutlined />}
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      allowClear
+                      size="large"
+                    />
+                  </Col>
+                  <Col xs={24}>
+                    <Select
+                      placeholder="Tipo"
+                      style={{ width: '100%' }}
+                      value={filterType}
+                      onChange={setFilterType}
+                      allowClear
+                      size="large"
+                    >
+                      <Select.Option value="BAJA">Baja</Select.Option>
+                      <Select.Option value="REACTIVACION">Reactivación</Select.Option>
+                    </Select>
+                  </Col>
+                  <Col xs={24}>
+                    <Select
+                      placeholder="Ubicación"
+                      style={{ width: '100%' }}
+                      value={filterLocation}
+                      onChange={setFilterLocation}
+                      allowClear
+                      showSearch
+                      optionFilterProp="children"
+                      size="large"
+                    >
+                      {locations.map((loc: any) => (
+                        <Select.Option key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Col>
+                  <Col xs={12}>
+                    <DatePicker
+                      style={{ width: '100%' }}
+                      placeholder="Desde"
+                      value={dateRange?.[0] || null}
+                      onChange={(date) => setDateRange(date ? [date, dateRange?.[1] || date] : null)}
+                      format="DD/MM/YYYY"
+                      size="large"
+                      placement="topLeft"
+                    />
+                  </Col>
+                  <Col xs={12}>
+                    <DatePicker
+                      style={{ width: '100%' }}
+                      placeholder="Hasta"
+                      value={dateRange?.[1] || null}
+                      onChange={(date) => setDateRange(date ? [dateRange?.[0] || date, date] : null)}
+                      format="DD/MM/YYYY"
+                      size="large"
+                      placement="topRight"
+                    />
+                  </Col>
+                  <Col xs={24}>
+                    <Button
+                      icon={<ClearOutlined />}
+                      onClick={handleClearFilters}
+                      disabled={!hasActiveFilters}
+                      block
+                      size="large"
+                    >
+                      Limpiar
+                    </Button>
+                  </Col>
+                </Row>
+                {hasActiveFilters && (
+                  <div style={{ marginTop: 8, color: '#1890ff', fontSize: 11 }}>
+                    Mostrando {filteredEvents.length} de {events.length} registros
+                  </div>
+                )}
+              </Card>
+            )}
+          </div>
+        ) : (
+          <Card size="small" style={{ marginBottom: 16, background: '#fafafa' }}>
+            <Row gutter={[8, 8]}>
+              <Col sm={12} md={6}>
+                <Input
+                  placeholder="Buscar por código, descripción..."
+                  prefix={<SearchOutlined />}
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  allowClear
+                  size="middle"
+                />
+              </Col>
+              <Col sm={12} md={4}>
+                <Select
+                  placeholder="Tipo"
+                  style={{ width: '100%' }}
+                  value={filterType}
+                  onChange={setFilterType}
+                  allowClear
+                  size="middle"
+                >
+                  <Select.Option value="BAJA">Baja</Select.Option>
+                  <Select.Option value="REACTIVACION">Reactivación</Select.Option>
+                </Select>
+              </Col>
+              <Col sm={12} md={5}>
+                <Select
+                  placeholder="Ubicación"
+                  style={{ width: '100%' }}
+                  value={filterLocation}
+                  onChange={setFilterLocation}
+                  allowClear
+                  showSearch
+                  optionFilterProp="children"
+                  size="middle"
+                >
+                  {locations.map((loc: any) => (
+                    <Select.Option key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Col>
               <Col sm={12} md={6}>
                 <RangePicker
                   style={{ width: '100%' }}
@@ -351,51 +461,25 @@ const BajasPage: React.FC = () => {
                   size="middle"
                 />
               </Col>
+              <Col sm={12} md={3}>
+                <Button
+                  icon={<ClearOutlined />}
+                  onClick={handleClearFilters}
+                  disabled={!hasActiveFilters}
+                  block
+                  size="middle"
+                >
+                  Limpiar
+                </Button>
+              </Col>
+            </Row>
+            {hasActiveFilters && (
+              <div style={{ marginTop: 8, color: '#1890ff', fontSize: 12 }}>
+                Mostrando {filteredEvents.length} de {events.length} registros
+              </div>
             )}
-            <Col xs={24} sm={12} md={3}>
-              <Button
-                icon={<ClearOutlined />}
-                onClick={handleClearFilters}
-                disabled={!hasActiveFilters}
-                block
-                size={isMobile ? 'large' : 'middle'}
-              >
-                Limpiar
-              </Button>
-            </Col>
-            {isMobile && (
-              <>
-                <Col xs={12}>
-                  <DatePicker
-                    style={{ width: '100%' }}
-                    placeholder="Desde"
-                    value={dateRange?.[0] || null}
-                    onChange={(date) => setDateRange(date ? [date, dateRange?.[1] || date] : null)}
-                    format="DD/MM/YYYY"
-                    size="large"
-                    placement="topLeft"
-                  />
-                </Col>
-                <Col xs={12}>
-                  <DatePicker
-                    style={{ width: '100%' }}
-                    placeholder="Hasta"
-                    value={dateRange?.[1] || null}
-                    onChange={(date) => setDateRange(date ? [dateRange?.[0] || date, date] : null)}
-                    format="DD/MM/YYYY"
-                    size="large"
-                    placement="topRight"
-                  />
-                </Col>
-              </>
-            )}
-          </Row>
-          {hasActiveFilters && (
-            <div style={{ marginTop: 8, color: '#1890ff', fontSize: isMobile ? 11 : 12 }}>
-              Mostrando {filteredEvents.length} de {events.length} registros
-            </div>
-          )}
-        </Card>
+          </Card>
+        )}
 
         {/* Lista */}
         {isMobile ? (
@@ -403,15 +487,16 @@ const BajasPage: React.FC = () => {
             <div style={{ textAlign: 'center', padding: '40px 0' }}>Cargando...</div>
           ) : filteredEvents.length > 0 ? (
             <div style={{ background: '#E0E0E0', borderRadius: 10, padding: 12 }}>
-              {filteredEvents.map(renderMobileCard)}
-              <div style={{
-                textAlign: 'center',
-                marginTop: 8,
-                color: '#8c8c8c',
-                fontSize: 12,
-              }}>
-                Total: {filteredEvents.length} registros
-              </div>
+              {filteredEvents.slice((mobilePage - 1) * 5, mobilePage * 5).map(renderMobileCard)}
+              <Pagination
+                current={mobilePage}
+                pageSize={5}
+                total={filteredEvents.length}
+                onChange={(page) => setMobilePage(page)}
+                size="small"
+                simple
+                style={{ textAlign: 'center', marginTop: 8 }}
+              />
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>

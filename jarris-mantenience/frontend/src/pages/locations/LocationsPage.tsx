@@ -14,6 +14,7 @@ import {
   Divider,
   Tooltip,
   Badge,
+  Pagination,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';
@@ -41,6 +42,7 @@ const LocationsPage: React.FC = () => {
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [form] = Form.useForm();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [mobilePage, setMobilePage] = useState(1);
 
   const { hasRole } = useAuth();
   const canEdit = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
@@ -223,10 +225,16 @@ const LocationsPage: React.FC = () => {
             <div style={{ textAlign: 'center', padding: '40px 0' }}>Cargando...</div>
           ) : locations.length > 0 ? (
             <div>
-              {locations.map(renderMobileCard)}
-              <div style={{ textAlign: 'center', marginTop: 16, color: '#8c8c8c' }}>
-                Total: {locations.length} ubicaciones
-              </div>
+              {locations.slice((mobilePage - 1) * 5, mobilePage * 5).map(renderMobileCard)}
+              <Pagination
+                current={mobilePage}
+                pageSize={5}
+                total={locations.length}
+                onChange={(page) => setMobilePage(page)}
+                size="small"
+                simple
+                style={{ textAlign: 'center', marginTop: 8 }}
+              />
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>

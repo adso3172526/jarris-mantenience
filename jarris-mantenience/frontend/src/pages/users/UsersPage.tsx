@@ -14,6 +14,7 @@ import {
   Divider,
   Tooltip,
   Badge,
+  Pagination,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -81,6 +82,7 @@ const UsersPage: React.FC = () => {
   const [form] = Form.useForm();
   const [resetPasswordForm] = Form.useForm();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [mobilePage, setMobilePage] = useState(1);
 
   useEffect(() => {
     const handleResize = () => {
@@ -313,7 +315,7 @@ const UsersPage: React.FC = () => {
             flexWrap: 'wrap',
             gap: 8
           }}>
-            <span style={{ fontSize: isMobile ? 16 : 16, fontWeight: 600 }}>
+            <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>
               Gestión de Usuarios
             </span>
             <Button
@@ -343,10 +345,16 @@ const UsersPage: React.FC = () => {
             <div style={{ textAlign: 'center', padding: '40px 0' }}>Cargando...</div>
           ) : users.length > 0 ? (
             <div>
-              {users.map(renderMobileCard)}
-              <div style={{ textAlign: 'center', marginTop: 16, color: '#8c8c8c' }}>
-                Total: {users.length} usuarios
-              </div>
+              {users.slice((mobilePage - 1) * 5, mobilePage * 5).map(renderMobileCard)}
+              <Pagination
+                current={mobilePage}
+                pageSize={5}
+                total={users.length}
+                onChange={(page) => setMobilePage(page)}
+                size="small"
+                simple
+                style={{ textAlign: 'center', marginTop: 8 }}
+              />
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>

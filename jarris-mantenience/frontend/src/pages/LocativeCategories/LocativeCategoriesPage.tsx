@@ -12,6 +12,7 @@ import {
   Divider,
   Tooltip,
   Badge,
+  Pagination,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined, EditOutlined } from '@ant-design/icons';
@@ -31,6 +32,7 @@ const LocativeCategoriesPage: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<LocativeCategory | null>(null);
   const [form] = Form.useForm();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [mobilePage, setMobilePage] = useState(1);
 
   const { hasRole } = useAuth();
   const canEdit = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
@@ -197,10 +199,16 @@ const LocativeCategoriesPage: React.FC = () => {
             <div style={{ textAlign: 'center', padding: '40px 0' }}>Cargando...</div>
           ) : categories.length > 0 ? (
             <div>
-              {categories.map(renderMobileCard)}
-              <div style={{ textAlign: 'center', marginTop: 16, color: '#8c8c8c' }}>
-                Total: {categories.length} categorías
-              </div>
+              {categories.slice((mobilePage - 1) * 5, mobilePage * 5).map(renderMobileCard)}
+              <Pagination
+                current={mobilePage}
+                pageSize={5}
+                total={categories.length}
+                onChange={(page) => setMobilePage(page)}
+                size="small"
+                simple
+                style={{ textAlign: 'center', marginTop: 8 }}
+              />
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>

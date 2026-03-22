@@ -308,7 +308,8 @@ const MainLayout: React.FC = () => {
             position: 'sticky',
             top: 0,
             zIndex: 100,
-            height: 64,
+            height: isMobile ? 48 : 64,
+            lineHeight: isMobile ? '48px' : '64px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
