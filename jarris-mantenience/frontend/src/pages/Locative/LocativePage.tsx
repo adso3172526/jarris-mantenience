@@ -241,9 +241,12 @@ const LocativePage: React.FC = () => {
   const getActionButtons = (record: WorkOrder, isMobileView = false) => {
     const buttons = [];
 
+    const wrapTooltip = (key: string, title: string, btn: React.ReactNode) =>
+      isMobileView ? <React.Fragment key={key}>{btn}</React.Fragment> : <Tooltip key={key} title={title}>{btn}</Tooltip>;
+
     // Ver siempre disponible
     buttons.push(
-      <Tooltip key="view" title="Ver detalles">
+      wrapTooltip("view", "Ver detalles",
         <Button
           type={isMobileView ? 'default' : 'text'}
           icon={<EyeOutlined style={{ color: '#1890ff' }} />}
@@ -252,13 +255,13 @@ const LocativePage: React.FC = () => {
         >
           {isMobileView && 'Ver'}
         </Button>
-      </Tooltip>
+      )
     );
 
     // Subir fotos
     if (record.status !== 'CERRADA' && record.status !== 'RECHAZADA') {
       buttons.push(
-        <Tooltip key="photos" title="Subir fotos">
+        wrapTooltip("photos", "Subir fotos",
           <Button
             type={isMobileView ? 'default' : 'text'}
             icon={<CameraOutlined />}
@@ -268,14 +271,14 @@ const LocativePage: React.FC = () => {
           >
             {isMobileView && 'Fotos'}
           </Button>
-        </Tooltip>
+        )
       );
     }
 
     // Asignar
     if (isJefe && record.status === 'NUEVA') {
       buttons.push(
-        <Tooltip key="assign" title="Asignar">
+        wrapTooltip("assign", "Asignar",
           <Button
             type={isMobileView ? 'default' : 'text'}
             icon={<UserAddOutlined />}
@@ -285,14 +288,14 @@ const LocativePage: React.FC = () => {
           >
             {isMobileView && 'Asignar'}
           </Button>
-        </Tooltip>
+        )
       );
     }
 
     // Reasignar
     if (isJefe && record.status === 'ASIGNADA') {
       buttons.push(
-        <Tooltip key="reassign" title="Reasignar">
+        wrapTooltip("reassign", "Reasignar",
           <Button
             type={isMobileView ? 'default' : 'text'}
             icon={<UserAddOutlined />}
@@ -302,14 +305,14 @@ const LocativePage: React.FC = () => {
           >
             {isMobileView && 'Reasignar'}
           </Button>
-        </Tooltip>
+        )
       );
     }
 
     // Iniciar
     if ((isTecnico || isContratista) && record.status === 'ASIGNADA') {
       buttons.push(
-        <Tooltip key="start" title="Iniciar">
+        wrapTooltip("start", "Iniciar",
           <Button
             type={isMobileView ? 'primary' : 'text'}
             icon={<PlayCircleOutlined />}
@@ -319,14 +322,14 @@ const LocativePage: React.FC = () => {
           >
             {isMobileView && 'Iniciar'}
           </Button>
-        </Tooltip>
+        )
       );
     }
 
     // Finalizar
     if ((isTecnico || isContratista) && record.status === 'EN_PROCESO') {
       buttons.push(
-        <Tooltip key="finish" title="Finalizar">
+        wrapTooltip("finish", "Finalizar",
           <Button
             type={isMobileView ? 'primary' : 'text'}
             icon={<CheckCircleOutlined />}
@@ -336,14 +339,14 @@ const LocativePage: React.FC = () => {
           >
             {isMobileView && 'Finalizar'}
           </Button>
-        </Tooltip>
+        )
       );
     }
 
     // Cerrar
     if (isJefe && record.status === 'TERMINADA') {
       buttons.push(
-        <Tooltip key="close" title="Cerrar OT">
+        wrapTooltip("close", "Cerrar OT",
           <Button
             type={isMobileView ? 'default' : 'text'}
             icon={<SendOutlined style={{ color: '#52c41a' }} />}
@@ -353,14 +356,14 @@ const LocativePage: React.FC = () => {
           >
             {isMobileView && 'Cerrar'}
           </Button>
-        </Tooltip>
+        )
       );
     }
 
     // Rechazar
     if (isJefe && record.status === 'NUEVA') {
       buttons.push(
-        <Tooltip key="reject" title="Rechazar">
+        wrapTooltip("reject", "Rechazar",
           <Button
             type={isMobileView ? 'default' : 'text'}
             danger={!isMobileView}
@@ -371,7 +374,7 @@ const LocativePage: React.FC = () => {
           >
             {isMobileView && 'Rechazar'}
           </Button>
-        </Tooltip>
+        )
       );
     }
 

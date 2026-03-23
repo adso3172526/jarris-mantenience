@@ -157,6 +157,7 @@ async create(dto: CreateWorkOrderDto) {
   wo.assigneeEmail = dto.assigneeEmail?.trim();
   wo.assignmentDescription = dto.assignmentDescription?.trim() || undefined;
   wo.priority = dto.priority || undefined;
+  wo.assignedAt = new Date();
   wo.status = WorkOrderStatus.ASIGNADA;
   const saved = await this.woRepo.save(wo);
   

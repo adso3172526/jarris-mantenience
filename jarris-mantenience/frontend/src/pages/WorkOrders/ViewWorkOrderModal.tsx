@@ -100,6 +100,14 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
         children: (
           <div>
             <Text strong>Asignada a {workOrder.assigneeName}</Text>
+            {workOrder.assignedAt && (
+              <>
+                <br />
+                <Text type="secondary">
+                  {new Date(workOrder.assignedAt).toLocaleString('es-CO')}
+                </Text>
+              </>
+            )}
             <br />
             <Tag color={workOrder.assigneeType === 'INTERNO' ? 'blue' : 'orange'}>
               {workOrder.assigneeType}

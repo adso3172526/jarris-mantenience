@@ -197,7 +197,10 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
           {formatCOP(record.cost)}
         </div>
         <div style={{ fontSize: 11, color: '#8c8c8c' }}>
-          <div> {dayjs(record.finishedAt).format('DD/MM/YYYY HH:mm')}</div>
+          <div><strong>Creación:</strong> {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}</div>
+          {record.finishedAt && (
+            <div><strong>Terminación:</strong> {dayjs(record.finishedAt).format('DD/MM/YYYY HH:mm')}</div>
+          )}
           <div> {record.finishedByName || record.finishedBy || 'N/A'}</div>
         </div>
       </div>
@@ -239,7 +242,10 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
 
           <div style={{ fontSize: 11, color: '#8c8c8c' }}>
             <div> {record.toLocation?.name || record.fromLocation?.name || asset?.location?.name || 'N/A'}</div>
-            <div> {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}</div>
+            <div><strong>Creación:</strong> {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}</div>
+            {(record.finishedAt || record.closedAt) && (
+              <div><strong>Terminación:</strong> {dayjs(record.finishedAt || record.closedAt).format('DD/MM/YYYY HH:mm')}</div>
+            )}
 
             {record.type === 'REPARACION' && (
               <div style={{ marginTop: 6 }}>
@@ -272,14 +278,14 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
     {
       title: 'Tipo',
       key: 'type',
-      width: 100,
+      width: 130,
       ellipsis: true,
       render: () => <Tag color="orange-inverse">Mantenimiento</Tag>,
     },
     {
       title: 'Ubicación',
       key: 'location',
-      width: 110,
+      width: 90,
       ellipsis: true,
       sorter: (a: any, b: any) => (a.location?.name || '').localeCompare(b.location?.name || ''),
       render: (_: any, record: any) => record.location?.name || asset?.location?.name || '-',
@@ -305,14 +311,23 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       ),
     },
     {
-      title: 'Fecha',
+      title: 'Fecha Creación',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 120,
+      ellipsis: true,
+      sorter: (a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      defaultSortOrder: 'descend' as const,
+      render: (date: string) => date ? dayjs(date).format('DD/MM/YYYY HH:mm') : <span style={{ color: '#8c8c8c' }}>—</span>,
+    },
+    {
+      title: 'Fecha Terminación',
       dataIndex: 'finishedAt',
       key: 'finishedAt',
       width: 120,
       ellipsis: true,
-      sorter: (a: any, b: any) => new Date(a.finishedAt).getTime() - new Date(b.finishedAt).getTime(),
-      defaultSortOrder: 'descend' as const,
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm'),
+      sorter: (a: any, b: any) => new Date(a.finishedAt || 0).getTime() - new Date(b.finishedAt || 0).getTime(),
+      render: (date: string) => date ? dayjs(date).format('DD/MM/YYYY HH:mm') : <span style={{ color: '#8c8c8c' }}>—</span>,
     },
     {
       title: 'Realizado Por',
@@ -344,7 +359,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       title: 'Tipo',
       dataIndex: 'type',
       key: 'type',
-      width: 100,
+      width: 130,
       ellipsis: true,
       sorter: (a: any, b: any) => (a.type || '').localeCompare(b.type || ''),
       render: (type: string) => {
@@ -370,7 +385,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
     {
       title: 'Ubicacion',
       key: 'location',
-      width: 110,
+      width: 90,
       ellipsis: true,
       sorter: (a: any, b: any) => {
         const aLoc = a.toLocation?.name || a.fromLocation?.name || '';
@@ -380,7 +395,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       render: (_: any, record: any) => record.toLocation?.name || record.fromLocation?.name || asset?.location?.name || 'N/A',
     },
     {
-      title: 'Fecha',
+      title: 'Fecha Creación',
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 120,
@@ -388,6 +403,21 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       sorter: (a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       defaultSortOrder: 'descend' as const,
       render: (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm'),
+    },
+    {
+      title: 'Fecha Terminación',
+      key: 'finishedAt',
+      width: 120,
+      ellipsis: true,
+      sorter: (a: any, b: any) => {
+        const aDate = a.finishedAt || a.closedAt || '';
+        const bDate = b.finishedAt || b.closedAt || '';
+        return new Date(aDate).getTime() - new Date(bDate).getTime();
+      },
+      render: (_: any, record: any) => {
+        const date = record.finishedAt || record.closedAt;
+        return date ? dayjs(date).format('DD/MM/YYYY HH:mm') : <span style={{ color: '#8c8c8c' }}>—</span>;
+      },
     },
     {
       title: 'Costo',

@@ -84,6 +84,9 @@ export class WorkOrderEntity {
   @Column({ nullable: true })
   assigneeEmail?: string;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  assignedAt?: Date;
+
   @Column({ type: 'text', nullable: true })
   assignmentDescription?: string;
 

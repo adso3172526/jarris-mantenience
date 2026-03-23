@@ -57,6 +57,8 @@ interface AssetEvent {
   workOrder?: {
     id: string;
     finishedBy?: string;
+    finishedAt?: string;
+    closedAt?: string;
     assigneeName?: string;
     assigneeEmail?: string;
   };
@@ -197,14 +199,29 @@ const EventsPage: React.FC = () => {
 
   const columns: ColumnsType<AssetEvent> = [
     {
-      title: 'Fecha',
+      title: 'Fecha Creación',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 100,
+      width: 110,
       ellipsis: true,
       sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       defaultSortOrder: 'descend',
-      render: (date: string) => new Date(date).toLocaleDateString('es-CO'),
+      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+    },
+    {
+      title: 'Fecha Terminación',
+      key: 'finishedAt',
+      width: 110,
+      ellipsis: true,
+      sorter: (a, b) => {
+        const aDate = a.workOrder?.finishedAt || a.workOrder?.closedAt || '';
+        const bDate = b.workOrder?.finishedAt || b.workOrder?.closedAt || '';
+        return new Date(aDate).getTime() - new Date(bDate).getTime();
+      },
+      render: (_: any, record: AssetEvent) => {
+        const date = record.workOrder?.finishedAt || record.workOrder?.closedAt;
+        return date ? dayjs(date).format('DD/MM/YYYY') : <span style={{ color: '#8c8c8c' }}>—</span>;
+      },
     },
     {
       title: 'OT',
@@ -355,7 +372,10 @@ const EventsPage: React.FC = () => {
         )}
 
         <div style={{ fontSize: 11, color: '#8c8c8c' }}>
-          {dayjs(record.createdAt).format('DD/MM/YYYY')}
+          <div><strong>Creación:</strong> {dayjs(record.createdAt).format('DD/MM/YYYY')}</div>
+          {(record.workOrder?.finishedAt || record.workOrder?.closedAt) && (
+            <div><strong>Terminación:</strong> {dayjs(record.workOrder.finishedAt || record.workOrder.closedAt).format('DD/MM/YYYY')}</div>
+          )}
         </div>
 
         {record.workOrderId && (
