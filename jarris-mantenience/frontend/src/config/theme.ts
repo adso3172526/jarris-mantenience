@@ -69,6 +69,19 @@ export const workOrderStatusColors = {
   RECHAZADA: 'red',
 } as const;
 
+// Prioridades de Work Orders
+export const workOrderPriorityColors = {
+  BAJA: 'green',
+  MEDIA: 'orange',
+  ALTA: 'red',
+} as const;
+
+export const workOrderPriorityLabels = {
+  BAJA: 'Baja',
+  MEDIA: 'Media',
+  ALTA: 'Alta',
+} as const;
+
 // Estados de Assets con colores
 export const assetStatusColors = {
   ACTIVO: 'green-inverse',

@@ -38,6 +38,7 @@ export class ReportsService {
         wo."assigneeType"::text AS tipo_tecnico,
         wo."assigneeName" AS nombre_tecnico,
         wo."assigneeEmail" AS email_tecnico,
+        wo.priority AS prioridad,
         wo.cost AS costo,
         wo."createdAt" AS fecha,
         wo."startedAt" AS fecha_inicio,
@@ -75,6 +76,7 @@ export class ReportsService {
         CASE WHEN ae."createdBy" IS NOT NULL THEN 'USUARIO' ELSE NULL END AS tipo_tecnico,
         COALESCE(u.name, ae."createdBy") AS nombre_tecnico,
         ae."createdBy" AS email_tecnico,
+        NULL::text AS prioridad,
         ae.cost AS costo,
         ae."createdAt" AS fecha,
         NULL::timestamptz AS fecha_inicio,
@@ -273,6 +275,7 @@ export class ReportsService {
       { header: 'Registro', key: 'tipo_registro', width: 10 },
       { header: 'ID', key: 'id', width: 12 },
       { header: 'Estado', key: 'estado', width: 12 },
+      { header: 'Prioridad', key: 'prioridad', width: 12 },
       { header: 'Categoría', key: 'categoria_ot', width: 14 },
       { header: 'Tipo', key: 'tipo_evento', width: 18 },
       { header: 'Ubicación', key: 'ubicacion_nombre', width: 20 },
@@ -305,6 +308,7 @@ export class ReportsService {
         tipo_registro: row.tipo_registro,
         id: row.id ? row.id.substring(0, 8) : 'N/A',
         estado: row.estado || 'N/A',
+        prioridad: row.prioridad || '',
         categoria_ot: esOT ? (row.categoria || 'N/A') : '',
         tipo_evento: esOT
           ? (row.tipo_mantenimiento || '-')
@@ -343,6 +347,7 @@ export class ReportsService {
       tipo_registro: '',
       id: '',
       estado: '',
+      prioridad: '',
       categoria_ot: '',
       tipo_evento: '',
       ubicacion_nombre: '',
@@ -364,7 +369,7 @@ export class ReportsService {
     // Auto-filtros
     worksheet.autoFilter = {
       from: 'A1',
-      to: 'P1',
+      to: 'Q1',
     };
 
     // Generar buffer

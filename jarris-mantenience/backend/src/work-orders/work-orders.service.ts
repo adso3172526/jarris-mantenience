@@ -4,7 +4,7 @@ import { DataSource, Repository } from 'typeorm';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-import { WorkOrderEntity, WorkOrderStatus, AssigneeType, MaintenanceType } from '../entities/work-order.entity';
+import { WorkOrderEntity, WorkOrderStatus, AssigneeType, MaintenanceType, WorkOrderPriority } from '../entities/work-order.entity';
 import { AssetEntity } from '../entities/asset.entity';
 import { LocationEntity } from '../entities/location.entity';
 import { AssetEventEntity, AssetEventType } from '../entities/asset-event.entity';
@@ -156,6 +156,7 @@ async create(dto: CreateWorkOrderDto) {
   wo.assigneeName = dto.assigneeName.trim();
   wo.assigneeEmail = dto.assigneeEmail?.trim();
   wo.assignmentDescription = dto.assignmentDescription?.trim() || undefined;
+  wo.priority = dto.priority || undefined;
   wo.status = WorkOrderStatus.ASIGNADA;
   const saved = await this.woRepo.save(wo);
   
@@ -190,7 +191,7 @@ ${asset ? `Equipo: ${asset.code} - ${asset.description}
 Categoría: ${asset.category?.name ?? ''}` : `Tipo: Mantenimiento Locativo
 Categoría: ${wo.locativeCategory?.name ?? ''}`}
 Ubicación: ${wo.location?.name ?? ''}
-
+${saved.priority ? `Prioridad: ${saved.priority}` : ''}
 Descripción del Trabajo:
 ${workDescription}
 
@@ -411,6 +412,16 @@ Cuando termine, suba la factura (PDF/JPG/PNG) si aplica.
             <div class="info-label">Ubicación:</div>
             <div class="info-value"><strong>${wo.location?.name ?? 'N/A'}</strong></div>
           </div>
+          ${saved.priority ? `
+          <div class="info-row">
+            <div class="info-label">Prioridad:</div>
+            <div class="info-value">
+              <span style="display:inline-block;padding:2px 10px;border-radius:4px;font-weight:600;color:#fff;background-color:${saved.priority === WorkOrderPriority.ALTA ? '#f5222d' : saved.priority === WorkOrderPriority.MEDIA ? '#fa8c16' : '#52c41a'};">
+                ${saved.priority}
+              </span>
+            </div>
+          </div>
+          ` : ''}
         </div>
       </div>
       

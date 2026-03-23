@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Tabs, Descriptions, Table, Tag, Image, Spin, message, Card, Divider } from 'antd';
+import { Modal, Tabs, Descriptions, Table, Tag, Image, Spin, message, Card, Divider, Pagination } from 'antd';
 import {
   DollarOutlined,
   HistoryOutlined,
@@ -29,6 +29,10 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
   const [bajas, setBajas] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [woPage, setWoPage] = useState(1);
+  const [eventsPage, setEventsPage] = useState(1);
+  const [transfersPage, setTransfersPage] = useState(1);
+  const [bajasPage, setBajasPage] = useState(1);
 
   const formatCOP = (value: number) => {
     return `$${Math.round(value).toLocaleString('es-CO')}`;
@@ -762,14 +766,20 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       key: 'history',
       label: isMobile ? 'Mantto' : 'Mantenimientos',
       children: (
-        <div>
+        <div style={{ minHeight: 350 }}>
           {isMobile ? (
             workOrders.length > 0 ? (
               <div>
-                {workOrders.map(renderWorkOrderCard)}
-                <div style={{ textAlign: 'center', marginTop: 12, color: '#8c8c8c', fontSize: 12 }}>
-                  Total: {workOrders.length} registros
-                </div>
+                {workOrders.slice((woPage - 1) * 5, woPage * 5).map(renderWorkOrderCard)}
+                <Pagination
+                  current={woPage}
+                  pageSize={5}
+                  total={workOrders.length}
+                  onChange={(page) => setWoPage(page)}
+                  size="small"
+                  simple
+                  style={{ textAlign: 'center', marginTop: 8 }}
+                />
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>
@@ -798,14 +808,20 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       key: 'events',
       label: isMobile ? 'Reparaciones' : 'Reparaciones',
       children: (
-        <div>
+        <div style={{ minHeight: 350 }}>
           {isMobile ? (
             events.length > 0 ? (
               <div>
-                {events.map(renderEventCard)}
-                <div style={{ textAlign: 'center', marginTop: 12, color: '#8c8c8c', fontSize: 12 }}>
-                  Total: {events.length} eventos
-                </div>
+                {events.slice((eventsPage - 1) * 5, eventsPage * 5).map(renderEventCard)}
+                <Pagination
+                  current={eventsPage}
+                  pageSize={5}
+                  total={events.length}
+                  onChange={(page) => setEventsPage(page)}
+                  size="small"
+                  simple
+                  style={{ textAlign: 'center', marginTop: 8 }}
+                />
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>
@@ -834,14 +850,20 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       key: 'transfers',
       label: isMobile ? 'Traslados' : 'Traslados',
       children: (
-        <div>
+        <div style={{ minHeight: 350 }}>
           {isMobile ? (
             transfers.length > 0 ? (
               <div>
-                {transfers.map(renderTransferCard)}
-                <div style={{ textAlign: 'center', marginTop: 12, color: '#8c8c8c', fontSize: 12 }}>
-                  Total: {transfers.length} traslados
-                </div>
+                {transfers.slice((transfersPage - 1) * 5, transfersPage * 5).map(renderTransferCard)}
+                <Pagination
+                  current={transfersPage}
+                  pageSize={5}
+                  total={transfers.length}
+                  onChange={(page) => setTransfersPage(page)}
+                  size="small"
+                  simple
+                  style={{ textAlign: 'center', marginTop: 8 }}
+                />
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>
@@ -870,14 +892,20 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       key: 'bajas',
       label: isMobile ? 'Bajas' : 'Historial Bajas',
       children: (
-        <div>
+        <div style={{ minHeight: 350 }}>
           {isMobile ? (
             bajas.length > 0 ? (
               <div>
-                {bajas.map(renderBajaCard)}
-                <div style={{ textAlign: 'center', marginTop: 12, color: '#8c8c8c', fontSize: 12 }}>
-                  Total: {bajas.length} registros
-                </div>
+                {bajas.slice((bajasPage - 1) * 5, bajasPage * 5).map(renderBajaCard)}
+                <Pagination
+                  current={bajasPage}
+                  pageSize={5}
+                  total={bajas.length}
+                  onChange={(page) => setBajasPage(page)}
+                  size="small"
+                  simple
+                  style={{ textAlign: 'center', marginTop: 8 }}
+                />
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>

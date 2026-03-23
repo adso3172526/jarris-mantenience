@@ -36,7 +36,7 @@ import {
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { workOrdersApi, usersApi, locationsApi } from '../../services/api';
-import { workOrderStatusColors } from '../../config/theme';
+import { workOrderStatusColors, workOrderPriorityColors, workOrderPriorityLabels } from '../../config/theme';
 import { useAuth } from '../../contexts/AuthContext';
 import CreateWorkOrderModal from './CreateWorkOrderModal';
 import ViewWorkOrderModal from './ViewWorkOrderModal';
@@ -57,6 +57,7 @@ interface WorkOrder {
   status: string;
   maintenanceType?: string;
   locativeCategory?: { id: string; name: string };
+  priority?: string;
   assigneeType?: string;
   assigneeName?: string;
   assigneeEmail?: string;
@@ -417,9 +418,16 @@ const WorkOrdersPage: React.FC = () => {
           <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#8c8c8c' }}>
             OT-{record.id.substring(0, 8)}
           </span>
-          <Tag color={workOrderStatusColors[record.status as keyof typeof workOrderStatusColors]}>
-            {record.status}
-          </Tag>
+          <div>
+            {record.priority && (
+              <Tag color={workOrderPriorityColors[record.priority as keyof typeof workOrderPriorityColors]}>
+                {workOrderPriorityLabels[record.priority as keyof typeof workOrderPriorityLabels]}
+              </Tag>
+            )}
+            <Tag color={workOrderStatusColors[record.status as keyof typeof workOrderStatusColors]}>
+              {record.status}
+            </Tag>
+          </div>
         </div>
         
         <div style={{ marginBottom: 8 }}>
@@ -453,7 +461,7 @@ const WorkOrdersPage: React.FC = () => {
 
         {!isPDV && record.assigneeName && (
           <div style={{ fontSize: 12, marginBottom: 4 }}>
-            <strong>Asignado:</strong> {record.assigneeName}{' '}
+            <div><strong>Asignado:</strong> {record.assigneeName}</div>
             <Tag size="small" color={record.assigneeType === 'INTERNO' ? 'blue' : 'orange'}>
               {record.assigneeType}
             </Tag>
@@ -509,6 +517,19 @@ const WorkOrdersPage: React.FC = () => {
       width: 120,
       ellipsis: true,
       sorter: (a, b) => (a.location?.name || '').localeCompare(b.location?.name || ''),
+    },
+    {
+      title: 'Prioridad',
+      dataIndex: 'priority',
+      key: 'priority',
+      width: 90,
+      ellipsis: true,
+      sorter: (a, b) => (a.priority || '').localeCompare(b.priority || ''),
+      render: (priority: string) => priority ? (
+        <Tag color={workOrderPriorityColors[priority as keyof typeof workOrderPriorityColors]}>
+          {workOrderPriorityLabels[priority as keyof typeof workOrderPriorityLabels]}
+        </Tag>
+      ) : <span style={{ color: '#8c8c8c' }}>—</span>,
     },
     {
       title: 'Estado',

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Descriptions, Tag, Timeline, Typography, Image, Button, Divider } from 'antd';
-import { workOrderStatusColors } from '../../config/theme';
+import { workOrderStatusColors, workOrderPriorityColors, workOrderPriorityLabels } from '../../config/theme';
 import {
   FileTextOutlined,
   UserOutlined,
@@ -186,6 +186,14 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
     <div>
       {/* Estado */}
       <div style={{ marginBottom: 16 }}>
+        {workOrder.priority && (
+          <Tag
+            color={workOrderPriorityColors[workOrder.priority as keyof typeof workOrderPriorityColors]}
+            style={{ fontSize: 14, padding: '4px 12px' }}
+          >
+            {workOrderPriorityLabels[workOrder.priority as keyof typeof workOrderPriorityLabels]}
+          </Tag>
+        )}
         <Tag
           color={workOrderStatusColors[workOrder.status as keyof typeof workOrderStatusColors]}
           style={{ fontSize: 14, padding: '4px 12px' }}
@@ -420,6 +428,14 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
   const renderDesktopContent = () => (
     <div>
       <div style={{ marginBottom: 24 }}>
+        {workOrder.priority && (
+          <Tag
+            color={workOrderPriorityColors[workOrder.priority as keyof typeof workOrderPriorityColors]}
+            style={{ fontSize: 14, padding: '4px 12px' }}
+          >
+            {workOrderPriorityLabels[workOrder.priority as keyof typeof workOrderPriorityLabels]}
+          </Tag>
+        )}
         <Tag
           color={workOrderStatusColors[workOrder.status as keyof typeof workOrderStatusColors]}
           style={{ fontSize: 14, padding: '4px 12px' }}

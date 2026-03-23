@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Select, Input, message, Alert } from 'antd';
+import { Modal, Form, Select, Input, Tag, message, Alert } from 'antd';
 import { workOrdersApi, usersApi } from '../../services/api';
+import { workOrderPriorityColors, workOrderPriorityLabels } from '../../config/theme';
 
 interface AssignWorkOrderModalProps {
   open: boolean;
@@ -51,6 +52,7 @@ const AssignWorkOrderModal: React.FC<AssignWorkOrderModalProps> = ({
         assigneeName: selectedTech?.name || selectedTech?.email.split('@')[0] || 'Técnico',
         assigneeEmail: selectedTech?.email,
         assignmentDescription: values.assignmentDescription?.trim() || undefined,
+        priority: values.priority || undefined,
       };
       
       await workOrdersApi.assign(workOrder.id, data);
@@ -139,6 +141,19 @@ const AssignWorkOrderModal: React.FC<AssignWorkOrderModalProps> = ({
             {filteredTechnicians.map((tech) => (
               <Select.Option key={tech.id} value={tech.id}>
                 {tech.name ? `${tech.name} (${tech.email})` : tech.email}
+              </Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+        <Form.Item
+          label="Prioridad"
+          name="priority"
+        >
+          <Select placeholder="Selecciona prioridad (opcional)" allowClear>
+            {Object.entries(workOrderPriorityLabels).map(([key, label]) => (
+              <Select.Option key={key} value={key}>
+                <Tag color={workOrderPriorityColors[key as keyof typeof workOrderPriorityColors]}>{label}</Tag>
               </Select.Option>
             ))}
           </Select>

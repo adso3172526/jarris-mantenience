@@ -31,6 +31,12 @@ export enum MaintenanceType {
   LOCATIVO = 'LOCATIVO',
 }
 
+export enum WorkOrderPriority {
+  BAJA = 'BAJA',
+  MEDIA = 'MEDIA',
+  ALTA = 'ALTA',
+}
+
 @Entity('work_orders')
 export class WorkOrderEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -80,6 +86,9 @@ export class WorkOrderEntity {
 
   @Column({ type: 'text', nullable: true })
   assignmentDescription?: string;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  priority?: WorkOrderPriority;
 
   // Campos de rechazo
   @Column({ type: 'text', nullable: true })

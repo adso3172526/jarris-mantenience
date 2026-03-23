@@ -218,12 +218,10 @@ const UsersPage: React.FC = () => {
           onClick={() => handleEdit(record)}
         />
         <Button
-          icon={<LockOutlined />}
+          type="text"
+          icon={<LockOutlined style={{ color: '#faad14' }} />}
           onClick={() => handleResetPassword(record)}
-          style={{ flex: 1, borderColor: '#faad14', color: '#faad14' }}
-        >
-          Reset Pass
-        </Button>
+        />
       </Space>
     </Card>
   );

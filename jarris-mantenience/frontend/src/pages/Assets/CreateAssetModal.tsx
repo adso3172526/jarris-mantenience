@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, InputNumber, message, Upload, Button } from 'antd';
+import { Modal, Form, Input, Select, InputNumber, message, Upload, Button, Alert } from 'antd';
 import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
 import { assetsApi, categoriesApi, locationsApi } from '../../services/api';
@@ -20,6 +20,7 @@ const CreateAssetModal: React.FC<CreateAssetModalProps> = ({
   const [categories, setCategories] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -51,7 +52,7 @@ const CreateAssetModal: React.FC<CreateAssetModalProps> = ({
       const values = await form.validateFields();
 
       if (fileList.length === 0) {
-        message.error('Debes subir al menos una foto del activo');
+        setPhotoError('Debes subir al menos una foto del activo');
         return;
       }
 
@@ -83,6 +84,7 @@ const CreateAssetModal: React.FC<CreateAssetModalProps> = ({
 
       form.resetFields();
       setFileList([]);
+      setPhotoError(null);
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -96,6 +98,7 @@ const CreateAssetModal: React.FC<CreateAssetModalProps> = ({
   const handleCancel = () => {
     form.resetFields();
     setFileList([]);
+    setPhotoError(null);
     onClose();
   };
 
@@ -103,30 +106,38 @@ const CreateAssetModal: React.FC<CreateAssetModalProps> = ({
     listType: 'picture-card' as const,
     fileList: fileList,
     beforeUpload: (file: File) => {
-      // Validar tipo de archivo
-      const isImage = file.type.startsWith('image/');
-      if (!isImage) {
-        message.error('Solo puedes subir archivos de imagen');
+      // Validar tipo
+      if (file.type && !file.type.startsWith('image/')) {
+        setPhotoError(`Formato no permitido: "${file.name}". Solo se aceptan imágenes.`);
         return false;
       }
 
-      // Validar tamaño (5MB)
-      const isLt5M = file.size / 1024 / 1024 < 5;
-      if (!isLt5M) {
-        message.error('La imagen debe ser menor a 5MB');
+      // Validar tamaño (15MB)
+      const sizeMB = file.size / 1024 / 1024;
+      if (sizeMB >= 15) {
+        setPhotoError(`"${file.name}" pesa ${sizeMB.toFixed(1)}MB. El máximo permitido es 15MB.`);
         return false;
       }
 
       // Validar máximo 5 fotos
       if (fileList.length >= 5) {
-        message.error('Máximo 5 fotos por activo');
+        setPhotoError('Máximo 5 fotos por activo.');
         return false;
       }
 
-      return false; // No subir automáticamente
+      setPhotoError(null);
+      return false;
     },
     onChange: ({ fileList: newFileList }: any) => {
-      setFileList(newFileList);
+      // Filtrar archivos inválidos
+      const valid = newFileList.filter((f: any) => {
+        if (!f.originFileObj) return true;
+        const type = f.originFileObj.type;
+        if (type && !type.startsWith('image/')) return false;
+        if (f.originFileObj.size / 1024 / 1024 >= 15) return false;
+        return true;
+      });
+      setFileList(valid.slice(0, 5));
     },
     onRemove: (file: UploadFile) => {
       const index = fileList.indexOf(file);
@@ -238,8 +249,18 @@ const CreateAssetModal: React.FC<CreateAssetModalProps> = ({
             )}
           </Upload>
           <div style={{ marginTop: 8, color: '#8c8c8c', fontSize: 12 }}>
-            Formatos: JPG, PNG, WEBP • Tamaño máximo: 5MB por foto
+            Formatos: JPG, PNG, WEBP • Tamaño máximo: 15MB por foto
           </div>
+          {photoError && (
+            <Alert
+              message={photoError}
+              type="error"
+              showIcon
+              closable
+              onClose={() => setPhotoError(null)}
+              style={{ marginTop: 8 }}
+            />
+          )}
         </Form.Item>
       </Form>
     </Modal>

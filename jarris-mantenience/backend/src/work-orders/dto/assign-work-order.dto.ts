@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
-import { AssigneeType } from '../../entities/work-order.entity';
+import { AssigneeType, WorkOrderPriority } from '../../entities/work-order.entity';
 
 export class AssignWorkOrderDto {
   @IsEnum(AssigneeType)
@@ -22,5 +22,9 @@ export class AssignWorkOrderDto {
   @IsString()
   @IsOptional()
   assignmentDescription?: string;
+
+  @IsEnum(WorkOrderPriority)
+  @IsOptional()
+  priority?: WorkOrderPriority;
 }
 

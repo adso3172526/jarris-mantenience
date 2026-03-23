@@ -91,7 +91,13 @@ export class AssetEventsService {
       }
 
       await manager.save(AssetEventEntity, event);
-      return event;
+
+      // Recargar con relaciones completas para la respuesta
+      const reloaded = await manager.findOne(AssetEventEntity, {
+        where: { id: eventId },
+        relations: ['asset', 'asset.location', 'fromLocation', 'toLocation'],
+      });
+      return reloaded;
     });
   }
 

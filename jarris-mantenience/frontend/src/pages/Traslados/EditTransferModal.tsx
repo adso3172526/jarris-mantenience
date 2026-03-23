@@ -24,12 +24,20 @@ const EditTransferModal: React.FC<EditTransferModalProps> = ({
   useEffect(() => {
     if (open && event) {
       form.setFieldsValue({
-        toLocationId: event.toLocation?.id,
+        toLocationId: event.toLocation?.id || undefined,
         description: event.description,
         cost: Number(event.cost || 0),
       });
     }
   }, [open, event, form]);
+
+  // Construir opciones del Select: excluir origen, incluir destino actual si no está en la lista
+  const filteredLocations = locations.filter((loc: any) => loc.id !== event?.fromLocation?.id);
+  const currentToInList = event?.toLocation?.id && filteredLocations.some((loc: any) => loc.id === event.toLocation.id);
+  const selectOptions = [...filteredLocations];
+  if (event?.toLocation?.id && !currentToInList) {
+    selectOptions.unshift({ id: event.toLocation.id, name: event.toLocation.name || 'Ubicación no disponible' });
+  }
 
   const handleSubmit = async (values: any) => {
     try {
@@ -94,7 +102,7 @@ const EditTransferModal: React.FC<EditTransferModalProps> = ({
             placeholder="Seleccionar destino"
             size={isMobile ? 'large' : 'middle'}
           >
-            {locations.filter((loc: any) => loc.id !== event?.fromLocation?.id).map((loc: any) => (
+            {selectOptions.map((loc: any) => (
               <Select.Option key={loc.id} value={loc.id}>
                 {loc.name}
               </Select.Option>
