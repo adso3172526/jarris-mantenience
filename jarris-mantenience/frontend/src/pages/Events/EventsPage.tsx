@@ -26,6 +26,7 @@ import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { assetEventsApi, locationsApi, usersApi, workOrdersApi } from '../../services/api';
 import ViewWorkOrderModal from '../WorkOrders/ViewWorkOrderModal';
+import { eventTypeStyles } from '../../config/theme';
 
 const { RangePicker } = DatePicker;
 
@@ -271,7 +272,7 @@ const EventsPage: React.FC = () => {
       ellipsis: true,
       sorter: (a, b) => a.type.localeCompare(b.type),
       render: (type: string) => (
-        <Tag color={type === 'MANTENIMIENTO' ? 'volcano-inverse' : 'yellow-inverse'}>
+        <Tag style={{ backgroundColor: eventTypeStyles[type]?.bg, color: eventTypeStyles[type]?.color, border: 'none' }}>
           {type === 'MANTENIMIENTO' ? 'Mantenimiento' : 'Reparación'}
         </Tag>
       ),
@@ -347,7 +348,7 @@ const EventsPage: React.FC = () => {
           <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 600 }}>
             {record.asset?.code || 'N/A'}
           </span>
-          <Tag color={record.type === 'MANTENIMIENTO' ? 'volcano-inverse' : 'yellow-inverse'}>
+          <Tag style={{ backgroundColor: eventTypeStyles[record.type]?.bg, color: eventTypeStyles[record.type]?.color, border: 'none' }}>
             {record.type === 'MANTENIMIENTO' ? 'Mantenimiento' : 'Reparación'}
           </Tag>
         </div>

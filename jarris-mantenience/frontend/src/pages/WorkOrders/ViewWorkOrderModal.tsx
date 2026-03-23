@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Descriptions, Tag, Timeline, Typography, Image, Button, Divider } from 'antd';
-import { workOrderStatusColors, workOrderPriorityColors, workOrderPriorityLabels } from '../../config/theme';
+import { workOrderStatusStyles, workOrderPriorityStyles, workOrderPriorityLabels } from '../../config/theme';
 import {
   FileTextOutlined,
   UserOutlined,
@@ -46,7 +46,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
     const items = [];
 
     items.push({
-      color: 'gold',
+      color: workOrderStatusStyles['NUEVA']?.color,
       dot: <FileTextOutlined />,
       children: (
         <div>
@@ -67,11 +67,11 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
 
     if (workOrder.rejectedAt) {
       items.push({
-        color: 'red',
+        color: workOrderStatusStyles['RECHAZADA']?.color,
         dot: <CloseCircleOutlined />,
         children: (
           <div>
-            <Text strong style={{ color: '#ff4d4f' }}>Rechazada</Text>
+            <Text strong style={{ color: workOrderStatusStyles['RECHAZADA']?.color }}>Rechazada</Text>
             <br />
             <Text type="secondary">
               {new Date(workOrder.rejectedAt).toLocaleString('es-CO')}
@@ -95,7 +95,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
 
     if (workOrder.assigneeName && !workOrder.rejectedAt) {
       items.push({
-        color: 'blue',
+        color: workOrderStatusStyles['ASIGNADA']?.color,
         dot: <UserOutlined />,
         children: (
           <div>
@@ -119,7 +119,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
 
     if ((workOrder.status === 'EN_PROCESO' || workOrder.status === 'TERMINADA' || workOrder.status === 'CERRADA') && !workOrder.rejectedAt) {
       items.push({
-        color: 'cyan',
+        color: workOrderStatusStyles['EN_PROCESO']?.color,
         dot: <ClockCircleOutlined />,
         children: (
           <div>
@@ -145,11 +145,11 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
 
     if (workOrder.finishedAt) {
       items.push({
-        color: 'green',
+        color: workOrderStatusStyles['TERMINADA']?.color,
         dot: <CheckCircleOutlined />,
         children: (
           <div>
-            <Text strong>Finalizada</Text>
+            <Text strong>Terminada</Text>
             <br />
             <Text type="secondary">
               {new Date(workOrder.finishedAt).toLocaleString('es-CO')}
@@ -167,7 +167,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
 
     if (workOrder.closedAt && !workOrder.rejectedAt) {
       items.push({
-        color: 'default',
+        color: workOrderStatusStyles['CERRADA']?.color,
         children: (
           <div>
             <Text strong>Cerrada</Text>
@@ -196,15 +196,13 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
       <div style={{ marginBottom: 16 }}>
         {workOrder.priority && (
           <Tag
-            color={workOrderPriorityColors[workOrder.priority as keyof typeof workOrderPriorityColors]}
-            style={{ fontSize: 14, padding: '4px 12px' }}
+            style={{ fontSize: 14, padding: '4px 12px', backgroundColor: workOrderPriorityStyles[workOrder.priority]?.bg, color: workOrderPriorityStyles[workOrder.priority]?.color, border: 'none' }}
           >
             {workOrderPriorityLabels[workOrder.priority as keyof typeof workOrderPriorityLabels]}
           </Tag>
         )}
         <Tag
-          color={workOrderStatusColors[workOrder.status as keyof typeof workOrderStatusColors]}
-          style={{ fontSize: 14, padding: '4px 12px' }}
+          style={{ fontSize: 14, padding: '4px 12px', backgroundColor: workOrderStatusStyles[workOrder.status]?.bg, color: workOrderStatusStyles[workOrder.status]?.color, border: 'none' }}
         >
           {workOrder.status}
         </Tag>
@@ -438,15 +436,13 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
       <div style={{ marginBottom: 24 }}>
         {workOrder.priority && (
           <Tag
-            color={workOrderPriorityColors[workOrder.priority as keyof typeof workOrderPriorityColors]}
-            style={{ fontSize: 14, padding: '4px 12px' }}
+            style={{ fontSize: 14, padding: '4px 12px', backgroundColor: workOrderPriorityStyles[workOrder.priority]?.bg, color: workOrderPriorityStyles[workOrder.priority]?.color, border: 'none' }}
           >
             {workOrderPriorityLabels[workOrder.priority as keyof typeof workOrderPriorityLabels]}
           </Tag>
         )}
         <Tag
-          color={workOrderStatusColors[workOrder.status as keyof typeof workOrderStatusColors]}
-          style={{ fontSize: 14, padding: '4px 12px' }}
+          style={{ fontSize: 14, padding: '4px 12px', backgroundColor: workOrderStatusStyles[workOrder.status]?.bg, color: workOrderStatusStyles[workOrder.status]?.color, border: 'none' }}
         >
           {workOrder.status}
         </Tag>

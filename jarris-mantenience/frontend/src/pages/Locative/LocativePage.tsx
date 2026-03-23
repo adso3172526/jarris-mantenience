@@ -34,7 +34,7 @@ import {
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { workOrdersApi, locationsApi, usersApi } from '../../services/api';
-import { workOrderStatusColors, workOrderPriorityColors, workOrderPriorityLabels } from '../../config/theme';
+import { workOrderStatusStyles, workOrderPriorityStyles, workOrderPriorityLabels } from '../../config/theme';
 import { useAuth } from '../../contexts/AuthContext';
 import ViewWorkOrderModal from '../WorkOrders/ViewWorkOrderModal';
 import AssignWorkOrderModal from '../WorkOrders/AssignWorkOrderModal';
@@ -419,6 +419,18 @@ const LocativePage: React.FC = () => {
       sorter: (a, b) => (a.location?.name || '').localeCompare(b.location?.name || ''),
     },
     {
+      title: 'Tipo',
+      dataIndex: 'maintenanceType',
+      key: 'maintenanceType',
+      width: 90,
+      ellipsis: true,
+      render: () => (
+        <Tag color="purple-inverse">
+          <HomeOutlined /> LOCATIVO
+        </Tag>
+      ),
+    },
+    {
       title: 'Prioridad',
       dataIndex: 'priority',
       key: 'priority',
@@ -426,7 +438,7 @@ const LocativePage: React.FC = () => {
       ellipsis: true,
       sorter: (a: WorkOrder, b: WorkOrder) => (a.priority || '').localeCompare(b.priority || ''),
       render: (priority: string) => priority ? (
-        <Tag color={workOrderPriorityColors[priority as keyof typeof workOrderPriorityColors]}>
+        <Tag style={{ backgroundColor: workOrderPriorityStyles[priority]?.bg, color: workOrderPriorityStyles[priority]?.color, border: 'none' }}>
           {workOrderPriorityLabels[priority as keyof typeof workOrderPriorityLabels]}
         </Tag>
       ) : <span style={{ color: '#8c8c8c' }}>—</span>,
@@ -439,20 +451,8 @@ const LocativePage: React.FC = () => {
       ellipsis: true,
       sorter: (a, b) => a.status.localeCompare(b.status),
       render: (status: string) => (
-        <Tag color={workOrderStatusColors[status as keyof typeof workOrderStatusColors]}>
+        <Tag style={{ backgroundColor: workOrderStatusStyles[status]?.bg, color: workOrderStatusStyles[status]?.color, border: 'none' }}>
           {status}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Tipo',
-      dataIndex: 'maintenanceType',
-      key: 'maintenanceType',
-      width: 90,
-      ellipsis: true,
-      render: () => (
-        <Tag color="purple-inverse">
-          <HomeOutlined /> LOCATIVO
         </Tag>
       ),
     },
@@ -513,22 +513,22 @@ const LocativePage: React.FC = () => {
           <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#8c8c8c' }}>
             OT-{record.id.substring(0, 8)}
           </span>
-          <div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            <Tag color={isContratista ? undefined : 'purple-inverse'}>
+              <HomeOutlined /> LOCATIVO
+            </Tag>
             {record.priority && (
-              <Tag color={workOrderPriorityColors[record.priority as keyof typeof workOrderPriorityColors]}>
+              <Tag style={{ backgroundColor: workOrderPriorityStyles[record.priority]?.bg, color: workOrderPriorityStyles[record.priority]?.color, border: 'none' }}>
                 {workOrderPriorityLabels[record.priority as keyof typeof workOrderPriorityLabels]}
               </Tag>
             )}
-            <Tag color={workOrderStatusColors[record.status as keyof typeof workOrderStatusColors]}>
+            <Tag style={{ backgroundColor: workOrderStatusStyles[record.status]?.bg, color: workOrderStatusStyles[record.status]?.color, border: 'none' }}>
               {record.status}
             </Tag>
           </div>
         </div>
 
         <div style={{ marginBottom: 4 }}>
-          <Tag color={isContratista ? undefined : 'purple-inverse'}>
-            <HomeOutlined /> LOCATIVO
-          </Tag>
           {record.locativeCategory?.name && (
             <span style={{ fontSize: 12, marginLeft: 4 }}>{record.locativeCategory.name}</span>
           )}

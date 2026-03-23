@@ -23,6 +23,7 @@ import {
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { assetEventsApi, locationsApi } from '../../services/api';
+import { eventTypeStyles } from '../../config/theme';
 
 const { RangePicker } = DatePicker;
 
@@ -204,11 +205,12 @@ const BajasPage: React.FC = () => {
       width: 100,
       ellipsis: true,
       sorter: (a, b) => a.type.localeCompare(b.type),
-      render: (type: string) => (
-        <Tag color={eventTypeColors[type] || 'default'}>
-          {eventTypeLabels[type] || type}
-        </Tag>
-      ),
+      render: (type: string) => {
+        const eStyle = eventTypeStyles[type];
+        return eStyle
+          ? <Tag style={{ backgroundColor: eStyle.bg, color: eStyle.color, border: 'none' }}>{eventTypeLabels[type] || type}</Tag>
+          : <Tag color={eventTypeColors[type] || 'default'}>{eventTypeLabels[type] || type}</Tag>;
+      },
     },
     {
       title: 'Registrado por',
@@ -241,7 +243,7 @@ const BajasPage: React.FC = () => {
           <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 14 }}>
             {record.asset?.code || 'N/A'}
           </span>
-          <Tag color={eventTypeColors[record.type] || 'default'}>
+          <Tag style={eventTypeStyles[record.type] ? { backgroundColor: eventTypeStyles[record.type].bg, color: eventTypeStyles[record.type].color, border: 'none' } : undefined} color={eventTypeStyles[record.type] ? undefined : eventTypeColors[record.type] || 'default'}>
             {eventTypeLabels[record.type] || record.type}
           </Tag>
         </div>

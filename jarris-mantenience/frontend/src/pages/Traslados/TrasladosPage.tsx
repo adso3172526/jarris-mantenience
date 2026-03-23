@@ -26,6 +26,7 @@ import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { assetEventsApi, locationsApi } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { eventTypeStyles } from '../../config/theme';
 import EditTransferModal from './EditTransferModal';
 import VoidTransferModal from './VoidTransferModal';
 
@@ -196,7 +197,7 @@ const TrasladosPage: React.FC = () => {
       key: 'type',
       width: 100,
       ellipsis: true,
-      render: (type: string) => <Tag color="pink-inverse">{type}</Tag>,
+      render: () => <Tag style={{ backgroundColor: eventTypeStyles['TRASLADO']?.bg, color: eventTypeStyles['TRASLADO']?.color, border: 'none' }}>Traslado</Tag>,
     },
     {
       title: 'Registrado por',
@@ -276,7 +277,7 @@ const TrasladosPage: React.FC = () => {
           <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 14 }}>
             {record.asset?.code || 'N/A'}
           </span>
-          <Tag color="pink-inverse">Traslado</Tag>
+          <Tag style={{ backgroundColor: eventTypeStyles['TRASLADO']?.bg, color: eventTypeStyles['TRASLADO']?.color, border: 'none' }}>Traslado</Tag>
         </div>
 
         <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>

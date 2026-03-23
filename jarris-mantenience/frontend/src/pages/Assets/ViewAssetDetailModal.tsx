@@ -9,7 +9,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { assetsApi, workOrdersApi, assetEventsApi, usersApi } from '../../services/api';
-import { assetStatusColors } from '../../config/theme';
+import { assetStatusColors, eventTypeStyles, eventTypeLabels } from '../../config/theme';
 
 interface ViewAssetDetailModalProps {
   open: boolean;
@@ -185,7 +185,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
           <span style={{ fontFamily: 'monospace', fontSize: 18, color: '#8c8c8c' }}>
             {record.id.substring(0, 8)}
           </span>
-          <Tag color="orange-inverse">Mantenimiento</Tag>
+          <Tag style={{ backgroundColor: eventTypeStyles['MANTENIMIENTO']?.bg, color: eventTypeStyles['MANTENIMIENTO']?.color, border: 'none' }}>Mantenimiento</Tag>
         </div>
         <div style={{ fontSize: 12, color: '#595959', marginBottom: 4 }}>
           <strong>Ubicación:</strong> {record.location?.name || asset?.location?.name || '-'}
@@ -211,16 +211,17 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
     const colors: any = {
       COMPRA: 'green-inverse',
       TRANSFERENCIA: 'blue-inverse',
-      TRASLADO: 'pink-inverse',
-      BAJA: 'red-inverse',
-      REACTIVACION: 'green-inverse',
-      REPARACION: 'yellow-inverse',
     };
     const numCost = Number(record.cost || 0);
 
     // Para REPARACION: mostrar ID de la OT
     const displayId =
       record.type === 'REPARACION' && record.workOrderId ? record.workOrderId : record.id;
+
+    const eventStyle = eventTypeStyles[record.type];
+    const tagProps = eventStyle
+      ? { style: { backgroundColor: eventStyle.bg, color: eventStyle.color, border: 'none' } }
+      : { color: colors[record.type] || 'default' };
 
     return (
       <Card key={record.id} style={{ marginBottom: 12 }} size="small">
@@ -229,7 +230,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
             <span style={{ fontFamily: 'monospace', fontSize: 18, color: '#8c8c8c' }}>
               {displayId.substring(0, 8)}
             </span>
-            <Tag color={colors[record.type] || 'default'}>{record.type}</Tag>
+            <Tag {...tagProps}>{eventTypeLabels[record.type] || record.type}</Tag>
           </div>
 
           {numCost > 0 && (
@@ -280,7 +281,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       key: 'type',
       width: 130,
       ellipsis: true,
-      render: () => <Tag color="orange-inverse">Mantenimiento</Tag>,
+      render: () => <Tag style={{ backgroundColor: eventTypeStyles['MANTENIMIENTO']?.bg, color: eventTypeStyles['MANTENIMIENTO']?.color, border: 'none' }}>Mantenimiento</Tag>,
     },
     {
       title: 'Ubicación',
@@ -366,12 +367,12 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
         const colors: any = {
           COMPRA: 'green-inverse',
           TRANSFERENCIA: 'blue-inverse',
-          TRASLADO: 'pink-inverse',
-          BAJA: 'red-inverse',
-          REACTIVACION: 'green-inverse',
-          REPARACION: 'yellow-inverse',
         };
-        return <Tag color={colors[type] || 'default'}>{type}</Tag>;
+        const eStyle = eventTypeStyles[type];
+        const tagProps = eStyle
+          ? { style: { backgroundColor: eStyle.bg, color: eStyle.color, border: 'none' } }
+          : { color: colors[type] || 'default' };
+        return <Tag {...tagProps}>{eventTypeLabels[type] || type}</Tag>;
       },
     },
     {
@@ -491,7 +492,12 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       width: 100,
       ellipsis: true,
       sorter: (a: any, b: any) => (a.type || '').localeCompare(b.type || ''),
-      render: (type: string) => <Tag color={transferTypeColors[type] || 'default'}>{type}</Tag>,
+      render: (type: string) => {
+        const eStyle = eventTypeStyles[type];
+        return eStyle
+          ? <Tag style={{ backgroundColor: eStyle.bg, color: eStyle.color, border: 'none' }}>{eventTypeLabels[type] || type}</Tag>
+          : <Tag color={transferTypeColors[type] || 'default'}>{eventTypeLabels[type] || type}</Tag>;
+      },
     },
     {
       title: 'Descripción',
@@ -543,7 +549,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
           <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#8c8c8c' }}>
             {record.id.substring(0, 8)}
           </span>
-          <Tag color={transferTypeColors[record.type] || 'default'}>{record.type}</Tag>
+          <Tag style={eventTypeStyles[record.type] ? { backgroundColor: eventTypeStyles[record.type].bg, color: eventTypeStyles[record.type].color, border: 'none' } : undefined} color={eventTypeStyles[record.type] ? undefined : transferTypeColors[record.type] || 'default'}>{eventTypeLabels[record.type] || record.type}</Tag>
         </div>
         <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>
           {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}
@@ -599,7 +605,12 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       key: 'type',
       width: 110,
       ellipsis: true,
-      render: (type: string) => <Tag color={bajaTypeColors[type] || 'default'}>{bajaTypeLabels[type] || type}</Tag>,
+      render: (type: string) => {
+        const eStyle = eventTypeStyles[type];
+        return eStyle
+          ? <Tag style={{ backgroundColor: eStyle.bg, color: eStyle.color, border: 'none' }}>{bajaTypeLabels[type] || type}</Tag>
+          : <Tag color={bajaTypeColors[type] || 'default'}>{bajaTypeLabels[type] || type}</Tag>;
+      },
     },
     {
       title: 'Descripción',
@@ -631,7 +642,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
           <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#8c8c8c' }}>
             {record.id.substring(0, 8)}
           </span>
-          <Tag color={bajaTypeColors[record.type] || 'default'}>{bajaTypeLabels[record.type] || record.type}</Tag>
+          <Tag style={eventTypeStyles[record.type] ? { backgroundColor: eventTypeStyles[record.type].bg, color: eventTypeStyles[record.type].color, border: 'none' } : undefined} color={eventTypeStyles[record.type] ? undefined : bajaTypeColors[record.type] || 'default'}>{bajaTypeLabels[record.type] || record.type}</Tag>
         </div>
         <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>
           {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}

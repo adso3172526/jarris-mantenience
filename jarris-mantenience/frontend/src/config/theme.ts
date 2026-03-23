@@ -59,19 +59,36 @@ export const theme: ThemeConfig = {
   },
 };
 
-// Estados de Work Orders con colores
+// Estados de Work Orders con colores personalizados (fondo + texto)
+export const workOrderStatusStyles: Record<string, { bg: string; color: string }> = {
+  NUEVA: { bg: '#F3F4F6', color: '#374151' },
+  ASIGNADA: { bg: '#DBEAFE', color: '#1E40AF' },
+  EN_PROCESO: { bg: '#FEF3C7', color: '#92400E' },
+  TERMINADA: { bg: '#D1FAE5', color: '#065F46' },
+  CERRADA: { bg: '#F9FAFB', color: '#9CA3AF' },
+  RECHAZADA: { bg: '#FEE2E2', color: '#991B1B' },
+};
+
+// Compat: mapa simple para casos que usen el preset de Ant Design
 export const workOrderStatusColors = {
-  NUEVA: 'gold',
+  NUEVA: 'default',
   ASIGNADA: 'blue',
-  EN_PROCESO: 'cyan',
+  EN_PROCESO: 'gold',
   TERMINADA: 'green',
   CERRADA: 'default',
   RECHAZADA: 'red',
 } as const;
 
-// Prioridades de Work Orders
+// Prioridades de Work Orders con colores personalizados (fondo + texto)
+export const workOrderPriorityStyles: Record<string, { bg: string; color: string }> = {
+  BAJA: { bg: '#E0F2FE', color: '#0369A1' },
+  MEDIA: { bg: '#FFEDD5', color: '#C2410C' },
+  ALTA: { bg: '#FEE2E2', color: '#B91C1C' },
+};
+
+// Compat
 export const workOrderPriorityColors = {
-  BAJA: 'green',
+  BAJA: 'blue',
   MEDIA: 'orange',
   ALTA: 'red',
 } as const;
@@ -81,6 +98,25 @@ export const workOrderPriorityLabels = {
   MEDIA: 'Media',
   ALTA: 'Alta',
 } as const;
+
+// Tipos de evento (Mantenimiento / Reparación)
+export const eventTypeStyles: Record<string, { bg: string; color: string }> = {
+  MANTENIMIENTO: { bg: '#fcf7bb', color: '#D97706' },
+  REPARACION: { bg: '#fae8d2', color: '#C2410C' },
+  TRASLADO: { bg: '#FDF2F8', color: '#BE185D' },
+  BAJA: { bg: '#F1F5F9', color: '#475569' },
+  REACTIVACION: { bg: '#ECFDF5', color: '#059669' },
+};
+
+export const eventTypeLabels: Record<string, string> = {
+  MANTENIMIENTO: 'Mantenimiento',
+  REPARACION: 'Reparación',
+  TRASLADO: 'Traslado',
+  BAJA: 'Baja',
+  REACTIVACION: 'Reactivación',
+  COMPRA: 'Compra',
+  TRANSFERENCIA: 'Transferencia',
+};
 
 // Estados de Assets con colores
 export const assetStatusColors = {

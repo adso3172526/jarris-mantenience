@@ -36,7 +36,7 @@ import {
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { workOrdersApi, usersApi, locationsApi } from '../../services/api';
-import { workOrderStatusColors, workOrderPriorityColors, workOrderPriorityLabels } from '../../config/theme';
+import { workOrderStatusStyles, workOrderPriorityStyles, workOrderPriorityLabels } from '../../config/theme';
 import { useAuth } from '../../contexts/AuthContext';
 import CreateWorkOrderModal from './CreateWorkOrderModal';
 import ViewWorkOrderModal from './ViewWorkOrderModal';
@@ -421,26 +421,23 @@ const WorkOrdersPage: React.FC = () => {
           <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#8c8c8c' }}>
             OT-{record.id.substring(0, 8)}
           </span>
-          <div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            <Tag color={record.maintenanceType === 'EQUIPO' ? 'blue-inverse' : 'purple-inverse'}>
+              {record.maintenanceType === 'EQUIPO' ? (
+                <><ToolOutlined /> EQUIPO</>
+              ) : (
+                <><HomeOutlined /> LOCATIVO</>
+              )}
+            </Tag>
             {record.priority && (
-              <Tag color={workOrderPriorityColors[record.priority as keyof typeof workOrderPriorityColors]}>
+              <Tag style={{ backgroundColor: workOrderPriorityStyles[record.priority]?.bg, color: workOrderPriorityStyles[record.priority]?.color, border: 'none' }}>
                 {workOrderPriorityLabels[record.priority as keyof typeof workOrderPriorityLabels]}
               </Tag>
             )}
-            <Tag color={workOrderStatusColors[record.status as keyof typeof workOrderStatusColors]}>
+            <Tag style={{ backgroundColor: workOrderStatusStyles[record.status]?.bg, color: workOrderStatusStyles[record.status]?.color, border: 'none' }}>
               {record.status}
             </Tag>
           </div>
-        </div>
-        
-        <div style={{ marginBottom: 8 }}>
-          <Tag color={record.maintenanceType === 'EQUIPO' ? 'blue-inverse' : 'purple-inverse'} style={{ marginBottom: 4 }}>
-            {record.maintenanceType === 'EQUIPO' ? (
-              <><ToolOutlined /> EQUIPO</>
-            ) : (
-              <><HomeOutlined /> LOCATIVO</>
-            )}
-          </Tag>
         </div>
 
         {record.maintenanceType === 'EQUIPO' && record.asset ? (
@@ -522,32 +519,6 @@ const WorkOrdersPage: React.FC = () => {
       sorter: (a, b) => (a.location?.name || '').localeCompare(b.location?.name || ''),
     },
     {
-      title: 'Prioridad',
-      dataIndex: 'priority',
-      key: 'priority',
-      width: 90,
-      ellipsis: true,
-      sorter: (a, b) => (a.priority || '').localeCompare(b.priority || ''),
-      render: (priority: string) => priority ? (
-        <Tag color={workOrderPriorityColors[priority as keyof typeof workOrderPriorityColors]}>
-          {workOrderPriorityLabels[priority as keyof typeof workOrderPriorityLabels]}
-        </Tag>
-      ) : <span style={{ color: '#8c8c8c' }}>—</span>,
-    },
-    {
-      title: 'Estado',
-      dataIndex: 'status',
-      key: 'status',
-      width: 110,
-      ellipsis: true,
-      sorter: (a, b) => a.status.localeCompare(b.status),
-      render: (status) => (
-        <Tag color={workOrderStatusColors[status as keyof typeof workOrderStatusColors]}>
-          {status}
-        </Tag>
-      ),
-    },
-    {
       title: 'Tipo',
       dataIndex: 'maintenanceType',
       key: 'maintenanceType',
@@ -561,6 +532,32 @@ const WorkOrdersPage: React.FC = () => {
           ) : (
             <><HomeOutlined /> LOCATIVO</>
           )}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Prioridad',
+      dataIndex: 'priority',
+      key: 'priority',
+      width: 90,
+      ellipsis: true,
+      sorter: (a, b) => (a.priority || '').localeCompare(b.priority || ''),
+      render: (priority: string) => priority ? (
+        <Tag style={{ backgroundColor: workOrderPriorityStyles[priority]?.bg, color: workOrderPriorityStyles[priority]?.color, border: 'none' }}>
+          {workOrderPriorityLabels[priority as keyof typeof workOrderPriorityLabels]}
+        </Tag>
+      ) : <span style={{ color: '#8c8c8c' }}>—</span>,
+    },
+    {
+      title: 'Estado',
+      dataIndex: 'status',
+      key: 'status',
+      width: 110,
+      ellipsis: true,
+      sorter: (a, b) => a.status.localeCompare(b.status),
+      render: (status) => (
+        <Tag style={{ backgroundColor: workOrderStatusStyles[status]?.bg, color: workOrderStatusStyles[status]?.color, border: 'none' }}>
+          {status}
         </Tag>
       ),
     },

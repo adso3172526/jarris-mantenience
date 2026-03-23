@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Form, Select, Input, Tag, message, Alert } from 'antd';
 import { workOrdersApi, usersApi } from '../../services/api';
-import { workOrderPriorityColors, workOrderPriorityLabels } from '../../config/theme';
+import { workOrderPriorityStyles, workOrderPriorityLabels } from '../../config/theme';
 
 interface AssignWorkOrderModalProps {
   open: boolean;
@@ -153,7 +153,7 @@ const AssignWorkOrderModal: React.FC<AssignWorkOrderModalProps> = ({
           <Select placeholder="Selecciona prioridad (opcional)" allowClear>
             {Object.entries(workOrderPriorityLabels).map(([key, label]) => (
               <Select.Option key={key} value={key}>
-                <Tag color={workOrderPriorityColors[key as keyof typeof workOrderPriorityColors]}>{label}</Tag>
+                <Tag style={{ backgroundColor: workOrderPriorityStyles[key]?.bg, color: workOrderPriorityStyles[key]?.color, border: 'none' }}>{label}</Tag>
               </Select.Option>
             ))}
           </Select>
