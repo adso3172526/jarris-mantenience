@@ -30,7 +30,7 @@ export class AssetEventsService {
 
     return this.assetEventRepository.find({
       where: { asset: { id: assetId }, active: true },
-      relations: ['asset', 'asset.location', 'fromLocation', 'toLocation'],
+      relations: ['asset', 'asset.location', 'fromLocation', 'toLocation', 'workOrder', 'workOrder.location'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -38,7 +38,7 @@ export class AssetEventsService {
   async getAllEvents(): Promise<AssetEventEntity[]> {
     return this.assetEventRepository.find({
       where: { active: true },
-      relations: ['asset', 'asset.location', 'fromLocation', 'toLocation', 'workOrder'],
+      relations: ['asset', 'asset.location', 'fromLocation', 'toLocation', 'workOrder', 'workOrder.location'],
       order: { createdAt: 'DESC' },
     });
   }

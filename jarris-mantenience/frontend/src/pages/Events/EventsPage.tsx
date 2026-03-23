@@ -61,6 +61,10 @@ interface AssetEvent {
     closedAt?: string;
     assigneeName?: string;
     assigneeEmail?: string;
+    location?: {
+      id: string;
+      name: string;
+    };
   };
 }
 
@@ -141,7 +145,8 @@ const EventsPage: React.FC = () => {
           e.asset?.code?.toLowerCase().includes(search) ||
           e.asset?.description?.toLowerCase().includes(search) ||
           e.createdBy?.toLowerCase().includes(search) ||
-          e.fromLocation?.name?.toLowerCase().includes(search)
+          e.fromLocation?.name?.toLowerCase().includes(search) ||
+          e.workOrder?.location?.name?.toLowerCase().includes(search)
       );
     }
 
@@ -150,7 +155,7 @@ const EventsPage: React.FC = () => {
     }
 
     if (filterLocation) {
-      filtered = filtered.filter((e) => e.fromLocation?.id === filterLocation);
+      filtered = filtered.filter((e) => e.fromLocation?.id === filterLocation || e.workOrder?.location?.id === filterLocation);
     }
 
     if (filterTechnician) {
@@ -254,9 +259,9 @@ const EventsPage: React.FC = () => {
       key: 'location',
       width: 120,
       ellipsis: true,
-      sorter: (a, b) => (a.fromLocation?.name || '').localeCompare(b.fromLocation?.name || ''),
+      sorter: (a, b) => (a.fromLocation?.name || a.workOrder?.location?.name || '').localeCompare(b.fromLocation?.name || b.workOrder?.location?.name || ''),
       render: (_: any, record: AssetEvent) =>
-        record.fromLocation?.name || '-',
+        record.fromLocation?.name || record.workOrder?.location?.name || '-',
     },
     {
       title: 'Tipo',
@@ -354,7 +359,7 @@ const EventsPage: React.FC = () => {
         )}
 
         <div style={{ fontSize: 12, color: '#595959', marginBottom: 4 }}>
-          <strong>Ubicación:</strong> {record.fromLocation?.name || '-'}
+          <strong>Ubicación:</strong> {record.fromLocation?.name || record.workOrder?.location?.name || '-'}
         </div>
 
         <div style={{ fontSize: 12, marginBottom: 4 }}>

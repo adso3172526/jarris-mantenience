@@ -189,7 +189,7 @@ Nueva Orden de Trabajo Asignada
 
 OT: ${saved.id}
 ${asset ? `Equipo: ${asset.code} - ${asset.description}
-Categoría: ${asset.category?.name ?? ''}` : `Tipo: Mantenimiento Locativo
+Categoría: ${asset.category?.name ?? ''}` : `Tipo: Locativo
 Categoría: ${wo.locativeCategory?.name ?? ''}`}
 Ubicación: ${wo.location?.name ?? ''}
 ${saved.priority ? `Prioridad: ${saved.priority}` : ''}
@@ -302,22 +302,22 @@ Cuando termine, suba la factura (PDF/JPG/PNG) si aplica.
       font-size: 14px;
     }
     .description-box {
-      background-color: #fff3cd;
-      border-left: 4px solid #ffc107;
-      padding: 15px;
-      border-radius: 4px;
-      font-size: 15px;
-      line-height: 1.6;
-      color: #856404;
-    }
-    .assignee-box {
       background-color: #d1ecf1;
       border-left: 4px solid #17a2b8;
       padding: 15px;
       border-radius: 4px;
       font-size: 15px;
-      font-weight: 500;
+      line-height: 1.6;
       color: #0c5460;
+    }
+    .assignee-box {
+      background-color: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #856404;
     }
     .instructions {
       background-color: #f8f9fa;
@@ -402,7 +402,7 @@ Cuando termine, suba la factura (PDF/JPG/PNG) si aplica.
           ` : `
           <div class="info-row">
             <div class="info-label">Tipo:</div>
-            <div class="info-value">Mantenimiento Locativo</div>
+            <div class="info-value">Locativo</div>
           </div>
           <div class="info-row">
             <div class="info-label">Categoría:</div>
@@ -658,7 +658,7 @@ Cuando termine, suba la factura (PDF/JPG/PNG) si aplica.
 `Su solicitud de mantenimiento ha sido rechazada
 
 OT: ${wo.id}
-${wo.asset ? `Equipo: ${wo.asset.code} - ${wo.asset.description}` : `Tipo: Mantenimiento Locativo - ${wo.locativeCategory?.name ?? ''}`}
+${wo.asset ? `Equipo: ${wo.asset.code} - ${wo.asset.description}` : `Tipo: Locativo - ${wo.locativeCategory?.name ?? ''}`}
 Ubicación: ${wo.location.name}
 
 Motivo del rechazo:

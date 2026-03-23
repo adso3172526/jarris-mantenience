@@ -137,7 +137,7 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
           <strong>{workOrder.asset ? 'Equipo:' : 'Tipo:'}</strong>{' '}
           {workOrder.asset 
             ? `${workOrder.asset.code} - ${workOrder.asset.description}` 
-            : `Mantenimiento Locativo - ${workOrder.locativeCategory || ''}`}
+            : `Locativo - ${workOrder.locativeCategory?.name || ''}`}
         </p>
         <p style={{ margin: 0 }}>
           <strong>Ubicación:</strong> {workOrder.location.name}

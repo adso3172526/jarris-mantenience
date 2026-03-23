@@ -63,7 +63,7 @@ const RejectWorkOrderModal: React.FC<RejectWorkOrderModalProps> = ({
               <strong>{workOrder.asset ? 'Equipo:' : 'Tipo:'}</strong>{' '}
               {workOrder.asset 
                 ? `${workOrder.asset.code} - ${workOrder.asset.description}` 
-                : `Mantenimiento Locativo - ${workOrder.locativeCategory?.name || ''}`}
+                : `Locativo - ${workOrder.locativeCategory?.name || ''}`}
             </p>
             <p><strong>Ubicación:</strong> {workOrder.location.name}</p>
             <p><strong>Solicitud:</strong> {workOrder.title}</p>

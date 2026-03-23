@@ -163,7 +163,7 @@ const UploadPhotosModal: React.FC<UploadPhotosModalProps> = ({
           <strong>{workOrder.asset ? 'Equipo:' : 'Tipo:'}</strong>{' '}
           {workOrder.asset 
             ? `${workOrder.asset.code} - ${workOrder.asset.description}` 
-            : `Mantenimiento Locativo - ${workOrder.locativeCategory || ''}`}
+            : `Locativo - ${workOrder.locativeCategory?.name || ''}`}
         </p>
         <p style={{ fontSize: 12, color: '#8c8c8c' }}>
           Puedes subir máximo 2 fotos por perfil. Formatos: JPG, PNG (máx 5MB cada una)
