@@ -442,8 +442,8 @@ const WorkOrdersPage: React.FC = () => {
 
         {record.maintenanceType === 'EQUIPO' && record.asset ? (
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontWeight: 600, fontSize: 13 }}>{record.asset.code}</div>
-            <div style={{ fontSize: 12, color: '#8c8c8c' }}>{record.asset.description}</div>
+            <div style={{ fontWeight: 600, fontSize: 15 }}>{record.asset.code}</div>
+            <div style={{ fontSize: 15, color: '#8c8c8c' }}>{record.asset.description}</div>
           </div>
         ) : (
           <span style={{ fontSize: 12, marginBottom: 8, display: 'inline-block' }}>
@@ -455,7 +455,7 @@ const WorkOrdersPage: React.FC = () => {
           <strong>Solicitud:</strong> {record.title}
         </div>
 
-        <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4, fontWeight: 700 }}>
+        <div style={{ fontSize: 14, color: '#8c8c8c', marginBottom: 4, fontWeight: 700 }}>
            {record.location.name}
         </div>
 

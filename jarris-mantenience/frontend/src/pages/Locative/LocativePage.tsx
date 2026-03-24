@@ -530,7 +530,7 @@ const LocativePage: React.FC = () => {
 
         <div style={{ marginBottom: 4 }}>
           {record.locativeCategory?.name && (
-            <span style={{ fontSize: 12, marginLeft: 4 }}>{record.locativeCategory.name}</span>
+            <span style={{ fontSize: 14, fontWeight: 600, marginLeft: 4 }}>{record.locativeCategory.name}</span>
           )}
         </div>
 
@@ -538,8 +538,8 @@ const LocativePage: React.FC = () => {
           <strong>Solicitud:</strong> {record.title}
         </div>
 
-        <div style={{ fontSize: 12, color: '#595959', marginBottom: 4 }}>
-          <strong>Ubicación:</strong> {record.location?.name}
+        <div style={{ fontSize: 14, color: '#595959', marginBottom: 4, fontWeight: 700 }}>
+          {record.location?.name}
         </div>
 
         <div style={{ fontSize: 12, marginBottom: 4 }}>
