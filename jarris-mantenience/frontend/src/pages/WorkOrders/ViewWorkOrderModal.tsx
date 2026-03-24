@@ -38,6 +38,14 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Bloquear scroll del body cuando el modal está abierto en mobile
+  useEffect(() => {
+    if (open && isMobile) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [open, isMobile]);
+
   const formatCOP = (value: number) => {
     return `$${Math.round(value).toLocaleString('es-CO')}`;
   };
@@ -629,15 +637,19 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
           <Button onClick={onClose} block={isMobile} danger>Cerrar</Button>
         )
       }
-      width={isMobile ? 'calc(100vw - 24px)' : 800}
-      centered
-      style={isMobile ? { maxWidth: 'calc(100vw - 24px)' } : {}}
+      width={isMobile ? 'calc(100vw - 16px)' : 800}
+      centered={!isMobile}
+      style={isMobile ? { maxWidth: 'calc(100vw - 16px)', margin: '8px', top: 0, padding: 0 } : {}}
       styles={{
         body: {
-          maxHeight: isMobile ? 'calc(100vh - 120px)' : 'calc(100vh - 200px)',
+          height: isMobile ? 'calc(100vh - 126px)' : undefined,
+          maxHeight: isMobile ? 'calc(100vh - 126px)' : 'calc(100vh - 200px)',
           overflowY: 'auto',
+          overscrollBehavior: 'contain',
           padding: isMobile ? 12 : undefined,
         },
+        content: isMobile ? { borderRadius: 8, height: 'calc(100vh - 16px)' } : {},
+        wrapper: isMobile ? { overflow: 'hidden' } : {},
       }}
     >
       {isMobile ? renderMobileContent() : renderDesktopContent()}

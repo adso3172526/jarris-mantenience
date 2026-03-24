@@ -502,7 +502,7 @@ const LocativePage: React.FC = () => {
   ];
 
   const renderMobileCard = (record: WorkOrder) => (
-    <Card key={record.id} style={{ marginBottom: 12 }} size="small">
+    <Card key={record.id} style={{ marginBottom: 12, borderLeft: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}` }} size="small">
       <div>
         <div style={{
           display: 'flex',

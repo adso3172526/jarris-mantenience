@@ -411,9 +411,9 @@ const WorkOrdersPage: React.FC = () => {
 
   // Mobile Card View
   const renderMobileCard = (record: WorkOrder) => (
-    <Card 
-      key={record.id} 
-      style={{ marginBottom: 12 }}
+    <Card
+      key={record.id}
+      style={{ marginBottom: 12, borderLeft: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}` }}
       size="small"
     >
       <div style={{ marginBottom: 12 }}>
