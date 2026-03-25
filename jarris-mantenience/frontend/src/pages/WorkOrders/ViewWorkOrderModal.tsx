@@ -622,20 +622,15 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
       onCancel={onClose}
       footer={
         showEditButton && onEdit ? (
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-            <Button
-              icon={<EditOutlined />}
-              onClick={onEdit}
-              type="primary"
-              style={{ backgroundColor: '#E60012', borderColor: '#E60012' }}
-            >
-              Editar OT
-            </Button>
-            <Button onClick={onClose} danger>Cerrar</Button>
-          </div>
-        ) : (
-          <Button onClick={onClose} block={isMobile} danger>Cerrar</Button>
-        )
+          <Button
+            icon={<EditOutlined />}
+            onClick={onEdit}
+            type="primary"
+            style={{ backgroundColor: '#E60012', borderColor: '#E60012' }}
+          >
+            Editar OT
+          </Button>
+        ) : null
       }
       width={isMobile ? 'calc(100vw - 16px)' : 800}
       centered={!isMobile}
