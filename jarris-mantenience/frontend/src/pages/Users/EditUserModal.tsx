@@ -60,7 +60,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
     }
   };
 
-  const needsLocation = selectedRoles.includes('PDV');
+  const needsLocation = selectedRoles.includes('PDV') || selectedRoles.includes('ADMINISTRACION');
 
   return (
     <Modal
@@ -117,6 +117,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
             </Select.Option>
             <Select.Option value="CONTRATISTA">Contratista</Select.Option>
             <Select.Option value="PDV">PDV</Select.Option>
+            <Select.Option value="ADMINISTRACION">Administración</Select.Option>
           </Select>
         </Form.Item>
 
@@ -127,11 +128,11 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
             rules={[
               {
                 required: true,
-                message: 'Ubicación requerida para usuarios PDV',
+                message: 'Ubicación requerida para usuarios PDV/Administración',
               },
             ]}
           >
-            <Select placeholder="Selecciona la ubicación del PDV">
+            <Select placeholder="Selecciona la ubicación">
               {locations.map((loc) => (
                 <Select.Option key={loc.id} value={loc.id}>
                   {loc.name} - {loc.type}

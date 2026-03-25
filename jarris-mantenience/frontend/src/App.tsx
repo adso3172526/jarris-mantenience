@@ -32,7 +32,7 @@ const RoleRedirect: React.FC = () => {
   if (user.roles.includes('ADMIN') || user.roles.includes('JEFE_MANTENIMIENTO')) {
     return <Navigate to="/dashboard" replace />;
   } else {
-    // TECNICO_INTERNO, CONTRATISTA, PDV
+    // TECNICO_INTERNO, CONTRATISTA, PDV, ADMINISTRACION
     return <Navigate to="/work-orders" replace />;
   }
 };
@@ -78,7 +78,7 @@ function App() {
                 </RoleRoute>
               } />
               <Route path="assets" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'ADMINISTRACION']}>
                   <AssetsPage />
                 </RoleRoute>
               } />

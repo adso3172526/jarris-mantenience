@@ -50,7 +50,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
     }
   };
 
-  const needsLocation = selectedRoles.includes('PDV');
+  const needsLocation = selectedRoles.includes('PDV') || selectedRoles.includes('ADMINISTRACION');
 
   return (
     <Modal
@@ -121,6 +121,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </Select.Option>
             <Select.Option value="CONTRATISTA">Contratista</Select.Option>
             <Select.Option value="PDV">PDV</Select.Option>
+            <Select.Option value="ADMINISTRACION">Administración</Select.Option>
           </Select>
         </Form.Item>
 
@@ -131,11 +132,11 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             rules={[
               {
                 required: true,
-                message: 'Ubicación requerida para usuarios PDV',
+                message: 'Ubicación requerida para usuarios PDV/Administración',
               },
             ]}
           >
-            <Select placeholder="Selecciona la ubicación del PDV">
+            <Select placeholder="Selecciona la ubicación">
               {locations.map((loc) => (
                 <Select.Option key={loc.id} value={loc.id}>
                   {loc.name} - {loc.type}
@@ -173,6 +174,9 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
           </li>
           <li>
             <strong>PDV:</strong> Crear solicitudes de OT (requiere ubicación)
+          </li>
+          <li>
+            <strong>ADMINISTRACION:</strong> Igual que PDV, gestiona solicitudes de su ubicación
           </li>
         </ul>
       </div>

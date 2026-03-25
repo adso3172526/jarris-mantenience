@@ -103,7 +103,7 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV'])) {
+    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'ADMINISTRACION'])) {
       items.push({
         key: '/assets',
         icon: <ToolOutlined />,
@@ -175,6 +175,7 @@ const MainLayout: React.FC = () => {
       TECNICO_INTERNO: 'Técnico',
       CONTRATISTA: 'Contratista',
       PDV: 'PDV',
+      ADMINISTRACION: 'Administración',
     };
     return roles.map((r) => roleLabels[r] || r).join(', ');
   };

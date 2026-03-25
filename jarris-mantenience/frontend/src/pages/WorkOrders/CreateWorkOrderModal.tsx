@@ -187,7 +187,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
           }
         });
         formData.append('uploadedBy', user?.email || '');
-        formData.append('userRole', 'PDV');
+        formData.append('userRole', user?.roles?.includes('ADMINISTRACION') ? 'ADMINISTRACION' : 'PDV');
 
         try {
           await workOrdersApi.uploadPhotos(newWoId, formData);

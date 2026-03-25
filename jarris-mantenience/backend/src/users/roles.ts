@@ -4,6 +4,7 @@ export const ROLES = {
   TECNICO_INTERNO: 'TECNICO_INTERNO',
   CONTRATISTA: 'CONTRATISTA',
   PDV: 'PDV',
+  ADMINISTRACION: 'ADMINISTRACION',
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];

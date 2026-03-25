@@ -34,13 +34,13 @@ export class WorkOrdersController {
   constructor(private readonly service: WorkOrdersService) {}
 
   @Post()
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'ADMINISTRACION')
   create(@Body() dto: CreateWorkOrderDto) {
     return this.service.create(dto);
   }
 
   @Get('by-asset/:assetId')
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA', 'ADMINISTRACION')
   findByAsset(@Param('assetId') assetId: string) {
     return this.service.findByAsset(assetId);
   }
@@ -58,7 +58,7 @@ export class WorkOrdersController {
   }
 
   @Get('by-location/:locationId')
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'PDV')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'PDV', 'ADMINISTRACION')
   findByLocation(@Param('locationId') locationId: string) {
     return this.service.findByLocation(locationId);
   }
@@ -70,13 +70,13 @@ export class WorkOrdersController {
   }
 
   @Get('by-creator')
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'PDV')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'PDV', 'ADMINISTRACION')
   findByCreator(@Query('email') email: string) {
     return this.service.findByCreator(email);
   }
 
   @Get(':id')
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA', 'ADMINISTRACION')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
@@ -154,7 +154,7 @@ export class WorkOrdersController {
   @UseInterceptors(
     FilesInterceptor('files', 2, {
       storage: multer.memoryStorage(),
-      limits: { fileSize: 5 * 1024 * 1024 },
+      limits: { fileSize: 15 * 1024 * 1024 },
       fileFilter: (req, file, cb) => {
         const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
         if (!allowed.includes(file.mimetype)) {
@@ -200,11 +200,11 @@ export class WorkOrdersController {
   }
 
   @Post(':id/photos')
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'CONTRATISTA', 'PDV')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'CONTRATISTA', 'PDV', 'ADMINISTRACION')
   @UseInterceptors(
     FilesInterceptor('files', 2, {
       storage: multer.memoryStorage(),
-      limits: { fileSize: 5 * 1024 * 1024 },
+      limits: { fileSize: 15 * 1024 * 1024 },
       fileFilter: (req, file, cb) => {
         const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
         if (!allowed.includes(file.mimetype)) {

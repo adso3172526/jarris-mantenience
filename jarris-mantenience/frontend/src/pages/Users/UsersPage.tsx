@@ -53,6 +53,7 @@ const roleColors: Record<string, string> = {
   TECNICO_INTERNO: 'green',
   CONTRATISTA: 'orange',
   PDV: 'purple',
+  ADMINISTRACION: 'cyan',
 };
 
 const roleLabels: Record<string, string> = {
@@ -61,6 +62,7 @@ const roleLabels: Record<string, string> = {
   TECNICO_INTERNO: 'Técnico Interno',
   CONTRATISTA: 'Contratista',
   PDV: 'Punto de Venta',
+  ADMINISTRACION: 'Administración',
 };
 
 const roleIcons: Record<string, React.ReactNode> = {
@@ -69,6 +71,7 @@ const roleIcons: Record<string, React.ReactNode> = {
   TECNICO_INTERNO: <ToolOutlined style={{ color: '#52c41a' }} />,
   CONTRATISTA: <TeamOutlined style={{ color: '#fa8c16' }} />,
   PDV: <ShopOutlined style={{ color: '#722ed1' }} />,
+  ADMINISTRACION: <ShopOutlined style={{ color: '#13c2c2' }} />,
 };
 
 const UsersPage: React.FC = () => {
@@ -125,7 +128,7 @@ const UsersPage: React.FC = () => {
       name: user.name,
       email: user.email,
       phone: user.phone,
-      roles: user.roles,
+      roles: user.roles?.[0] || undefined,
       locationId: user.locationId,
       active: user.active,
     });
@@ -134,15 +137,15 @@ const UsersPage: React.FC = () => {
 
   const handleSubmit = async (values: any) => {
     try {
+      const payload = { ...values, roles: [values.roles] };
       if (editingUser) {
-        const updateData = { ...values };
-        if (!updateData.password) {
-          delete updateData.password;
+        if (!payload.password) {
+          delete payload.password;
         }
-        await usersApi.update(editingUser.id, updateData);
+        await usersApi.update(editingUser.id, payload);
         message.success('Usuario actualizado exitosamente');
       } else {
-        await usersApi.create(values);
+        await usersApi.create(payload);
         message.success('Usuario creado exitosamente');
       }
       setModalOpen(false);
@@ -298,9 +301,9 @@ const UsersPage: React.FC = () => {
     },
   ];
 
-  // Detectar si tiene rol PDV seleccionado
-  const selectedRoles = Form.useWatch('roles', form);
-  const hasPDVRole = selectedRoles?.includes('PDV');
+  // Detectar si tiene rol PDV o ADMINISTRACION seleccionado
+  const selectedRole = Form.useWatch('roles', form);
+  const hasPDVRole = selectedRole === 'PDV' || selectedRole === 'ADMINISTRACION';
 
   return (
     <div style={{ height: isMobile ? 'auto' : 'calc(100vh - 112px)', display: 'flex', flexDirection: 'column' }}>
@@ -464,35 +467,36 @@ const UsersPage: React.FC = () => {
             rules={[{ required: true, message: 'Selecciona al menos un rol' }]}
           >
             <Select
-              mode="multiple"
-              placeholder="Selecciona uno o más roles"
+              placeholder="Selecciona un rol"
               size={isMobile ? "large" : "middle"}
+              onChange={() => form.setFieldsValue({ locationId: undefined })}
             >
               <Select.Option value="ADMIN">Administrador</Select.Option>
               <Select.Option value="JEFE_MANTENIMIENTO">Jefe de Mantenimiento</Select.Option>
               <Select.Option value="TECNICO_INTERNO">Técnico Interno</Select.Option>
               <Select.Option value="CONTRATISTA">Contratista</Select.Option>
               <Select.Option value="PDV">Punto de Venta</Select.Option>
+              <Select.Option value="ADMINISTRACION">Administración</Select.Option>
             </Select>
           </Form.Item>
 
           {hasPDVRole && (
             <Form.Item
-              label="Ubicación (PDV)"
+              label="Ubicación"
               name="locationId"
               rules={[
                 {
                   required: hasPDVRole,
-                  message: 'Ubicación requerida para usuarios PDV',
+                  message: 'Ubicación requerida para usuarios PDV/Administración',
                 },
               ]}
             >
               <Select
-                placeholder="Selecciona la ubicación del PDV"
+                placeholder="Selecciona la ubicación"
                 size={isMobile ? "large" : "middle"}
               >
                 {locations
-                  .filter((loc) => loc.type === 'PDV')
+                  .filter((loc) => loc.active !== false && (selectedRole === 'PDV' ? loc.type === 'PDV' : selectedRole === 'ADMINISTRACION' ? loc.type === 'DEPARTAMENTO' : true))
                   .map((loc) => (
                     <Select.Option key={loc.id} value={loc.id}>
                       {loc.name}
@@ -518,7 +522,7 @@ const UsersPage: React.FC = () => {
             fontSize: isMobile ? 11 : 12
           }}>
             <p style={{ margin: 0 }}>
-              Los usuarios PDV requieren una ubicación asignada. Los demás roles tienen acceso global.
+              Los usuarios PDV y Administración requieren una ubicación asignada. Los demás roles tienen acceso global.
             </p>
           </div>
         )}

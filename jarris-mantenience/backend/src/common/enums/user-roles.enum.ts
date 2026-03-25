@@ -4,6 +4,7 @@ export enum UserRole {
   TECNICO_INTERNO = 'TECNICO_INTERNO',
   CONTRATISTA = 'CONTRATISTA',
   PDV = 'PDV',
+  ADMINISTRACION = 'ADMINISTRACION',
 }
 
 // Helper para validar roles

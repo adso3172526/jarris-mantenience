@@ -29,21 +29,21 @@ export class UsersController {
 
   // Ver todos: TODOS los roles
   @Get()
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA', 'ADMINISTRACION')
   findAll() {
     return this.service.findAll();
   }
 
   // Listar técnicos y contratistas: TODOS (para asignar OT)
   @Get('technicians-contractors/list')
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA', 'ADMINISTRACION')
   findTechniciansAndContractors() {
     return this.service.findTechniciansAndContractors();
   }
 
   // Ver uno: TODOS
   @Get(':id')
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA', 'ADMINISTRACION')
   findById(@Param('id') id: string) {
     return this.service.findById(id);
   }

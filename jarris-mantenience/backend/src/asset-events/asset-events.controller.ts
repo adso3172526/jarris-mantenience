@@ -12,13 +12,13 @@ export class AssetEventsController {
   constructor(private readonly assetEventsService: AssetEventsService) {}
 
   @Get()
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'ADMINISTRACION')
   async getAllEvents() {
     return this.assetEventsService.getAllEvents();
   }
 
   @Get('asset/:id')
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'ADMINISTRACION')
   async getEventsByAsset(@Param('id') assetId: string) {
     return this.assetEventsService.getEventsByAsset(assetId);
   }

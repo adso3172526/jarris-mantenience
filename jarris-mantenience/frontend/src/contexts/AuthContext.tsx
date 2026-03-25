@@ -97,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (userData.roles.includes('ADMIN') || userData.roles.includes('JEFE_MANTENIMIENTO')) {
         return '/dashboard';
       } else {
-        // TECNICO_INTERNO, CONTRATISTA, PDV
+        // TECNICO_INTERNO, CONTRATISTA, PDV, ADMINISTRACION
         return '/work-orders';
       }
     } catch (error: any) {

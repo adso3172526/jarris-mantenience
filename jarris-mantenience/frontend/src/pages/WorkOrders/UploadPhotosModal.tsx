@@ -49,6 +49,8 @@ const UploadPhotosModal: React.FC<UploadPhotosModalProps> = ({
         const roles = user.roles;
         if (roles.includes('PDV')) {
           userRole = 'PDV';
+        } else if (roles.includes('ADMINISTRACION')) {
+          userRole = 'ADMINISTRACION';
         } else if (roles.includes('TECNICO_INTERNO')) {
           userRole = 'TECNICO_INTERNO';
         } else if (roles.includes('CONTRATISTA')) {
@@ -106,12 +108,7 @@ const UploadPhotosModal: React.FC<UploadPhotosModalProps> = ({
     multiple: true,
     maxCount: 2,
     fileList: fileList,
-    onRemove: (file) => {
-      setFileList(fileList.filter(f => f.uid !== file.uid));
-    },
     beforeUpload: (file) => {
-      console.log('beforeUpload called:', file.name, file.type);
-      
       // Validar tipo
       const isImage = ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type);
       if (!isImage) {
@@ -120,30 +117,15 @@ const UploadPhotosModal: React.FC<UploadPhotosModalProps> = ({
       }
 
       // Validar tamaño
-      const isLt5M = file.size / 1024 / 1024 < 5;
-      if (!isLt5M) {
-        message.error(`${file.name} debe ser menor a 5MB`);
+      if (file.size / 1024 / 1024 >= 15) {
+        message.error(`${file.name} debe ser menor a 15MB`);
         return Upload.LIST_IGNORE;
       }
 
-      // Validar máximo 2
-      if (fileList.length >= 2) {
-        message.error('Máximo 2 fotos');
-        return Upload.LIST_IGNORE;
-      }
-
-      // Crear UploadFile con originFileObj
-      const uploadFile: UploadFile = {
-        uid: `${Date.now()}-${file.name}`,
-        name: file.name,
-        status: 'done',
-        originFileObj: file,
-      };
-
-      setFileList(prev => [...prev, uploadFile]);
-      console.log('File added, has originFileObj:', !!uploadFile.originFileObj);
-      
       return false; // No subir automáticamente
+    },
+    onChange: ({ fileList: newFileList }) => {
+      setFileList(newFileList.slice(0, 2));
     },
   };
 
@@ -166,7 +148,7 @@ const UploadPhotosModal: React.FC<UploadPhotosModalProps> = ({
             : `Locativo - ${workOrder.locativeCategory?.name || ''}`}
         </p>
         <p style={{ fontSize: 12, color: '#8c8c8c' }}>
-          Puedes subir máximo 2 fotos por perfil. Formatos: JPG, PNG (máx 5MB cada una)
+          Puedes subir máximo 2 fotos por perfil. Formatos: JPG, PNG (máx 15MB cada una)
         </p>
       </div>
 

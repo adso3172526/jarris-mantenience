@@ -33,31 +33,31 @@ export class AssetsController {
   }
 
   @Get()
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA', 'ADMINISTRACION')
   findAll() {
     return this.assetsService.findAll();
   }
 
   @Get('location/:locationId')
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA', 'ADMINISTRACION')
   findByLocation(@Param('locationId') locationId: string) {
     return this.assetsService.findByLocation(locationId);
   }
 
   @Get('code/:code')
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA', 'ADMINISTRACION')
   findByCode(@Param('code') code: string) {
     return this.assetsService.findByCode(code);
   }
 
   @Get(':id')
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'CONTRATISTA', 'ADMINISTRACION')
   findOne(@Param('id') id: string) {
     return this.assetsService.findOne(id);
   }
 
   @Get(':id/qr')
-  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'ADMINISTRACION')
   async getQR(@Param('id') id: string) {
     const qrCode = await this.assetsService.getQRCode(id);
     return { qrCode };

@@ -110,7 +110,7 @@ const WorkOrdersPage: React.FC = () => {
   const isJefe = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
   const isTecnico = hasRole('TECNICO_INTERNO');
   const isContratista = hasRole('CONTRATISTA');
-  const isPDV = hasRole('PDV');
+  const isPDV = hasRole('PDV') || hasRole('ADMINISTRACION');
 
   const formatCOP = (value: number) => {
     return `$${Math.round(value).toLocaleString('es-CO')}`;
@@ -134,6 +134,11 @@ const WorkOrdersPage: React.FC = () => {
   useEffect(() => {
     applyFilters();
   }, [workOrders, searchText, filterStatus, filterLocation, filterAssignee, dateRange]);
+
+  // Resetear página solo cuando cambian los filtros
+  useEffect(() => {
+    setMobilePage(1);
+  }, [searchText, filterStatus, filterLocation, filterAssignee, dateRange]);
 
   const loadWorkOrders = async () => {
     try {
@@ -205,7 +210,6 @@ const WorkOrdersPage: React.FC = () => {
     }
 
     setFilteredOrders(filtered);
-    setMobilePage(1);
   };
 
   const handleView = (order: WorkOrder) => {

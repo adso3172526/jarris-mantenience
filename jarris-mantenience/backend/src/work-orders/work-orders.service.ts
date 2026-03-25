@@ -103,7 +103,7 @@ async create(dto: CreateWorkOrderDto) {
 
       if (!user?.locationId) {
         throw new BadRequestException(
-          'Usuario PDV debe tener ubicación asignada para crear OT locativa'
+          'Usuario PDV/ADMINISTRACION debe tener ubicación asignada para crear OT locativa'
         );
       }
 
@@ -614,7 +614,7 @@ Cuando termine, suba la factura (PDF/JPG/PNG) si aplica.
     }
 
     // Determinar en qué campo guardar según rol
-    const isPDV = userRole.toUpperCase().includes('PDV');
+    const isPDV = userRole.toUpperCase().includes('PDV') || userRole.toUpperCase().includes('ADMINISTRACION');
     console.log('Is PDV?', isPDV);
     
     if (isPDV) {
