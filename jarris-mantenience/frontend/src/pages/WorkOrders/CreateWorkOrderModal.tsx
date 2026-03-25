@@ -227,15 +227,20 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
       onCancel={() => { form.resetFields(); setFileList([]); setSelectedLocationId(undefined); setAssets([]); onClose(); }}
       onOk={() => form.submit()}
       confirmLoading={loading}
-      width={isMobile ? '100%' : 520}
-      centered
+      width={isMobile ? 'calc(100vw - 16px)' : 520}
+      centered={!isMobile}
       okText="Enviar Solicitud"
       cancelText="Cancelar"
+      style={isMobile ? { maxWidth: 'calc(100vw - 16px)', margin: '8px', top: 0, padding: 0 } : {}}
       styles={{
         body: {
-          maxHeight: isMobile ? 'calc(100vh - 110px)' : 'calc(100vh - 200px)',
+          maxHeight: isMobile ? 'calc(100vh - 160px)' : 'calc(100vh - 200px)',
           overflowY: 'auto',
+          overflowX: 'hidden',
+          padding: isMobile ? 12 : undefined,
         },
+        content: isMobile ? { borderRadius: 8 } : {},
+        wrapper: isMobile ? { overflow: 'hidden' } : {},
       }}
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
@@ -420,7 +425,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
         </Form.Item>
       </Form>
 
-      <div style={{ padding: '8px 12px', background: '#fafafa', borderRadius: 4, fontSize: 12, color: '#8c8c8c' }}>
+      <div style={{ padding: '8px 12px', background: '#fafafa', borderRadius: 4, fontSize: 12, color: '#8c8c8c', wordBreak: 'break-word' }}>
         La solicitud será enviada al Jefe de Mantenimiento para su revisión.
       </div>
     </Modal>
