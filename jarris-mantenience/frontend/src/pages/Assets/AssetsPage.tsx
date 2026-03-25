@@ -94,7 +94,7 @@ const AssetsPage: React.FC = () => {
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
 
   const { hasRole, user } = useAuth();
-  const isPDV = hasRole(['PDV']);
+  const isPDV = hasRole(['PDV']) || hasRole(['ADMINISTRACION']);
   const canEdit = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']);
   const canDeactivate = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
 

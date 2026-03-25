@@ -296,13 +296,13 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
         )}
       </div>
 
-      {/* Fotos del PDV */}
+      {/* Fotos de la Solicitud */}
       {workOrder.pdvPhotos && workOrder.pdvPhotos.length > 0 && (
         <>
           <Divider />
           <div style={{ marginBottom: 16 }}>
             <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 8 }}>
-              Fotos del PDV
+              Fotos de la Solicitud
             </Text>
             <Image.PreviewGroup>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -517,7 +517,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
 
       {workOrder.pdvPhotos && workOrder.pdvPhotos.length > 0 && (
         <>
-          <Title level={5} style={{ marginTop: 24 }}>Fotos del PDV</Title>
+          <Title level={5} style={{ marginTop: 24 }}>Fotos de la Solicitud</Title>
           <Image.PreviewGroup>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               {workOrder.pdvPhotos.map((photo: string, index: number) => (
