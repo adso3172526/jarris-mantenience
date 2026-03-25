@@ -502,7 +502,7 @@ const LocativePage: React.FC = () => {
   ];
 
   const renderMobileCard = (record: WorkOrder) => (
-    <Card key={record.id} style={{ marginBottom: 12, borderLeft: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}` }} size="small">
+    <Card key={record.id} style={{ marginBottom: 12, borderLeft: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}`, borderBottom: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}` }} size="small">
       <div>
         <div style={{
           display: 'flex',
@@ -510,7 +510,7 @@ const LocativePage: React.FC = () => {
           alignItems: 'flex-start',
           marginBottom: 8,
         }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#8c8c8c' }}>
+          <span style={{ fontFamily: "'Segoe UI', sans-serif", fontSize: 14, fontWeight: 600, color: '#8c8c8c' }}>
             OT-{record.id.substring(0, 8)}
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>

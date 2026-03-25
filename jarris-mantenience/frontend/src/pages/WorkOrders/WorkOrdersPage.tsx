@@ -418,7 +418,7 @@ const WorkOrdersPage: React.FC = () => {
     >
       <div style={{ marginBottom: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#8c8c8c' }}>
+          <span style={{ fontFamily: "'Segoe UI', sans-serif", fontSize: 14, fontWeight: 600, color: '#8c8c8c' }}>
             OT-{record.id.substring(0, 8)}
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
