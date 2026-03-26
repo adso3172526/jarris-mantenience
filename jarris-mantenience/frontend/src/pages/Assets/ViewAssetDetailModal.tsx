@@ -727,15 +727,15 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
               </Card>
 
               {asset.photos && asset.photos.length > 0 && (
-                <div style={{ marginTop: 12 }}>
+                <div style={{ marginTop: 12, marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Fotos:</div>
                   <Image.PreviewGroup>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', overflow: 'hidden' }}>
                       {asset.photos.map((photo: string, index: number) => (
                         <Image
                           key={index}
-                          width={100}
-                          height={100}
+                          width={80}
+                          height={80}
                           src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${photo}`}
                           style={{ objectFit: 'cover', borderRadius: 8 }}
                         />
@@ -983,15 +983,17 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       open={open}
       onCancel={onClose}
       footer={null}
-      width={isMobile ? 'calc(100vw - 24px)' : 1000}
+      width={isMobile ? 'calc(100% - 16px)' : 1000}
       centered
-      style={isMobile ? { maxWidth: 'calc(100vw - 24px)' } : {}}
+      style={isMobile ? { maxWidth: 'calc(100% - 16px)', padding: 0 } : {}}
       styles={{
         body: {
           maxHeight: isMobile ? 'calc(100vh - 120px)' : 'calc(100vh - 200px)',
           overflowY: 'auto',
+          overflowX: 'hidden',
           padding: isMobile ? 12 : undefined,
         },
+        content: isMobile ? { borderRadius: 8 } : {},
       }}
     >
       <Spin spinning={loading}>

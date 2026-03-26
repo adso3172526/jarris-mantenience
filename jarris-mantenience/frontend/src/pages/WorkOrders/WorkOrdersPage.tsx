@@ -422,26 +422,28 @@ const WorkOrdersPage: React.FC = () => {
     >
       <div style={{ marginBottom: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-          <span style={{ fontFamily: "'Segoe UI', sans-serif", fontSize: 14, fontWeight: 600, color: '#8c8c8c' }}>
-            OT-{record.id.substring(0, 8)}
-          </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            <Tag color={record.maintenanceType === 'EQUIPO' ? 'blue-inverse' : 'purple-inverse'}>
-              {record.maintenanceType === 'EQUIPO' ? (
-                <><ToolOutlined /> EQUIPO</>
-              ) : (
-                <><HomeOutlined /> LOCATIVO</>
-              )}
-            </Tag>
-            {record.priority && (
-              <Tag style={{ backgroundColor: workOrderPriorityStyles[record.priority]?.bg, color: workOrderPriorityStyles[record.priority]?.color, border: 'none' }}>
-                {workOrderPriorityLabels[record.priority as keyof typeof workOrderPriorityLabels]}
+          <div>
+            <div style={{ fontFamily: "'Segoe UI', sans-serif", fontSize: 14, fontWeight: 600, color: '#8c8c8c', marginBottom: 8 }}>
+              OT-{record.id.substring(0, 8)}
+            </div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <Tag color={record.maintenanceType === 'EQUIPO' ? 'blue-inverse' : 'purple-inverse'} style={{ width: 90, textAlign: 'center', display: 'inline-block' }}>
+                {record.maintenanceType === 'EQUIPO' ? (
+                  <><ToolOutlined /> EQUIPO</>
+                ) : (
+                  <><HomeOutlined /> LOCATIVO</>
+                )}
               </Tag>
-            )}
-            <Tag style={{ backgroundColor: workOrderStatusStyles[record.status]?.bg, color: workOrderStatusStyles[record.status]?.color, border: 'none' }}>
-              {record.status}
-            </Tag>
+              {record.priority && (
+                <Tag style={{ backgroundColor: workOrderPriorityStyles[record.priority]?.bg, color: workOrderPriorityStyles[record.priority]?.color, border: 'none', width: 60, textAlign: 'center', display: 'inline-block' }}>
+                  {workOrderPriorityLabels[record.priority as keyof typeof workOrderPriorityLabels]}
+                </Tag>
+              )}
+            </div>
           </div>
+          <Tag style={{ backgroundColor: workOrderStatusStyles[record.status]?.bg, color: workOrderStatusStyles[record.status]?.color, border: 'none', width: 90, textAlign: 'center', display: 'inline-block', margin: 0 }}>
+            {record.status}
+          </Tag>
         </div>
 
         {record.maintenanceType === 'EQUIPO' && record.asset ? (
@@ -530,7 +532,7 @@ const WorkOrdersPage: React.FC = () => {
       ellipsis: true,
       sorter: (a, b) => (a.maintenanceType || '').localeCompare(b.maintenanceType || ''),
       render: (type) => (
-        <Tag color={type === 'EQUIPO' ? 'blue-inverse' : 'purple-inverse'}>
+        <Tag color={type === 'EQUIPO' ? 'blue-inverse' : 'purple-inverse'} style={{ width: 90, textAlign: 'center', display: 'inline-block' }}>
           {type === 'EQUIPO' ? (
             <><ToolOutlined /> EQUIPO</>
           ) : (
@@ -547,7 +549,7 @@ const WorkOrdersPage: React.FC = () => {
       ellipsis: true,
       sorter: (a, b) => (a.priority || '').localeCompare(b.priority || ''),
       render: (priority: string) => priority ? (
-        <Tag style={{ backgroundColor: workOrderPriorityStyles[priority]?.bg, color: workOrderPriorityStyles[priority]?.color, border: 'none' }}>
+        <Tag style={{ backgroundColor: workOrderPriorityStyles[priority]?.bg, color: workOrderPriorityStyles[priority]?.color, border: 'none', width: 60, textAlign: 'center', display: 'inline-block' }}>
           {workOrderPriorityLabels[priority as keyof typeof workOrderPriorityLabels]}
         </Tag>
       ) : <span style={{ color: '#8c8c8c' }}>—</span>,
@@ -560,7 +562,7 @@ const WorkOrdersPage: React.FC = () => {
       ellipsis: true,
       sorter: (a, b) => a.status.localeCompare(b.status),
       render: (status) => (
-        <Tag style={{ backgroundColor: workOrderStatusStyles[status]?.bg, color: workOrderStatusStyles[status]?.color, border: 'none' }}>
+        <Tag style={{ backgroundColor: workOrderStatusStyles[status]?.bg, color: workOrderStatusStyles[status]?.color, border: 'none', width: 90, textAlign: 'center', display: 'inline-block' }}>
           {status}
         </Tag>
       ),

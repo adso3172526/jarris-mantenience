@@ -504,28 +504,25 @@ const LocativePage: React.FC = () => {
   const renderMobileCard = (record: WorkOrder) => (
     <Card key={record.id} style={{ marginBottom: 12, borderLeft: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}`, borderBottom: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}` }} size="small">
       <div>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: 8,
-        }}>
-          <span style={{ fontFamily: "'Segoe UI', sans-serif", fontSize: 14, fontWeight: 600, color: '#8c8c8c' }}>
-            OT-{record.id.substring(0, 8)}
-          </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            <Tag color={isContratista ? undefined : 'purple-inverse'}>
-              <HomeOutlined /> LOCATIVO
-            </Tag>
-            {record.priority && (
-              <Tag style={{ backgroundColor: workOrderPriorityStyles[record.priority]?.bg, color: workOrderPriorityStyles[record.priority]?.color, border: 'none' }}>
-                {workOrderPriorityLabels[record.priority as keyof typeof workOrderPriorityLabels]}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+          <div>
+            <div style={{ fontFamily: "'Segoe UI', sans-serif", fontSize: 14, fontWeight: 600, color: '#8c8c8c', marginBottom: 8 }}>
+              OT-{record.id.substring(0, 8)}
+            </div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <Tag color={isContratista ? undefined : 'purple-inverse'} style={{ width: 90, textAlign: 'center', display: 'inline-block' }}>
+                <HomeOutlined /> LOCATIVO
               </Tag>
-            )}
-            <Tag style={{ backgroundColor: workOrderStatusStyles[record.status]?.bg, color: workOrderStatusStyles[record.status]?.color, border: 'none' }}>
-              {record.status}
-            </Tag>
+              {record.priority && (
+                <Tag style={{ backgroundColor: workOrderPriorityStyles[record.priority]?.bg, color: workOrderPriorityStyles[record.priority]?.color, border: 'none', width: 60, textAlign: 'center', display: 'inline-block' }}>
+                  {workOrderPriorityLabels[record.priority as keyof typeof workOrderPriorityLabels]}
+                </Tag>
+              )}
+            </div>
           </div>
+          <Tag style={{ backgroundColor: workOrderStatusStyles[record.status]?.bg, color: workOrderStatusStyles[record.status]?.color, border: 'none', width: 90, textAlign: 'center', display: 'inline-block', margin: 0 }}>
+            {record.status}
+          </Tag>
         </div>
 
         <div style={{ marginBottom: 4 }}>

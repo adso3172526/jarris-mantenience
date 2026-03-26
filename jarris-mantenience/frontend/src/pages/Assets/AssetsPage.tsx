@@ -249,10 +249,12 @@ const AssetsPage: React.FC = () => {
   };
 
   // Mobile Card View
-  const renderMobileCard = (record: Asset) => (
+  const renderMobileCard = (record: Asset) => {
+    const borderColor = '#bfbfbf';
+    return (
     <Card
       key={record.id}
-      style={{ marginBottom: 12 }}
+      style={{ marginBottom: 12, borderLeft: `4px solid ${borderColor}`, borderBottom: `4px solid ${borderColor}` }}
       size="small"
     >
       <div style={{ marginBottom: 12, overflow: 'hidden' }}>
@@ -267,7 +269,7 @@ const AssetsPage: React.FC = () => {
         </div>
 
         {/* Description */}
-        <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 8, wordBreak: 'break-word' }}>
+        <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 8, wordBreak: 'break-word' }}>
           {record.description}
         </div>
 
@@ -276,7 +278,7 @@ const AssetsPage: React.FC = () => {
           <Tag color="blue" style={{ marginBottom: 4 }}>
             {record.category?.name || 'Sin categoria'}
           </Tag>
-          <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 4 }}>
+          <div style={{ fontSize: 14, color: '#8c8c8c', marginTop: 4, fontWeight: 700 }}>
              {record.location?.name || 'Sin ubicacion'}
           </div>
         </div>
@@ -383,6 +385,7 @@ const AssetsPage: React.FC = () => {
       </Space>
     </Card>
   );
+  };
 
   // Desktop Table Columns
   const columns: ColumnsType<Asset> = [
