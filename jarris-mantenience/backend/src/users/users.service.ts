@@ -94,6 +94,7 @@ export class UsersService implements OnModuleInit {
 
     if (dto.name !== undefined) user.name = dto.name;
     if (dto.email) user.email = dto.email.toLowerCase().trim();
+    if (dto.phone !== undefined) user.phone = dto.phone;
     if (dto.roles) user.roles = dto.roles;
     if (dto.locationId !== undefined) user.locationId = dto.locationId ?? null;
     if (dto.active !== undefined) user.active = dto.active;

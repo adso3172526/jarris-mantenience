@@ -197,7 +197,7 @@ const TrasladosPage: React.FC = () => {
       key: 'type',
       width: 100,
       ellipsis: true,
-      render: () => <Tag style={{ backgroundColor: eventTypeStyles['TRASLADO']?.bg, color: eventTypeStyles['TRASLADO']?.color, border: 'none' }}>Traslado</Tag>,
+      render: () => <Tag style={{ backgroundColor: eventTypeStyles['TRASLADO']?.bg, color: eventTypeStyles['TRASLADO']?.color, border: 'none', width: 110, textAlign: 'center', display: 'inline-block' }}>Traslado</Tag>,
     },
     {
       title: 'Registrado por',
@@ -277,7 +277,7 @@ const TrasladosPage: React.FC = () => {
           <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 14 }}>
             {record.asset?.code || 'N/A'}
           </span>
-          <Tag style={{ backgroundColor: eventTypeStyles['TRASLADO']?.bg, color: eventTypeStyles['TRASLADO']?.color, border: 'none' }}>Traslado</Tag>
+          <Tag style={{ backgroundColor: eventTypeStyles['TRASLADO']?.bg, color: eventTypeStyles['TRASLADO']?.color, border: 'none', width: 110, textAlign: 'center', display: 'inline-block' }}>Traslado</Tag>
         </div>
 
         <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>

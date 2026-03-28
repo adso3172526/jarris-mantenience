@@ -272,7 +272,7 @@ const EventsPage: React.FC = () => {
       ellipsis: true,
       sorter: (a, b) => a.type.localeCompare(b.type),
       render: (type: string) => (
-        <Tag style={{ backgroundColor: eventTypeStyles[type]?.bg, color: eventTypeStyles[type]?.color, border: 'none' }}>
+        <Tag style={{ backgroundColor: eventTypeStyles[type]?.bg, color: eventTypeStyles[type]?.color, border: 'none', width: 110, textAlign: 'center', display: 'inline-block' }}>
           {type === 'MANTENIMIENTO' ? 'Mantenimiento' : 'Reparación'}
         </Tag>
       ),
@@ -348,7 +348,7 @@ const EventsPage: React.FC = () => {
           <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 600 }}>
             {record.asset?.code || 'N/A'}
           </span>
-          <Tag style={{ backgroundColor: eventTypeStyles[record.type]?.bg, color: eventTypeStyles[record.type]?.color, border: 'none' }}>
+          <Tag style={{ backgroundColor: eventTypeStyles[record.type]?.bg, color: eventTypeStyles[record.type]?.color, border: 'none', width: 110, textAlign: 'center', display: 'inline-block' }}>
             {record.type === 'MANTENIMIENTO' ? 'Mantenimiento' : 'Reparación'}
           </Tag>
         </div>

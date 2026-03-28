@@ -263,7 +263,7 @@ const AssetsPage: React.FC = () => {
           <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 14 }}>
             {record.code}
           </span>
-          <Tag color={assetStatusColors[record.status as keyof typeof assetStatusColors]}>
+          <Tag color={assetStatusColors[record.status as keyof typeof assetStatusColors]} style={{ width: 70, textAlign: 'center', display: 'inline-block' }}>
             {record.status}
           </Tag>
         </div>
@@ -414,7 +414,7 @@ const AssetsPage: React.FC = () => {
       ellipsis: true,
       sorter: (a, b) => (a.status || '').localeCompare(b.status || ''),
       render: (status) => (
-        <Tag color={assetStatusColors[status as keyof typeof assetStatusColors]}>
+        <Tag color={assetStatusColors[status as keyof typeof assetStatusColors]} style={{ width: 70, textAlign: 'center', display: 'inline-block' }}>
           {status}
         </Tag>
       ),

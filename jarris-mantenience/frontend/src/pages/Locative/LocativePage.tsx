@@ -425,7 +425,7 @@ const LocativePage: React.FC = () => {
       width: 90,
       ellipsis: true,
       render: () => (
-        <Tag color="purple-inverse">
+        <Tag color="purple-inverse" style={{ width: 90, textAlign: 'center', display: 'inline-block' }}>
           <HomeOutlined /> LOCATIVO
         </Tag>
       ),
@@ -438,7 +438,7 @@ const LocativePage: React.FC = () => {
       ellipsis: true,
       sorter: (a: WorkOrder, b: WorkOrder) => (a.priority || '').localeCompare(b.priority || ''),
       render: (priority: string) => priority ? (
-        <Tag style={{ backgroundColor: workOrderPriorityStyles[priority]?.bg, color: workOrderPriorityStyles[priority]?.color, border: 'none' }}>
+        <Tag style={{ backgroundColor: workOrderPriorityStyles[priority]?.bg, color: workOrderPriorityStyles[priority]?.color, border: 'none', width: 60, textAlign: 'center', display: 'inline-block' }}>
           {workOrderPriorityLabels[priority as keyof typeof workOrderPriorityLabels]}
         </Tag>
       ) : <span style={{ color: '#8c8c8c' }}>—</span>,
@@ -451,7 +451,7 @@ const LocativePage: React.FC = () => {
       ellipsis: true,
       sorter: (a, b) => a.status.localeCompare(b.status),
       render: (status: string) => (
-        <Tag style={{ backgroundColor: workOrderStatusStyles[status]?.bg, color: workOrderStatusStyles[status]?.color, border: 'none' }}>
+        <Tag style={{ backgroundColor: workOrderStatusStyles[status]?.bg, color: workOrderStatusStyles[status]?.color, border: 'none', width: 90, textAlign: 'center', display: 'inline-block' }}>
           {status}
         </Tag>
       ),

@@ -208,8 +208,8 @@ const BajasPage: React.FC = () => {
       render: (type: string) => {
         const eStyle = eventTypeStyles[type];
         return eStyle
-          ? <Tag style={{ backgroundColor: eStyle.bg, color: eStyle.color, border: 'none' }}>{eventTypeLabels[type] || type}</Tag>
-          : <Tag color={eventTypeColors[type] || 'default'}>{eventTypeLabels[type] || type}</Tag>;
+          ? <Tag style={{ backgroundColor: eStyle.bg, color: eStyle.color, border: 'none', width: 110, textAlign: 'center', display: 'inline-block' }}>{eventTypeLabels[type] || type}</Tag>
+          : <Tag color={eventTypeColors[type] || 'default'} style={{ width: 110, textAlign: 'center', display: 'inline-block' }}>{eventTypeLabels[type] || type}</Tag>;
       },
     },
     {
@@ -243,7 +243,7 @@ const BajasPage: React.FC = () => {
           <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 14 }}>
             {record.asset?.code || 'N/A'}
           </span>
-          <Tag style={eventTypeStyles[record.type] ? { backgroundColor: eventTypeStyles[record.type].bg, color: eventTypeStyles[record.type].color, border: 'none' } : undefined} color={eventTypeStyles[record.type] ? undefined : eventTypeColors[record.type] || 'default'}>
+          <Tag style={eventTypeStyles[record.type] ? { backgroundColor: eventTypeStyles[record.type].bg, color: eventTypeStyles[record.type].color, border: 'none', width: 110, textAlign: 'center', display: 'inline-block' } : { width: 110, textAlign: 'center', display: 'inline-block' }} color={eventTypeStyles[record.type] ? undefined : eventTypeColors[record.type] || 'default'}>
             {eventTypeLabels[record.type] || record.type}
           </Tag>
         </div>
