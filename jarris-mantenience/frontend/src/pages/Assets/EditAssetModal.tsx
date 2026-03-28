@@ -265,7 +265,7 @@ const handleSubmit = async () => {
             style={{ width: '100%' }}
             placeholder="0"
             formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={value => value!.replace(/\$\s?|(,*)/g, '')}
+            parser={value => value!.replace(/\$\s?|(,*)/g, '') as any}
             min={0}
           />
         </Form.Item>

@@ -858,8 +858,6 @@ const AssetsPage: React.FC = () => {
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         onSuccess={loadData}
-        locations={locations}
-        categories={categories}
       />
 
       {selectedAsset && (
@@ -869,7 +867,6 @@ const AssetsPage: React.FC = () => {
             onClose={() => setEditModalOpen(false)}
             onSuccess={loadData}
             asset={selectedAsset}
-            categories={categories}
           />
 
           <TransferAssetModal

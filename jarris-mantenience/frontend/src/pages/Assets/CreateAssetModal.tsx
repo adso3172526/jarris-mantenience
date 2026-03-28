@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, InputNumber, message, Upload, Button, Alert } from 'antd';
-import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
+import { Modal, Form, Input, Select, InputNumber, message, Upload, Alert } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
 import { assetsApi, categoriesApi, locationsApi } from '../../services/api';
 
@@ -231,7 +231,7 @@ const CreateAssetModal: React.FC<CreateAssetModalProps> = ({
             style={{ width: '100%' }}
             placeholder="0"
             formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={value => value!.replace(/\$\s?|(,*)/g, '')}
+            parser={value => value!.replace(/\$\s?|(,*)/g, '') as any}
             min={0}
           />
         </Form.Item>

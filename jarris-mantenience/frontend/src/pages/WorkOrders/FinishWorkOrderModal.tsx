@@ -22,10 +22,7 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [invoiceFile, setInvoiceFile] = useState<UploadFile | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const { user, hasRole } = useAuth();
-  
-  const isContratista = hasRole('CONTRATISTA');
-  const isTecnico = hasRole('TECNICO_INTERNO');
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleResize = () => {
@@ -97,7 +94,7 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
         uid: `${Date.now()}`,
         name: file.name,
         status: 'done',
-        originFileObj: file,
+        originFileObj: file as any,
       };
 
       setInvoiceFile(uploadFile);
@@ -182,7 +179,7 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
             min={0}
             prefix="$"
             formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={value => value!.replace(/\$\s?|(,*)/g, '')}
+            parser={value => value!.replace(/\$\s?|(,*)/g, '') as any}
             placeholder="0"
           />
         </Form.Item>

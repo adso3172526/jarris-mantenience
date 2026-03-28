@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { Modal, Button, Typography, Space, Upload, message } from 'antd';
+import { Modal, Button, Typography, Space, Upload } from 'antd';
 import { CameraOutlined, ScanOutlined } from '@ant-design/icons';
 import { Html5Qrcode } from 'html5-qrcode';
 

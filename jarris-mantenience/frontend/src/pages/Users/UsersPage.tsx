@@ -20,16 +20,10 @@ import type { ColumnsType } from 'antd/es/table';
 import {
   PlusOutlined,
   EditOutlined,
-  UserOutlined,
   LockOutlined,
   MailOutlined,
   PhoneOutlined,
   EnvironmentOutlined,
-  SafetyCertificateOutlined,
-  SettingOutlined,
-  ToolOutlined,
-  TeamOutlined,
-  ShopOutlined,
 } from '@ant-design/icons';
 import { usersApi, locationsApi } from '../../services/api';
 
@@ -47,15 +41,6 @@ interface User {
   active: boolean;
 }
 
-const roleColors: Record<string, string> = {
-  ADMIN: 'red',
-  JEFE_MANTENIMIENTO: 'blue',
-  TECNICO_INTERNO: 'green',
-  CONTRATISTA: 'orange',
-  PDV: 'purple',
-  ADMINISTRACION: 'cyan',
-};
-
 const roleLabels: Record<string, string> = {
   ADMIN: 'Administrador',
   JEFE_MANTENIMIENTO: 'Jefe Mantenimiento',
@@ -63,15 +48,6 @@ const roleLabels: Record<string, string> = {
   CONTRATISTA: 'Contratista',
   PDV: 'Punto de Venta',
   ADMINISTRACION: 'Administración',
-};
-
-const roleIcons: Record<string, React.ReactNode> = {
-  ADMIN: <SafetyCertificateOutlined style={{ color: '#E60012' }} />,
-  JEFE_MANTENIMIENTO: <SettingOutlined style={{ color: '#1890ff' }} />,
-  TECNICO_INTERNO: <ToolOutlined style={{ color: '#52c41a' }} />,
-  CONTRATISTA: <TeamOutlined style={{ color: '#fa8c16' }} />,
-  PDV: <ShopOutlined style={{ color: '#722ed1' }} />,
-  ADMINISTRACION: <ShopOutlined style={{ color: '#13c2c2' }} />,
 };
 
 const UsersPage: React.FC = () => {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, InputNumber, message, Upload, Button, Tabs, Image, Divider } from 'antd';
-import { UploadOutlined, DeleteOutlined } from '@ant-design/icons';
+import { UploadOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd';
 import { workOrdersApi } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -139,7 +139,7 @@ const EditClosedWorkOrderModal: React.FC<EditClosedWorkOrderModalProps> = ({
         uid: `${Date.now()}`,
         name: file.name,
         status: 'done',
-        originFileObj: file,
+        originFileObj: file as any,
       };
 
       setInvoiceFile(uploadFile);
@@ -173,7 +173,7 @@ const EditClosedWorkOrderModal: React.FC<EditClosedWorkOrderModalProps> = ({
         uid: `${Date.now()}-${file.name}`,
         name: file.name,
         status: 'done',
-        originFileObj: file,
+        originFileObj: file as any,
       };
 
       setPdvPhotos((prev) => [...prev, uploadFile]);
@@ -209,7 +209,7 @@ const EditClosedWorkOrderModal: React.FC<EditClosedWorkOrderModalProps> = ({
         uid: `${Date.now()}-${file.name}`,
         name: file.name,
         status: 'done',
-        originFileObj: file,
+        originFileObj: file as any,
       };
 
       setTechPhotos((prev) => [...prev, uploadFile]);
@@ -251,7 +251,7 @@ const EditClosedWorkOrderModal: React.FC<EditClosedWorkOrderModalProps> = ({
               style={{ width: '100%' }}
               min={0}
               formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+              parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as any}
               placeholder="0"
             />
           </Form.Item>

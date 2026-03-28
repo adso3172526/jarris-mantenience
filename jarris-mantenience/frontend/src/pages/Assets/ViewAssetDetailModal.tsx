@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Tabs, Descriptions, Table, Tag, Image, Spin, message, Card, Divider, Pagination } from 'antd';
-import {
-  DollarOutlined,
-  HistoryOutlined,
-  EnvironmentOutlined,
-  SwapOutlined,
-  StopOutlined,
-} from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { assetsApi, workOrdersApi, assetEventsApi, usersApi } from '../../services/api';
 import { assetStatusColors, eventTypeStyles, eventTypeLabels } from '../../config/theme';
@@ -82,7 +75,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
 
       // --- NUEVO: mapa para enriquecer eventos de REPARACION con datos de la OT ---
       const allWorkOrders = woRes.data || [];
-      const woById = new Map(allWorkOrders.map((wo: any) => [wo.id, wo]));
+      const woById: Map<string, any> = new Map(allWorkOrders.map((wo: any) => [wo.id, wo]));
 
       // 5. Identificar OT de REPARACION por eventos sin workOrderId (fallback)
       const reparacionEventsWithoutWorkOrder = allEvents.filter(
@@ -132,7 +125,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
       // 7. Enriquecer eventos con datos de OT y nombre de usuario
       const enrichedEvents = allEvents
         .map((event: any) => {
-          const enriched = { ...event };
+          const enriched: any = { ...event };
           if (event.type === 'REPARACION' && event.workOrderId) {
             const wo = woById.get(event.workOrderId);
             enriched.finishedBy = wo?.finishedBy;
@@ -679,7 +672,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: 11, color: '#8c8c8c' }}>Estado</div>
-                  <Tag color={assetStatusColors[asset.status]}>{asset.status}</Tag>
+                  <Tag color={assetStatusColors[asset.status as keyof typeof assetStatusColors]}>{asset.status}</Tag>
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: 11, color: '#8c8c8c' }}>Descripcion</div>
@@ -752,7 +745,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
                   <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{asset.code}</span>
                 </Descriptions.Item>
                 <Descriptions.Item label="Estado" span={1}>
-                  <Tag color={assetStatusColors[asset.status]}>{asset.status}</Tag>
+                  <Tag color={assetStatusColors[asset.status as keyof typeof assetStatusColors]}>{asset.status}</Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="Descripcion" span={2}>
                   {asset.description}

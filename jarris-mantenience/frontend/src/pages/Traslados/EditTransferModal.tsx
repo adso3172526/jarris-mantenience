@@ -119,7 +119,7 @@ const EditTransferModal: React.FC<EditTransferModalProps> = ({
             style={{ width: '100%' }}
             min={0}
             formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+            parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as any}
             size={isMobile ? 'large' : 'middle'}
           />
         </Form.Item>

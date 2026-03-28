@@ -21,7 +21,6 @@ import {
   UserAddOutlined,
   PlayCircleOutlined,
   CheckCircleOutlined,
-  CloseCircleOutlined,
   SendOutlined,
   FileTextOutlined,
   SearchOutlined,
@@ -468,7 +467,7 @@ const WorkOrdersPage: React.FC = () => {
         {!isPDV && record.assigneeName && (
           <div style={{ fontSize: 12, marginBottom: 4 }}>
             <div><strong>Asignado:</strong> {record.assigneeName}</div>
-            <Tag size="small" color={record.assigneeType === 'INTERNO' ? 'blue' : 'orange'}>
+            <Tag color={record.assigneeType === 'INTERNO' ? 'blue' : 'orange'}>
               {record.assigneeType}
             </Tag>
           </div>

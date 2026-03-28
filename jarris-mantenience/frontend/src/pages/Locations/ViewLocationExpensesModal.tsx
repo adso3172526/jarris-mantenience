@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Table, Tag, Spin, message, Card, Divider } from 'antd';
-import { HomeOutlined, DollarOutlined } from '@ant-design/icons';
+import { Modal, Table, Tag, Spin, message, Card } from 'antd';
+import { HomeOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { locationsApi } from '../../services/api';
 
@@ -19,7 +19,6 @@ const ViewLocationExpensesModal: React.FC<ViewLocationExpensesModalProps> = ({
 }) => {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [totalExpenses, setTotalExpenses] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
@@ -41,12 +40,6 @@ const ViewLocationExpensesModal: React.FC<ViewLocationExpensesModalProps> = ({
       setLoading(true);
       const response = await locationsApi.getExpenses(locationId);
       setExpenses(response.data);
-      
-      const total = response.data.reduce(
-        (sum: number, wo: any) => sum + (Number(wo.cost) || 0), 
-        0
-      );
-      setTotalExpenses(total);
     } catch (error: any) {
       console.error('Error loading expenses:', error);
       message.error('Error al cargar gastos');
