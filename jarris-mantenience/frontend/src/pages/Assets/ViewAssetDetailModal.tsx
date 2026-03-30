@@ -51,46 +51,43 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
     try {
       setLoading(true);
 
-      // 1. Cargar activo
-      const assetRes = await assetsApi.getById(assetId);
+      // Cargar todo en paralelo
+      const [assetRes, eventsRes, woRes, usersRes] = await Promise.all([
+        assetsApi.getById(assetId),
+        assetEventsApi.getByAsset(assetId).catch(() => ({ data: [] })),
+        workOrdersApi.getByAsset(assetId),
+        usersApi.getAll().catch(() => ({ data: [] })),
+      ]);
+
       setAsset(assetRes.data);
+      const allEvents = eventsRes.data || [];
+      const allWorkOrders = woRes.data || [];
 
-      // 2. Cargar eventos PRIMERO (para saber cu��les son reparaciones)
-      let allEvents: any[] = [];
-      try {
-        const eventsRes = await assetEventsApi.getByAsset(assetId);
-        allEvents = eventsRes.data;
-      } catch (evError) {
-        console.warn('Could not load events:', evError);
-      }
+      // Mapa de usuarios
+      const usersByEmail: Record<string, string> = (usersRes.data || []).reduce(
+        (map: Record<string, string>, u: any) => {
+          if (u.email) map[u.email] = u.name || u.email;
+          return map;
+        }, {}
+      );
 
-      // 3. Identificar OT de tipo REPARACION por workOrderId
+      // Mapa de OTs
+      const woById: Map<string, any> = new Map(allWorkOrders.map((wo: any) => [wo.id, wo]));
+
+      // Identificar OT de tipo REPARACION por workOrderId
       const reparacionWorkOrderIds = new Set(
         allEvents
           .filter((event: any) => event.type === 'REPARACION' && event.workOrderId)
           .map((event: any) => event.workOrderId)
       );
 
-      // 4. Cargar OT del activo
-      const woRes = await workOrdersApi.getByAsset(assetId);
-
-      // --- NUEVO: mapa para enriquecer eventos de REPARACION con datos de la OT ---
-      const allWorkOrders = woRes.data || [];
-      const woById: Map<string, any> = new Map(allWorkOrders.map((wo: any) => [wo.id, wo]));
-
-      // 5. Identificar OT de REPARACION por eventos sin workOrderId (fallback)
       const reparacionEventsWithoutWorkOrder = allEvents.filter(
         (event: any) => event.type === 'REPARACION' && !event.workOrderId
       );
 
-      // Filtrar: Excluir OT que:
-      // a) Tienen workOrderId en un evento de REPARACION
-      // b) Tienen el mismo costo y fecha cercana a un evento de REPARACION sin workOrderId
+      // Filtrar OT de mantenimiento (excluir las que ya son reparaciones)
       const maintenanceWorkOrders = allWorkOrders.filter((wo: any) => {
-        // Si ya est�� en el Set, excluir
         if (reparacionWorkOrderIds.has(wo.id)) return false;
-
-        // Fallback: Verificar si hay un evento de REPARACION con mismo costo y fecha cercana
         const matchingReparacion = reparacionEventsWithoutWorkOrder.find((event: any) => {
           if (!wo.closedAt || !event.createdAt) return false;
           const woCost = Number(wo.cost) || 0;
@@ -98,25 +95,10 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
           const timeDiff = Math.abs(
             new Date(wo.closedAt).getTime() - new Date(event.createdAt).getTime()
           );
-          // Mismo costo y cerrada dentro de 5 minutos del evento
           return Math.abs(woCost - eventCost) < 10 && timeDiff < 5 * 60 * 1000;
         });
-
         return !matchingReparacion;
       });
-
-      // 6. Cargar usuarios para mapear email -> nombre
-      let usersByEmail: Record<string, string> = {};
-      try {
-        const usersRes = await usersApi.getAll();
-        const users = usersRes.data || [];
-        usersByEmail = users.reduce((map: Record<string, string>, u: any) => {
-          if (u.email) map[u.email] = u.name || u.email;
-          return map;
-        }, {});
-      } catch (e) {
-        console.warn('Could not load users:', e);
-      }
 
       setWorkOrders(maintenanceWorkOrders.map((wo: any) => ({
         ...wo,
