@@ -210,8 +210,8 @@ const handleSubmit = async () => {
       >
         <Form.Item
           name="description"
-          label="Descripción"
-          rules={[{ required: true, message: 'Ingresa una descripción' }]}
+          label="Nombre"
+          rules={[{ required: true, message: 'Ingresa un nombre' }]}
         >
           <Input placeholder="Ej: Taladro Inalámbrico" />
         </Form.Item>

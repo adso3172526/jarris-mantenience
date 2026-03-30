@@ -14,7 +14,6 @@ import {
   Popconfirm,
   Row,
   Col,
-  Divider,
   DatePicker,
   Pagination,
 } from 'antd';
@@ -74,6 +73,7 @@ const AssetsPage: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [mobilePage, setMobilePage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -255,10 +255,11 @@ const AssetsPage: React.FC = () => {
     return (
     <Card
       key={record.id}
-      style={{ marginBottom: 12, borderLeft: `4px solid ${borderColor}`, borderBottom: `4px solid ${borderColor}` }}
+      style={{ marginBottom: 12, borderLeft: `4px solid ${borderColor}`, borderBottom: `4px solid ${borderColor}`, cursor: 'pointer' }}
       size="small"
+      onClick={() => setExpandedCardId(expandedCardId === record.id ? null : record.id)}
     >
-      <div style={{ marginBottom: 12, overflow: 'hidden' }}>
+      <div style={{ overflow: 'hidden' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
           <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 14 }}>
@@ -298,92 +299,96 @@ const AssetsPage: React.FC = () => {
             {formatCOP(record.value)}
           </div>
         )}
-
       </div>
 
-      <Divider style={{ margin: '8px 0' }} />
-
-      {/* Actions */}
-      <Space direction="vertical" style={{ width: '100%' }} size="small">
-        <Button
-          type="default"
-          icon={<HistoryOutlined />}
-          onClick={() => handleViewDetail(record)}
-          block
+      {/* Collapsible Actions */}
+      {expandedCardId === record.id && (
+        <div
+          style={{ marginTop: 8, borderTop: '1px solid #f0f0f0', paddingTop: 8 }}
+          onClick={(e) => e.stopPropagation()}
         >
-          Ver Historial
-        </Button>
-
-        {!isPDV && (record.status === 'BAJA' ? (
-          canDeactivate && (
-            <Popconfirm
-              title="Reactivar este activo?"
-              description="El estado cambiara de BAJA a ACTIVO"
-              onConfirm={() => handleReactivate(record.id)}
-              okText="Si"
-              cancelText="No"
-            >
-              <Button
-                icon={<CheckCircleOutlined />}
-                block
-                style={{ background: '#52c41a', borderColor: '#52c41a', color: '#fff' }}
-              >
-                Reactivar
-              </Button>
-            </Popconfirm>
-          )
-        ) : (
-          <>
+          <Space direction="vertical" style={{ width: '100%' }} size="small">
             <Button
               type="default"
-              icon={<QrcodeOutlined />}
-              onClick={() => handleViewQR(record)}
+              icon={<HistoryOutlined />}
+              onClick={() => handleViewDetail(record)}
               block
             >
-              Ver QR
+              Ver Historial
             </Button>
 
-            {canEdit && (
-              <>
-                <Button
-                  type="default"
-                  icon={<EditOutlined style={{ color: '#1890ff' }} />}
-                  onClick={() => handleEdit(record)}
-                  block
-                  style={{ color: '#1890ff', borderColor: '#1890ff', background: '#fff' }}
-                >
-                  Editar
-                </Button>
-
-                <Button
-                  type="default"
-                  icon={<SwapOutlined />}
-                  onClick={() => handleTransfer(record)}
-                  block
-                >
-                  Trasladar
-                </Button>
-
+            {!isPDV && (record.status === 'BAJA' ? (
+              canDeactivate && (
                 <Popconfirm
-                  title="Dar de baja este activo?"
-                  description="Esta accion cambiara el estado a BAJA"
-                  onConfirm={() => handleDeactivate(record.id)}
+                  title="Reactivar este activo?"
+                  description="El estado cambiara de BAJA a ACTIVO"
+                  onConfirm={() => handleReactivate(record.id)}
                   okText="Si"
                   cancelText="No"
                 >
                   <Button
-                    danger
-                    icon={<DeleteOutlined />}
+                    icon={<CheckCircleOutlined />}
                     block
+                    style={{ background: '#52c41a', borderColor: '#52c41a', color: '#fff' }}
                   >
-                    Dar de Baja
+                    Reactivar
                   </Button>
                 </Popconfirm>
+              )
+            ) : (
+              <>
+                <Button
+                  type="default"
+                  icon={<QrcodeOutlined />}
+                  onClick={() => handleViewQR(record)}
+                  block
+                >
+                  Ver QR
+                </Button>
+
+                {canEdit && (
+                  <>
+                    <Button
+                      type="default"
+                      icon={<EditOutlined style={{ color: '#1890ff' }} />}
+                      onClick={() => handleEdit(record)}
+                      block
+                      style={{ color: '#1890ff', borderColor: '#1890ff', background: '#fff' }}
+                    >
+                      Editar
+                    </Button>
+
+                    <Button
+                      type="default"
+                      icon={<SwapOutlined />}
+                      onClick={() => handleTransfer(record)}
+                      block
+                    >
+                      Trasladar
+                    </Button>
+
+                    <Popconfirm
+                      title="Dar de baja este activo?"
+                      description="Esta accion cambiara el estado a BAJA"
+                      onConfirm={() => handleDeactivate(record.id)}
+                      okText="Si"
+                      cancelText="No"
+                    >
+                      <Button
+                        danger
+                        icon={<DeleteOutlined />}
+                        block
+                      >
+                        Dar de Baja
+                      </Button>
+                    </Popconfirm>
+                  </>
+                )}
               </>
-            )}
-          </>
-        ))}
-      </Space>
+            ))}
+          </Space>
+        </div>
+      )}
     </Card>
   );
   };
@@ -928,7 +933,7 @@ const AssetsPage: React.FC = () => {
                 ctx.font = '14px Arial';
                 ctx.fillText(`Código: ${selectedAsset?.code || ''}`, textX, textY);
                 const link = document.createElement('a');
-                link.download = `QR-${selectedAsset?.code || 'activo'}.png`;
+                link.download = `${selectedAsset?.code || 'activo'}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
               };
