@@ -10,7 +10,7 @@ import {
   Tooltip,
   Row,
   Col,
-  Divider,
+
   DatePicker,
   Pagination,
 } from 'antd';
@@ -90,6 +90,7 @@ const WorkOrdersPage: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [mobilePage, setMobilePage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -416,10 +417,11 @@ const WorkOrdersPage: React.FC = () => {
   const renderMobileCard = (record: WorkOrder) => (
     <Card
       key={record.id}
-      style={{ marginBottom: 12, borderLeft: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}`, borderBottom: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}` }}
+      style={{ marginBottom: 12, borderLeft: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}`, borderBottom: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}`, cursor: 'pointer' }}
       size="small"
+      onClick={() => setExpandedCardId(expandedCardId === record.id ? null : record.id)}
     >
-      <div style={{ marginBottom: 12 }}>
+      <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
           <div>
             <div style={{ fontFamily: "'Segoe UI', sans-serif", fontSize: 14, fontWeight: 600, color: '#8c8c8c', marginBottom: 8 }}>
@@ -482,12 +484,16 @@ const WorkOrdersPage: React.FC = () => {
         <div style={{ fontSize: 11, color: '#8c8c8c' }}>
           {new Date(record.createdAt).toLocaleDateString('es-CO')}
         </div>
-
       </div>
 
-      <Divider style={{ margin: '8px 0' }} />
-
-      {getActionButtons(record, true)}
+      {expandedCardId === record.id && (
+        <div
+          style={{ marginTop: 8, borderTop: '1px solid #f0f0f0', paddingTop: 8 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {getActionButtons(record, true)}
+        </div>
+      )}
     </Card>
   );
 

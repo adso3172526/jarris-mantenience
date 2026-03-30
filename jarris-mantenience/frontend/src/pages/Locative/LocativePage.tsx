@@ -10,7 +10,7 @@ import {
   Row,
   Col,
   Button,
-  Divider,
+
   Tooltip,
   Pagination,
   message,
@@ -84,6 +84,7 @@ const LocativePage: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [mobilePage, setMobilePage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   // Modals
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -500,7 +501,12 @@ const LocativePage: React.FC = () => {
   ];
 
   const renderMobileCard = (record: WorkOrder) => (
-    <Card key={record.id} style={{ marginBottom: 12, borderLeft: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}`, borderBottom: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}` }} size="small">
+    <Card
+      key={record.id}
+      style={{ marginBottom: 12, borderLeft: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}`, borderBottom: `4px solid ${workOrderStatusStyles[record.status]?.color || '#d9d9d9'}`, cursor: 'pointer' }}
+      size="small"
+      onClick={() => setExpandedCardId(expandedCardId === record.id ? null : record.id)}
+    >
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
           <div>
@@ -559,11 +565,16 @@ const LocativePage: React.FC = () => {
         <div style={{ fontSize: 11, color: '#8c8c8c' }}>
           {dayjs(record.createdAt).format('DD/MM/YYYY')}
         </div>
-
-        <Divider style={{ margin: '8px 0' }} />
-
-        {getActionButtons(record, true)}
       </div>
+
+      {expandedCardId === record.id && (
+        <div
+          style={{ marginTop: 8, borderTop: '1px solid #f0f0f0', paddingTop: 8 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {getActionButtons(record, true)}
+        </div>
+      )}
     </Card>
   );
 

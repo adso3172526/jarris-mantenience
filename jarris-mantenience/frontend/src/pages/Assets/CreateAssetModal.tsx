@@ -172,8 +172,8 @@ const CreateAssetModal: React.FC<CreateAssetModalProps> = ({
       >
         <Form.Item
           name="description"
-          label="Descripcion"
-          rules={[{ required: true, message: 'Ingresa una descripcion' }]}
+          label="Nombre"
+          rules={[{ required: true, message: 'Ingresa un nombre' }]}
         >
           <Input placeholder="Ej: Taladro Inalámbrico" />
         </Form.Item>

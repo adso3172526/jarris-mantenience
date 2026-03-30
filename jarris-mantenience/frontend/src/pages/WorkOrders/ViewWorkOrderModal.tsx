@@ -242,7 +242,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
               <div style={{ fontWeight: 600 }}>{workOrder.asset.code}</div>
             </div>
             <div style={{ marginBottom: 8 }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>Descripción:</Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>Nombre:</Text>
               <div>{workOrder.asset.description}</div>
             </div>
             <div style={{ marginBottom: 8 }}>
@@ -473,7 +473,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
             <Descriptions.Item label="Código" span={1}>
               {workOrder.asset.code}
             </Descriptions.Item>
-            <Descriptions.Item label="Descripción" span={1}>
+            <Descriptions.Item label="Nombre" span={1}>
               {workOrder.asset.description}
             </Descriptions.Item>
             <Descriptions.Item label="Categoría" span={1}>

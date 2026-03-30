@@ -31,6 +31,7 @@ import {
   CheckCircleOutlined,
   ToolOutlined,
   FilterOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -895,11 +896,47 @@ const AssetsPage: React.FC = () => {
         width={isMobile ? '90%' : 520}
       >
         <div style={{ textAlign: 'center', padding: isMobile ? '10px 0' : '20px 0' }}>
-          <Image src={qrCode} alt="QR Code" style={{ maxWidth: '100%' }} />
+          <Image src={qrCode} alt="QR Code" style={{ maxWidth: '100%' }} preview={false} />
           <div style={{ marginTop: 16, fontSize: isMobile ? 13 : 14 }}>
             <p><strong>Equipo:</strong> {selectedAsset?.description}</p>
             <p><strong>Codigo:</strong> {selectedAsset?.code}</p>
           </div>
+          <Button
+            type="primary"
+            icon={<DownloadOutlined />}
+            style={{ marginTop: 12 }}
+            onClick={() => {
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              if (!ctx || !qrCode) return;
+              const img = new window.Image();
+              img.onload = () => {
+                const padding = 30;
+                const textAreaHeight = 58;
+                canvas.width = img.width + padding * 2;
+                canvas.height = img.height + padding * 2 + textAreaHeight;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, padding, padding);
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                const textX = canvas.width / 2;
+                let textY = img.height + padding * 2 + 10;
+                ctx.fillText(selectedAsset?.description || '', textX, textY);
+                textY += 24;
+                ctx.font = '14px Arial';
+                ctx.fillText(`Código: ${selectedAsset?.code || ''}`, textX, textY);
+                const link = document.createElement('a');
+                link.download = `QR-${selectedAsset?.code || 'activo'}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+              };
+              img.src = qrCode;
+            }}
+          >
+            Descargar QR
+          </Button>
         </div>
       </Modal>
     </div>

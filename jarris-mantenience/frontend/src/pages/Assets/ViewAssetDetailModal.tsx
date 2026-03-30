@@ -675,7 +675,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
                   <Tag color={assetStatusColors[asset.status as keyof typeof assetStatusColors]}>{asset.status}</Tag>
                 </div>
                 <div style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 11, color: '#8c8c8c' }}>Descripcion</div>
+                  <div style={{ fontSize: 11, color: '#8c8c8c' }}>Nombre</div>
                   <div style={{ fontSize: 13 }}>{asset.description}</div>
                 </div>
                 <Divider style={{ margin: '12px 0' }} />
@@ -747,7 +747,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
                 <Descriptions.Item label="Estado" span={1}>
                   <Tag color={assetStatusColors[asset.status as keyof typeof assetStatusColors]}>{asset.status}</Tag>
                 </Descriptions.Item>
-                <Descriptions.Item label="Descripcion" span={2}>
+                <Descriptions.Item label="Nombre" span={2}>
                   {asset.description}
                 </Descriptions.Item>
                 <Descriptions.Item label="Categoria" span={1}>
