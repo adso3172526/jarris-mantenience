@@ -41,6 +41,7 @@ export class ReportsService {
         wo.priority AS prioridad,
         wo.cost AS costo,
         wo."createdAt" AS fecha,
+        wo."assignedAt" AS fecha_asignacion,
         wo."startedAt" AS fecha_inicio,
         wo."finishedAt" AS fecha_terminacion,
         wo."closedAt" AS fecha_cierre,
@@ -79,6 +80,7 @@ export class ReportsService {
         NULL::text AS prioridad,
         ae.cost AS costo,
         ae."createdAt" AS fecha,
+        NULL::timestamptz AS fecha_asignacion,
         NULL::timestamptz AS fecha_inicio,
         NULL::timestamptz AS fecha_terminacion,
         NULL::timestamptz AS fecha_cierre,
@@ -286,6 +288,7 @@ export class ReportsService {
       { header: 'Email Responsable', key: 'email_responsable', width: 30 },
       { header: 'Costo', key: 'costo', width: 15 },
       { header: 'Fecha Ingreso', key: 'fecha', width: 18 },
+      { header: 'Fecha Asignación', key: 'fecha_asignacion', width: 18 },
       { header: 'Fecha Inicio', key: 'fecha_inicio', width: 18 },
       { header: 'Fecha Terminada', key: 'fecha_terminacion', width: 18 },
       { header: 'Fecha Cerrada', key: 'fecha_cierre', width: 18 },
@@ -323,6 +326,7 @@ export class ReportsService {
         email_responsable: row.email_tecnico || 'N/A',
         costo: Number(row.costo || 0),
         fecha: row.fecha ? new Date(row.fecha) : null,
+        fecha_asignacion: row.fecha_asignacion ? new Date(row.fecha_asignacion) : null,
         fecha_inicio: row.fecha_inicio ? new Date(row.fecha_inicio) : null,
         fecha_terminacion: row.fecha_terminacion ? new Date(row.fecha_terminacion) : null,
         fecha_cierre: row.fecha_cierre ? new Date(row.fecha_cierre) : null,
@@ -333,7 +337,7 @@ export class ReportsService {
     worksheet.getColumn('costo').numFmt = '"$"#,##0';
 
     // Formato de fechas
-    ['fecha', 'fecha_inicio', 'fecha_terminacion', 'fecha_cierre'].forEach(col => {
+    ['fecha', 'fecha_asignacion', 'fecha_inicio', 'fecha_terminacion', 'fecha_cierre'].forEach(col => {
       worksheet.getColumn(col).numFmt = 'dd/mm/yyyy hh:mm';
     });
 
@@ -369,7 +373,7 @@ export class ReportsService {
     // Auto-filtros
     worksheet.autoFilter = {
       from: 'A1',
-      to: 'Q1',
+      to: 'R1',
     };
 
     // Generar buffer

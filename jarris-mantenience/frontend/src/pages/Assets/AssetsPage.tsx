@@ -261,7 +261,7 @@ const AssetsPage: React.FC = () => {
     >
       <div style={{ overflow: 'hidden' }}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
           <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 14 }}>
             {record.code}
           </span>
@@ -271,34 +271,29 @@ const AssetsPage: React.FC = () => {
         </div>
 
         {/* Description */}
-        <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 8, wordBreak: 'break-word' }}>
+        <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6, wordBreak: 'break-word' }}>
           {record.description}
         </div>
 
         {/* Category & Location */}
-        <div style={{ marginBottom: 8 }}>
-          <Tag color="blue" style={{ marginBottom: 4 }}>
+        <div style={{ marginBottom: 6 }}>
+          <Tag color="blue">
             {record.category?.name || 'Sin categoria'}
           </Tag>
-          <div style={{ fontSize: 14, color: '#8c8c8c', marginTop: 4, fontWeight: 700 }}>
+          <div style={{ fontSize: 13, color: '#8c8c8c', marginTop: 4, fontWeight: 700 }}>
              {record.location?.name || 'Sin ubicacion'}
           </div>
         </div>
 
-        {/* Brand & Serial */}
-        {(record.brand || record.serial) && (
-          <div style={{ fontSize: 12, color: '#595959', marginBottom: 8, wordBreak: 'break-word' }}>
-            {record.brand && <div><strong>Marca:</strong> {record.brand}</div>}
-            {record.serial && <div><strong>Serial:</strong> {record.serial}</div>}
-          </div>
-        )}
+        {/* Brand */}
+        <div style={{ fontSize: 12, color: '#595959', marginBottom: 6, wordBreak: 'break-word' }}>
+          <div><strong>Marca:</strong> {record.brand || '—'}</div>
+        </div>
 
         {/* Value */}
-        {record.value > 0 && (
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#E60012', marginBottom: 8 }}>
-            {formatCOP(record.value)}
-          </div>
-        )}
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#E60012' }}>
+          {record.value > 0 ? formatCOP(record.value) : '—'}
+        </div>
       </div>
 
       {/* Collapsible Actions */}

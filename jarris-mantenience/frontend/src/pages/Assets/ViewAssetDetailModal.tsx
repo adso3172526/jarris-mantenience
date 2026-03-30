@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Tabs, Descriptions, Table, Tag, Image, Spin, message, Card, Divider, Pagination } from 'antd';
+import { Modal, Tabs, Descriptions, Table, Tag, Image, Spin, message, Card, Divider, Pagination, Segmented } from 'antd';
 import dayjs from 'dayjs';
 import { assetsApi, workOrdersApi, assetEventsApi, usersApi } from '../../services/api';
 import { assetStatusColors, eventTypeStyles, eventTypeLabels } from '../../config/theme';
@@ -26,6 +26,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
   const [eventsPage, setEventsPage] = useState(1);
   const [transfersPage, setTransfersPage] = useState(1);
   const [bajasPage, setBajasPage] = useState(1);
+  const [activeTab, setActiveTab] = useState('info');
 
   const formatCOP = (value: number) => {
     return `$${Math.round(value).toLocaleString('es-CO')}`;
@@ -170,88 +171,73 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
     }
   };
 
+  // Estilos unificados para cards mobile
+  const cardStyle = { marginBottom: 12 };
+  const headerStyle: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 };
+  const idStyle: React.CSSProperties = { fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: '#8c8c8c' };
+  const descStyle: React.CSSProperties = { fontSize: 13, marginBottom: 6, lineHeight: 1.4, wordBreak: 'break-word' };
+  const locationStyle: React.CSSProperties = { fontSize: 12, color: '#595959', marginBottom: 4 };
+  const costStyle: React.CSSProperties = { fontSize: 14, fontWeight: 600, color: '#E60012', marginBottom: 6 };
+  const metaStyle: React.CSSProperties = { fontSize: 11, color: '#8c8c8c' };
+
+  const getEventTag = (type: string, label?: string) => {
+    const eStyle = eventTypeStyles[type];
+    return eStyle
+      ? <Tag style={{ backgroundColor: eStyle.bg, color: eStyle.color, border: 'none' }}>{label || eventTypeLabels[type] || type}</Tag>
+      : <Tag>{label || eventTypeLabels[type] || type}</Tag>;
+  };
+
   // Mobile Card Renderers
   const renderWorkOrderCard = (record: any) => (
-    <Card key={record.id} style={{ marginBottom: 12 }} size="small">
-      <div style={{ marginBottom: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 18, color: '#8c8c8c' }}>
-            {record.id.substring(0, 8)}
-          </span>
-          <Tag style={{ backgroundColor: eventTypeStyles['MANTENIMIENTO']?.bg, color: eventTypeStyles['MANTENIMIENTO']?.color, border: 'none' }}>Mantenimiento</Tag>
-        </div>
-        <div style={{ fontSize: 12, color: '#595959', marginBottom: 4 }}>
-          <strong>Ubicación:</strong> {record.location?.name || asset?.location?.name || '-'}
-        </div>
-        <div style={{ fontSize: 13, marginBottom: 8, lineHeight: 1.4 }}>
-          {record.workDoneDescription || 'N/A'}
-        </div>
-        <div style={{ fontSize: 16, fontWeight: 600, color: '#E60012', marginBottom: 8 }}>
-          {formatCOP(record.cost)}
-        </div>
-        <div style={{ fontSize: 11, color: '#8c8c8c' }}>
-          <div><strong>Creación:</strong> {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}</div>
-          {record.finishedAt && (
-            <div><strong>Terminación:</strong> {dayjs(record.finishedAt).format('DD/MM/YYYY HH:mm')}</div>
-          )}
-          <div> {record.finishedByName || record.finishedBy || 'N/A'}</div>
-        </div>
+    <Card key={record.id} style={cardStyle} size="small">
+      <div style={headerStyle}>
+        <span style={idStyle}>OT-{record.id.substring(0, 8)}</span>
+        {getEventTag('MANTENIMIENTO', 'Mantenimiento')}
+      </div>
+      <div style={descStyle}>{record.workDoneDescription || 'N/A'}</div>
+      <div style={locationStyle}>
+        <strong>Ubicación:</strong> {record.location?.name || asset?.location?.name || '-'}
+      </div>
+      {Number(record.cost || 0) > 0 && (
+        <div style={costStyle}>{formatCOP(record.cost)}</div>
+      )}
+      <div style={metaStyle}>
+        <div><strong>Creación:</strong> {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}</div>
+        {record.finishedAt && (
+          <div><strong>Terminación:</strong> {dayjs(record.finishedAt).format('DD/MM/YYYY HH:mm')}</div>
+        )}
+        <div><strong>Realizó:</strong> {record.finishedByName || record.finishedBy || 'N/A'}</div>
       </div>
     </Card>
   );
 
   const renderEventCard = (record: any) => {
-    const colors: any = {
-      COMPRA: 'green-inverse',
-      TRANSFERENCIA: 'blue-inverse',
-    };
     const numCost = Number(record.cost || 0);
-
-    // Para REPARACION: mostrar ID de la OT
     const displayId =
       record.type === 'REPARACION' && record.workOrderId ? record.workOrderId : record.id;
-
-    const eventStyle = eventTypeStyles[record.type];
-    const tagProps = eventStyle
-      ? { style: { backgroundColor: eventStyle.bg, color: eventStyle.color, border: 'none' } }
-      : { color: colors[record.type] || 'default' };
+    const responsable = record.type === 'REPARACION'
+      ? (record.finishedBy || 'N/A')
+      : (record.createdByName || 'N/A');
 
     return (
-      <Card key={record.id} style={{ marginBottom: 12 }} size="small">
-        <div style={{ marginBottom: 8 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 18, color: '#8c8c8c' }}>
-              {displayId.substring(0, 8)}
-            </span>
-            <Tag {...tagProps}>{eventTypeLabels[record.type] || record.type}</Tag>
-          </div>
-
-          {numCost > 0 && (
-            <div style={{ fontSize: 16, fontWeight: 600, color: '#cf1322', marginBottom: 8 }}>
-              {formatCOP(numCost)}
-            </div>
+      <Card key={record.id} style={cardStyle} size="small">
+        <div style={headerStyle}>
+          <span style={idStyle}>OT-{displayId.substring(0, 8)}</span>
+          {getEventTag(record.type)}
+        </div>
+        <div style={descStyle}>{record.description || 'N/A'}</div>
+        <div style={locationStyle}>
+          <strong>Ubicación:</strong> {record.toLocation?.name || record.fromLocation?.name || asset?.location?.name || 'N/A'}
+        </div>
+        {numCost > 0 && (
+          <div style={costStyle}>{formatCOP(numCost)}</div>
+        )}
+        <div style={metaStyle}>
+          <div><strong>Creación:</strong> {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}</div>
+          {(record.finishedAt || record.closedAt) && (
+            <div><strong>Terminación:</strong> {dayjs(record.finishedAt || record.closedAt).format('DD/MM/YYYY HH:mm')}</div>
           )}
-
-          <div style={{ fontSize: 13, marginBottom: 8 }}>{record.description}</div>
-
-          <div style={{ fontSize: 11, color: '#8c8c8c' }}>
-            <div> {record.toLocation?.name || record.fromLocation?.name || asset?.location?.name || 'N/A'}</div>
-            <div><strong>Creación:</strong> {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}</div>
-            {(record.finishedAt || record.closedAt) && (
-              <div><strong>Terminación:</strong> {dayjs(record.finishedAt || record.closedAt).format('DD/MM/YYYY HH:mm')}</div>
-            )}
-
-            {record.type === 'REPARACION' && (
-              <div style={{ marginTop: 6 }}>
-                <div> {record.finishedBy || 'N/A'}</div>
-              </div>
-            )}
-            {record.type !== 'REPARACION' && record.createdByName && (
-              <div style={{ marginTop: 6 }}>
-                <div> {record.createdByName}</div>
-              </div>
-            )}
-          </div>
+          <div><strong>Realizó:</strong> {responsable}</div>
         </div>
       </Card>
     );
@@ -536,37 +522,27 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
   ];
 
   const renderTransferCard = (record: any) => (
-    <Card key={record.id} style={{ marginBottom: 12 }} size="small">
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#8c8c8c' }}>
-            {record.id.substring(0, 8)}
-          </span>
-          <Tag style={eventTypeStyles[record.type] ? { backgroundColor: eventTypeStyles[record.type].bg, color: eventTypeStyles[record.type].color, border: 'none' } : undefined} color={eventTypeStyles[record.type] ? undefined : transferTypeColors[record.type] || 'default'}>{eventTypeLabels[record.type] || record.type}</Tag>
+    <Card key={record.id} style={cardStyle} size="small">
+      <div style={headerStyle}>
+        <span style={idStyle}>{record.id.substring(0, 8)}</span>
+        {getEventTag(record.type)}
+      </div>
+      {record.description && (
+        <div style={descStyle}>{record.description}</div>
+      )}
+      {(record.fromLocation || record.toLocation) && (
+        <div style={locationStyle}>
+          {record.fromLocation && <span><strong>De:</strong> {record.fromLocation.name}</span>}
+          {record.fromLocation && record.toLocation && ' → '}
+          {record.toLocation && <span><strong>A:</strong> {record.toLocation.name}</span>}
         </div>
-        <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>
-          {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}
-        </div>
-        {record.description && (
-          <div style={{ fontSize: 13, marginBottom: 8 }}>{record.description}</div>
-        )}
-        {(record.fromLocation || record.toLocation) && (
-          <div style={{ fontSize: 12, color: '#595959', marginBottom: 4 }}>
-            {record.fromLocation && <span><strong>De:</strong> {record.fromLocation.name}</span>}
-            {record.fromLocation && record.toLocation && ' → '}
-            {record.toLocation && <span><strong>A:</strong> {record.toLocation.name}</span>}
-          </div>
-        )}
-        {Number(record.cost || 0) > 0 && (
-          <div style={{ fontSize: 12, color: '#cf1322', fontWeight: 600, marginTop: 4 }}>
-            <strong>Costo:</strong> {formatCOP(Number(record.cost))}
-          </div>
-        )}
-        {record.createdByName && (
-          <div style={{ fontSize: 11, color: '#8c8c8c', marginTop: 4 }}>
-            Registrado por: {record.createdByName}
-          </div>
-        )}
+      )}
+      {Number(record.cost || 0) > 0 && (
+        <div style={costStyle}>{formatCOP(Number(record.cost))}</div>
+      )}
+      <div style={metaStyle}>
+        <div><strong>Fecha:</strong> {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}</div>
+        <div><strong>Registró:</strong> {record.createdByName || 'N/A'}</div>
       </div>
     </Card>
   );
@@ -628,32 +604,31 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
     },
   ];
 
-  const renderBajaCard = (record: any) => (
-    <Card key={record.id} style={{ marginBottom: 12 }} size="small">
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#8c8c8c' }}>
-            {record.id.substring(0, 8)}
-          </span>
-          <Tag style={eventTypeStyles[record.type] ? { backgroundColor: eventTypeStyles[record.type].bg, color: eventTypeStyles[record.type].color, border: 'none' } : undefined} color={eventTypeStyles[record.type] ? undefined : bajaTypeColors[record.type] || 'default'}>{bajaTypeLabels[record.type] || record.type}</Tag>
-        </div>
-        <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>
-          {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}
+  const renderBajaCard = (record: any) => {
+    const eStyle = eventTypeStyles[record.type];
+    const bajaTag = eStyle
+      ? <Tag style={{ backgroundColor: eStyle.bg, color: eStyle.color, border: 'none' }}>{bajaTypeLabels[record.type] || record.type}</Tag>
+      : <Tag color={bajaTypeColors[record.type] || 'default'}>{bajaTypeLabels[record.type] || record.type}</Tag>;
+
+    return (
+      <Card key={record.id} style={cardStyle} size="small">
+        <div style={headerStyle}>
+          <span style={idStyle}>{record.id.substring(0, 8)}</span>
+          {bajaTag}
         </div>
         {record.description && (
-          <div style={{ fontSize: 13, marginBottom: 8, wordBreak: 'break-word' }}>{record.description}</div>
+          <div style={descStyle}>{record.description}</div>
         )}
-        <div style={{ fontSize: 12, color: '#595959', marginBottom: 4 }}>
+        <div style={locationStyle}>
           <strong>Ubicación:</strong> {record.fromLocation?.name || record.toLocation?.name || asset?.location?.name || '-'}
         </div>
-        {record.createdByName && (
-          <div style={{ fontSize: 11, color: '#8c8c8c', marginTop: 4 }}>
-            Registrado por: {record.createdByName}
-          </div>
-        )}
-      </div>
-    </Card>
-  );
+        <div style={metaStyle}>
+          <div><strong>Fecha:</strong> {dayjs(record.createdAt).format('DD/MM/YYYY HH:mm')}</div>
+          <div><strong>Registró:</strong> {record.createdByName || 'N/A'}</div>
+        </div>
+      </Card>
+    );
+  };
 
   const tabItems = [
     {
@@ -991,11 +966,25 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
     >
       <Spin spinning={loading}>
         {asset && (
-          <Tabs
-            items={tabItems}
-            defaultActiveKey="info"
-            size={isMobile ? 'small' : 'middle'}
-          />
+          isMobile ? (
+            <div>
+              <Segmented
+                block
+                size="middle"
+                value={activeTab}
+                onChange={(val) => setActiveTab(val as string)}
+                options={tabItems.map((item) => ({ label: item.label, value: item.key }))}
+                style={{ marginBottom: 12 }}
+              />
+              {tabItems.find((item) => item.key === activeTab)?.children}
+            </div>
+          ) : (
+            <Tabs
+              items={tabItems}
+              defaultActiveKey="info"
+              size="middle"
+            />
+          )
         )}
       </Spin>
 
