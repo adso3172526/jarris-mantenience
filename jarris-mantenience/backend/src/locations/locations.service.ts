@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LocationEntity } from '../entities/location.entity';
@@ -16,8 +16,16 @@ export class LocationsService {
   ) {}
 
   async create(dto: CreateLocationDto) {
+    const normalizedName = dto.name.trim().toUpperCase();
+    const existing = await this.repo
+      .createQueryBuilder('l')
+      .where('UPPER(l.name) = :name', { name: normalizedName })
+      .getOne();
+    if (existing) {
+      throw new ConflictException(`Ya existe una ubicación con el nombre "${normalizedName}"`);
+    }
     const entity = this.repo.create({
-      name: dto.name.trim(),
+      name: normalizedName,
       type: dto.type,
       active: true,
     });
@@ -36,7 +44,17 @@ export class LocationsService {
 
   async update(id: string, dto: UpdateLocationDto) {
     const item = await this.findOne(id);
-    if (dto.name !== undefined) item.name = dto.name.trim();
+    if (dto.name !== undefined) {
+      const normalizedName = dto.name.trim().toUpperCase();
+      const existing = await this.repo
+        .createQueryBuilder('l')
+        .where('UPPER(l.name) = :name', { name: normalizedName })
+        .getOne();
+      if (existing && existing.id !== id) {
+        throw new ConflictException(`Ya existe una ubicación con el nombre "${normalizedName}"`);
+      }
+      item.name = normalizedName;
+    }
     if (dto.type !== undefined) item.type = dto.type;
     if (dto.active !== undefined) item.active = dto.active;
     return this.repo.save(item);

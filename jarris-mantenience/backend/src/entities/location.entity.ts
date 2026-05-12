@@ -17,7 +17,7 @@ export class LocationEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 120 })
+  @Column({ length: 120, unique: true })
   name: string;
 
   @Column({ type: 'enum', enum: LocationType })
