@@ -21,6 +21,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 interface LocativeCategory {
   id: string;
+  code: number | null;
   name: string;
   active: boolean;
 }
@@ -57,6 +58,12 @@ const LocativeCategoriesPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getNextCode = () => {
+    const codes = categories.map((c) => c.code).filter((c): c is number => c != null);
+    const max = codes.length > 0 ? Math.max(...codes) : 0;
+    return max < 1000 ? 1000 : max + 1;
   };
 
   const handleCreate = () => {
@@ -103,6 +110,9 @@ const LocativeCategoriesPage: React.FC = () => {
           <strong style={{ fontSize: 14 }}>{record.name}</strong>
           <Badge status={record.active ? 'success' : 'default'} text={record.active ? 'Activa' : 'Inactiva'} />
         </div>
+        {record.code != null && (
+          <div style={{ fontSize: 12, color: '#8c8c8c' }}>Código: {record.code}</div>
+        )}
       </div>
       {canEdit && (
         <>
@@ -119,6 +129,15 @@ const LocativeCategoriesPage: React.FC = () => {
   );
 
   const columns: ColumnsType<LocativeCategory> = [
+    {
+      title: 'Código',
+      dataIndex: 'code',
+      key: 'code',
+      width: 90,
+      align: 'center',
+      sorter: (a, b) => (a.code ?? 0) - (b.code ?? 0),
+      render: (code: number | null) => code ?? <span style={{ color: '#8c8c8c' }}>-</span>,
+    },
     {
       title: 'Nombre',
       dataIndex: 'name',
@@ -260,6 +279,15 @@ const LocativeCategoriesPage: React.FC = () => {
           onFinish={handleSubmit}
           requiredMark={!isMobile}
         >
+          <Form.Item label="Código">
+            <Input
+              value={editingCategory ? (editingCategory.code ?? '-') : getNextCode()}
+              disabled
+              size={isMobile ? 'large' : 'middle'}
+              style={{ fontWeight: 600 }}
+            />
+          </Form.Item>
+
           <Form.Item
             label="Nombre"
             name="name"

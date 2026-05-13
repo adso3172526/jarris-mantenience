@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LocativeCategoryEntity } from '../entities/locative-category.entity';
@@ -32,14 +32,36 @@ export class LocativeCategoriesService implements OnModuleInit {
       );
       await this.repo.save(entities);
     }
+
+    // Asignar código a categorías que no tengan
+    const withoutCode = await this.repo.find({ where: { code: null as any } });
+    for (const cat of withoutCode) {
+      cat.code = await this.getNextCode();
+      await this.repo.save(cat);
+    }
   }
 
   async create(dto: CreateLocativeCategoryDto) {
-    const entity = this.repo.create({
-      name: dto.name.trim().toUpperCase(),
-      active: true,
-    });
+    const normalizedName = dto.name.trim().toUpperCase();
+    const existing = await this.repo
+      .createQueryBuilder('lc')
+      .where('UPPER(lc.name) = :name', { name: normalizedName })
+      .getOne();
+    if (existing) {
+      throw new ConflictException(`Ya existe una categoría locativa con el nombre "${normalizedName}"`);
+    }
+    const nextCode = await this.getNextCode();
+    const entity = this.repo.create({ name: normalizedName, code: nextCode, active: true });
     return this.repo.save(entity);
+  }
+
+  private async getNextCode(): Promise<number> {
+    const result = await this.repo
+      .createQueryBuilder('lc')
+      .select('MAX(lc.code)', 'max')
+      .getRawOne();
+    const max = result?.max ?? 0;
+    return max < 1000 ? 1000 : max + 1;
   }
 
   findAll() {
@@ -59,7 +81,17 @@ export class LocativeCategoriesService implements OnModuleInit {
   async update(id: string, dto: UpdateLocativeCategoryDto) {
     const item = await this.findOne(id);
 
-    if (dto.name !== undefined) item.name = dto.name.trim().toUpperCase();
+    if (dto.name !== undefined) {
+      const normalizedName = dto.name.trim().toUpperCase();
+      const existing = await this.repo
+        .createQueryBuilder('lc')
+        .where('UPPER(lc.name) = :name', { name: normalizedName })
+        .getOne();
+      if (existing && existing.id !== id) {
+        throw new ConflictException(`Ya existe una categoría locativa con el nombre "${normalizedName}"`);
+      }
+      item.name = normalizedName;
+    }
     if (dto.active !== undefined) item.active = dto.active;
 
     return this.repo.save(item);
