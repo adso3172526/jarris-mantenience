@@ -7,6 +7,7 @@ import {
   Modal,
   Form,
   Input,
+  InputNumber,
   Select,
   Switch,
   message,
@@ -24,6 +25,8 @@ interface Location {
   id: string;
   name: string;
   type: string;
+  operationalCenter: number | null;
+  costCenter: number | null;
   active: boolean;
   createdAt: string;
 }
@@ -112,6 +115,13 @@ const LocationsPage: React.FC = () => {
         <div style={{ fontSize: 12, color: '#8c8c8c' }}>
           {locationTypeLabels[record.type] || record.type}
         </div>
+        {(record.operationalCenter != null || record.costCenter != null) && (
+          <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 4 }}>
+            {record.operationalCenter != null && `CO: ${record.operationalCenter}`}
+            {record.operationalCenter != null && record.costCenter != null && ' | '}
+            {record.costCenter != null && `CC: ${record.costCenter}`}
+          </div>
+        )}
       </div>
 
       <Divider style={{ margin: '8px 0' }} />
@@ -141,6 +151,24 @@ const LocationsPage: React.FC = () => {
           </div>
         </div>
       ),
+    },
+    {
+      title: 'CO',
+      dataIndex: 'operationalCenter',
+      key: 'operationalCenter',
+      width: 80,
+      align: 'center',
+      sorter: (a, b) => (a.operationalCenter ?? 0) - (b.operationalCenter ?? 0),
+      render: (val: number | null) => val ?? <span style={{ color: '#8c8c8c' }}>-</span>,
+    },
+    {
+      title: 'CC',
+      dataIndex: 'costCenter',
+      key: 'costCenter',
+      width: 80,
+      align: 'center',
+      sorter: (a, b) => (a.costCenter ?? 0) - (b.costCenter ?? 0),
+      render: (val: number | null) => val ?? <span style={{ color: '#8c8c8c' }}>-</span>,
     },
     {
       title: 'Estado',
@@ -310,6 +338,30 @@ const LocationsPage: React.FC = () => {
                 { label: 'Departamento Administrativo', value: 'DEPARTAMENTO' },
                 { label: 'Planta de Producción', value: 'PLANTA' },
               ]}
+            />
+          </Form.Item>
+
+          <Form.Item
+            label="Centro Operativo (CO)"
+            name="operationalCenter"
+          >
+            <InputNumber
+              placeholder="Ej: 100"
+              size={isMobile ? 'large' : 'middle'}
+              style={{ width: '100%' }}
+              precision={0}
+            />
+          </Form.Item>
+
+          <Form.Item
+            label="Centro de Costos (CC)"
+            name="costCenter"
+          >
+            <InputNumber
+              placeholder="Ej: 200"
+              size={isMobile ? 'large' : 'middle'}
+              style={{ width: '100%' }}
+              precision={0}
             />
           </Form.Item>
 

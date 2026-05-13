@@ -24,9 +24,25 @@ export class LocationsService {
     if (existing) {
       throw new ConflictException(`Ya existe una ubicación con el nombre "${normalizedName}"`);
     }
+    if (dto.operationalCenter != null) {
+      const existingCO = await this.repo.findOne({ where: { operationalCenter: dto.operationalCenter } });
+      if (existingCO) {
+        throw new ConflictException(`Ya existe una ubicación con el Centro Operativo ${dto.operationalCenter}`);
+      }
+    }
+
+    if (dto.costCenter != null) {
+      const existingCC = await this.repo.findOne({ where: { costCenter: dto.costCenter } });
+      if (existingCC) {
+        throw new ConflictException(`Ya existe una ubicación con el Centro de Costos ${dto.costCenter}`);
+      }
+    }
+
     const entity = this.repo.create({
       name: normalizedName,
       type: dto.type,
+      operationalCenter: dto.operationalCenter ?? null,
+      costCenter: dto.costCenter ?? null,
       active: true,
     });
     return this.repo.save(entity);
@@ -56,6 +72,23 @@ export class LocationsService {
       item.name = normalizedName;
     }
     if (dto.type !== undefined) item.type = dto.type;
+
+    if (dto.operationalCenter !== undefined) {
+      const existingCO = await this.repo.findOne({ where: { operationalCenter: dto.operationalCenter } });
+      if (existingCO && existingCO.id !== id) {
+        throw new ConflictException(`Ya existe una ubicación con el Centro Operativo ${dto.operationalCenter}`);
+      }
+      item.operationalCenter = dto.operationalCenter;
+    }
+
+    if (dto.costCenter !== undefined) {
+      const existingCC = await this.repo.findOne({ where: { costCenter: dto.costCenter } });
+      if (existingCC && existingCC.id !== id) {
+        throw new ConflictException(`Ya existe una ubicación con el Centro de Costos ${dto.costCenter}`);
+      }
+      item.costCenter = dto.costCenter;
+    }
+
     if (dto.active !== undefined) item.active = dto.active;
     return this.repo.save(item);
   }

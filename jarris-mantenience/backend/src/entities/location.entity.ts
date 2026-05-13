@@ -23,6 +23,12 @@ export class LocationEntity {
   @Column({ type: 'enum', enum: LocationType })
   type: LocationType;
 
+  @Column({ type: 'int', nullable: true, unique: true })
+  operationalCenter: number | null;
+
+  @Column({ type: 'int', nullable: true, unique: true })
+  costCenter: number | null;
+
   @Column({ default: true })
   active: boolean;
 

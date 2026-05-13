@@ -30,6 +30,8 @@ export class ReportsService {
         wo.title AS solicitud,
         l.name AS ubicacion_nombre,
         l.id AS ubicacion_id,
+        l."operationalCenter" AS co,
+        l."costCenter" AS cc,
         a.code AS activo_codigo,
         a.description AS activo_descripcion,
         c.name AS categoria_nombre,
@@ -65,6 +67,8 @@ export class ReportsService {
         ae.type::text AS solicitud,
         COALESCE(tl.name, fl.name, al.name) AS ubicacion_nombre,
         COALESCE(tl.id, fl.id, al.id) AS ubicacion_id,
+        COALESCE(tl."operationalCenter", fl."operationalCenter", al."operationalCenter") AS co,
+        COALESCE(tl."costCenter", fl."costCenter", al."costCenter") AS cc,
         a.code AS activo_codigo,
         a.description AS activo_descripcion,
         c.name AS categoria_nombre,
@@ -281,6 +285,8 @@ export class ReportsService {
       { header: 'Categoría', key: 'categoria_ot', width: 14 },
       { header: 'Tipo', key: 'tipo_evento', width: 18 },
       { header: 'Ubicación', key: 'ubicacion_nombre', width: 20 },
+      { header: 'CO', key: 'co', width: 10 },
+      { header: 'CC', key: 'cc', width: 10 },
       { header: 'Activo', key: 'activo', width: 30 },
       { header: 'Cat. Activo/Locativo', key: 'categoria_detalle', width: 20 },
       { header: 'Descripción', key: 'trabajo_realizado', width: 40 },
@@ -317,6 +323,8 @@ export class ReportsService {
           ? (row.tipo_mantenimiento || '-')
           : (row.tipo_mantenimiento || 'N/A'),
         ubicacion_nombre: row.ubicacion_nombre || 'N/A',
+        co: row.co != null ? Number(row.co) : '',
+        cc: row.cc != null ? Number(row.cc) : '',
         activo: row.activo_codigo || (esOT ? 'LOCATIVO' : 'N/A'),
         categoria_detalle: row.categoria_nombre || row.categoria_locativa || 'N/A',
         trabajo_realizado: row.descripcion_solicitud
@@ -355,6 +363,8 @@ export class ReportsService {
       categoria_ot: '',
       tipo_evento: '',
       ubicacion_nombre: '',
+      co: '',
+      cc: '',
       activo: '',
       categoria_detalle: '',
       trabajo_realizado: 'TOTALES:',
@@ -373,7 +383,7 @@ export class ReportsService {
     // Auto-filtros
     worksheet.autoFilter = {
       from: 'A1',
-      to: 'R1',
+      to: 'T1',
     };
 
     // Generar buffer
@@ -401,6 +411,8 @@ export class ReportsService {
           a.status::text AS estado,
           c.name AS categoria,
           l.name AS ubicacion,
+          l."operationalCenter" AS co,
+          l."costCenter" AS cc,
           l.type::text AS tipo_ubicacion,
           a."createdAt" AS fecha_registro
         FROM assets a
@@ -424,6 +436,8 @@ export class ReportsService {
         { header: 'Estado', key: 'estado', width: 15 },
         { header: 'Categoría', key: 'categoria', width: 20 },
         { header: 'Ubicación', key: 'ubicacion', width: 20 },
+        { header: 'CO', key: 'co', width: 10 },
+        { header: 'CC', key: 'cc', width: 10 },
         { header: 'Tipo Ubicación', key: 'tipo_ubicacion', width: 15 },
         { header: 'Fecha Registro', key: 'fecha_registro', width: 18 },
       ];
@@ -449,6 +463,8 @@ export class ReportsService {
           estado: row.estado || 'N/A',
           categoria: row.categoria || 'N/A',
           ubicacion: row.ubicacion || 'N/A',
+          co: row.co != null ? Number(row.co) : '',
+          cc: row.cc != null ? Number(row.cc) : '',
           tipo_ubicacion: row.tipo_ubicacion || 'N/A',
           fecha_registro: row.fecha_registro ? new Date(row.fecha_registro) : null,
         });
@@ -461,7 +477,7 @@ export class ReportsService {
       // Auto-filtros
       worksheet.autoFilter = {
         from: 'A1',
-        to: 'L1',
+        to: 'N1',
       };
 
       const buffer = await workbook.xlsx.writeBuffer();
