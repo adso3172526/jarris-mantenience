@@ -28,8 +28,11 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
-  const { user, hasRole } = useAuth();
-  const isAdminOrJefe = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
+  const { user, hasAccess, hasPermission } = useAuth();
+  const isAdminOrJefe = hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['CREAR_OT_EQUIPO', 'CREAR_OT_LOCATIVO']);
+  const isFixedRole = (user?.roles?.length ?? 0) > 0 && !user?.profileId;
+  const canCreateEquipo = isFixedRole || hasPermission('CREAR_OT_EQUIPO');
+  const canCreateLocativo = isFixedRole || hasPermission('CREAR_OT_LOCATIVO');
 
   const maintenanceType = Form.useWatch('maintenanceType', form);
 
@@ -45,7 +48,8 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
         loadAssets();
       }
       loadLocativeCategories();
-      form.setFieldsValue({ maintenanceType: 'EQUIPO' });
+      const defaultType = canCreateEquipo ? 'EQUIPO' : 'LOCATIVO';
+      form.setFieldsValue({ maintenanceType: defaultType });
       if (isAdminOrJefe) {
         loadLocations();
         setSelectedLocationId(undefined);
@@ -277,28 +281,32 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
           style={{ marginBottom: 16 }}
         >
           <Row gutter={12}>
-            <Col span={12}>
-              <Card
-                size="small"
-                style={typeCardStyle('EQUIPO')}
-                styles={{ body: { padding: '12px 16px', textAlign: 'center' } }}
-                onClick={() => { form.setFieldsValue({ maintenanceType: 'EQUIPO', assetId: undefined, locativeCategoryId: undefined }); if (isAdminOrJefe && selectedLocationId) loadAssetsByLocation(selectedLocationId); }}
-              >
-                <ToolOutlined style={{ fontSize: 22, color: maintenanceType === 'EQUIPO' ? '#1890ff' : '#8c8c8c', display: 'block', marginBottom: 4 }} />
-                <div style={{ fontWeight: 600, fontSize: 13 }}>Equipo</div>
-              </Card>
-            </Col>
-            <Col span={12}>
-              <Card
-                size="small"
-                style={typeCardStyle('LOCATIVO')}
-                styles={{ body: { padding: '12px 16px', textAlign: 'center' } }}
-                onClick={() => form.setFieldsValue({ maintenanceType: 'LOCATIVO', assetId: undefined, locativeCategoryId: undefined })}
-              >
-                <HomeOutlined style={{ fontSize: 22, color: maintenanceType === 'LOCATIVO' ? '#722ed1' : '#8c8c8c', display: 'block', marginBottom: 4 }} />
-                <div style={{ fontWeight: 600, fontSize: 13 }}>Locativo</div>
-              </Card>
-            </Col>
+            {canCreateEquipo && (
+              <Col span={canCreateLocativo ? 12 : 24}>
+                <Card
+                  size="small"
+                  style={typeCardStyle('EQUIPO')}
+                  styles={{ body: { padding: '12px 16px', textAlign: 'center' } }}
+                  onClick={() => { form.setFieldsValue({ maintenanceType: 'EQUIPO', assetId: undefined, locativeCategoryId: undefined }); if (isAdminOrJefe && selectedLocationId) loadAssetsByLocation(selectedLocationId); }}
+                >
+                  <ToolOutlined style={{ fontSize: 22, color: maintenanceType === 'EQUIPO' ? '#1890ff' : '#8c8c8c', display: 'block', marginBottom: 4 }} />
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>Equipo</div>
+                </Card>
+              </Col>
+            )}
+            {canCreateLocativo && (
+              <Col span={canCreateEquipo ? 12 : 24}>
+                <Card
+                  size="small"
+                  style={typeCardStyle('LOCATIVO')}
+                  styles={{ body: { padding: '12px 16px', textAlign: 'center' } }}
+                  onClick={() => form.setFieldsValue({ maintenanceType: 'LOCATIVO', assetId: undefined, locativeCategoryId: undefined })}
+                >
+                  <HomeOutlined style={{ fontSize: 22, color: maintenanceType === 'LOCATIVO' ? '#722ed1' : '#8c8c8c', display: 'block', marginBottom: 4 }} />
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>Locativo</div>
+                </Card>
+              </Col>
+            )}
           </Row>
         </Form.Item>
 

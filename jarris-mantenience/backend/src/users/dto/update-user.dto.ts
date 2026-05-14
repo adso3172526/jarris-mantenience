@@ -28,4 +28,8 @@ export class UpdateUserDto {
 
   @IsOptional()
   active?: boolean;
+
+  @IsOptional()
+  @IsString()
+  profileId?: string;
 }

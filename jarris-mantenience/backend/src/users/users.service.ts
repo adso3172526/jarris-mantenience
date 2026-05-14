@@ -41,11 +41,13 @@ export class UsersService implements OnModuleInit {
 
   async create(dto: CreateUserDto) {
     const passwordHash = await bcrypt.hash(dto.password, 10);
+
     const user = this.repo.create({
       name: dto.name,
       email: dto.email.toLowerCase().trim(),
       passwordHash,
-      roles: dto.roles,
+      roles: dto.profileId ? [] : (dto.roles || []),
+      profileId: dto.profileId || null,
       active: true,
       locationId: dto.locationId ?? null,
     });
@@ -54,8 +56,8 @@ export class UsersService implements OnModuleInit {
 
   findAll() {
     return this.repo.find({
-      select: ['id', 'name', 'email', 'phone', 'roles', 'active', 'locationId', 'createdAt', 'updatedAt'],
-      relations: ['location'],
+      select: ['id', 'name', 'email', 'phone', 'roles', 'active', 'locationId', 'profileId', 'createdAt', 'updatedAt'],
+      relations: ['location', 'profile'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -63,8 +65,8 @@ export class UsersService implements OnModuleInit {
   async findById(id: string) {
     const user = await this.repo.findOne({
       where: { id },
-      select: ['id', 'name', 'email', 'phone', 'roles', 'active', 'locationId', 'createdAt', 'updatedAt'],
-      relations: ['location'],
+      select: ['id', 'name', 'email', 'phone', 'roles', 'active', 'locationId', 'profileId', 'createdAt', 'updatedAt'],
+      relations: ['location', 'profile'],
     });
     if (!user) throw new NotFoundException('User not found');
     return user;
@@ -73,6 +75,7 @@ export class UsersService implements OnModuleInit {
   async findByEmailWithHash(email: string) {
     return this.repo.findOne({
       where: { email: email.toLowerCase().trim() },
+      relations: ['profile'],
     });
   }
 
@@ -82,8 +85,8 @@ export class UsersService implements OnModuleInit {
       select: ['id', 'name', 'email', 'roles'],
     });
 
-    return users.filter(u => 
-      u.roles.includes(ROLES.TECNICO_INTERNO) || 
+    return users.filter(u =>
+      u.roles.includes(ROLES.TECNICO_INTERNO) ||
       u.roles.includes(ROLES.CONTRATISTA)
     );
   }
@@ -95,9 +98,22 @@ export class UsersService implements OnModuleInit {
     if (dto.name !== undefined) user.name = dto.name;
     if (dto.email) user.email = dto.email.toLowerCase().trim();
     if (dto.phone !== undefined) user.phone = dto.phone;
-    if (dto.roles) user.roles = dto.roles;
     if (dto.locationId !== undefined) user.locationId = dto.locationId ?? null;
     if (dto.active !== undefined) user.active = dto.active;
+
+    // Handle profile vs roles exclusivity
+    if (dto.profileId !== undefined) {
+      if (dto.profileId) {
+        user.profileId = dto.profileId;
+        user.roles = [];
+      } else {
+        user.profileId = null;
+        if (dto.roles) user.roles = dto.roles;
+      }
+    } else if (dto.roles) {
+      user.roles = dto.roles;
+      user.profileId = null;
+    }
 
     if (dto.password && dto.password.trim().length > 0) {
       user.passwordHash = await bcrypt.hash(dto.password, 10);
@@ -108,7 +124,7 @@ export class UsersService implements OnModuleInit {
 
   async resetPassword(id: string, newPassword: string) {
     const user = await this.repo.findOne({ where: { id } });
-    
+
     if (!user) {
       throw new NotFoundException('Usuario no encontrado');
     }
@@ -119,8 +135,8 @@ export class UsersService implements OnModuleInit {
 
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     await this.repo.save(user);
-    
-    return { 
+
+    return {
       message: 'Contraseña restablecida exitosamente',
       userId: id,
       email: user.email
@@ -129,14 +145,14 @@ export class UsersService implements OnModuleInit {
 
   async delete(id: string) {
     const user = await this.repo.findOne({ where: { id } });
-    
+
     if (!user) {
       throw new NotFoundException('Usuario no encontrado');
     }
-    
+
     await this.repo.remove(user);
-    
-    return { 
+
+    return {
       message: 'Usuario eliminado exitosamente',
       deletedUserId: id,
       deletedEmail: user.email

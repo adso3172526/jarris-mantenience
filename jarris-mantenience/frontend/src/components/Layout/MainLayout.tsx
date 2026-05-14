@@ -36,7 +36,7 @@ const MainLayout: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, hasRole } = useAuth();
+  const { user, logout, hasAccess } = useAuth();
 
   useEffect(() => {
     const handleResize = () => {
@@ -69,7 +69,7 @@ const MainLayout: React.FC = () => {
   const getMenuItems = (): SidebarItem[] => {
     const items: SidebarItem[] = [];
 
-    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO'])) {
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['VER_DASHBOARD'])) {
       items.push({
         key: '/dashboard',
         icon: <DashboardOutlined />,
@@ -85,7 +85,7 @@ const MainLayout: React.FC = () => {
       onClick: () => navigate('/work-orders'),
     });
 
-    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'])) {
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'], ['VER_ACTIVOS'])) {
       items.push({
         key: '/locative',
         icon: <HomeOutlined />,
@@ -94,7 +94,7 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'])) {
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'], ['VER_EVENTOS'])) {
       items.push({
         key: '/events',
         icon: <UnorderedListOutlined />,
@@ -103,7 +103,7 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'ADMINISTRACION'])) {
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'ADMINISTRACION'], ['VER_ACTIVOS'])) {
       items.push({
         key: '/assets',
         icon: <ToolOutlined />,
@@ -112,7 +112,7 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'])) {
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'], ['VER_TRASLADOS', 'CREAR_TRASLADOS', 'EDITAR_TRASLADOS'])) {
       items.push({
         key: '/traslados',
         icon: <SwapOutlined />,
@@ -121,7 +121,7 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'])) {
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'], ['VER_BAJAS'])) {
       items.push({
         key: '/bajas',
         icon: <StopOutlined />,
@@ -130,45 +130,59 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO'])) {
-      items.push(
-        {
-          key: '/locations',
-          icon: <EnvironmentOutlined />,
-          label: 'Ubicaciones',
-          onClick: () => navigate('/locations'),
-        },
-        {
-          key: '/categories',
-          icon: <AppstoreOutlined />,
-          label: 'Categorias Activos',
-          onClick: () => navigate('/categories'),
-        },
-        {
-          key: '/locative-categories',
-          icon: <TagOutlined />,
-          label: 'Categorias Locativos',
-          onClick: () => navigate('/locative-categories'),
-        },
-        {
-          key: '/users',
-          icon: <UserOutlined />,
-          label: 'Usuarios',
-          onClick: () => navigate('/users'),
-        },
-        {
-          key: '/reports',
-          icon: <BarChartOutlined />,
-          label: 'Reportes',
-          onClick: () => navigate('/reports'),
-        }
-      );
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['VER_UBICACIONES'])) {
+      items.push({
+        key: '/locations',
+        icon: <EnvironmentOutlined />,
+        label: 'Ubicaciones',
+        onClick: () => navigate('/locations'),
+      });
+    }
+
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['VER_CATEGORIAS_ACTIVOS'])) {
+      items.push({
+        key: '/categories',
+        icon: <AppstoreOutlined />,
+        label: 'Categorias Activos',
+        onClick: () => navigate('/categories'),
+      });
+    }
+
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['VER_CATEGORIAS_LOCATIVOS'])) {
+      items.push({
+        key: '/locative-categories',
+        icon: <TagOutlined />,
+        label: 'Categorias Locativos',
+        onClick: () => navigate('/locative-categories'),
+      });
+    }
+
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['CREAR_USUARIOS'])) {
+      items.push({
+        key: '/users',
+        icon: <UserOutlined />,
+        label: 'Usuarios y Perfiles',
+        onClick: () => navigate('/users'),
+      });
+    }
+
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['GENERAR_REPORTES'])) {
+      items.push({
+        key: '/reports',
+        icon: <BarChartOutlined />,
+        label: 'Reportes',
+        onClick: () => navigate('/reports'),
+      });
     }
 
     return items;
   };
 
   const getRoleLabel = (roles: string[]) => {
+    // If user has a profile name, show that instead
+    if (user?.profileName) {
+      return user.profileName;
+    }
     const roleLabels: Record<string, string> = {
       ADMIN: 'Admin',
       JEFE_MANTENIMIENTO: 'Jefe',
@@ -225,7 +239,6 @@ const MainLayout: React.FC = () => {
     );
   };
 
-  // Mobile drawer menu items (botones con icono + texto)
   const renderMobileMenuItem = (item: SidebarItem) => {
     const isActive = location.pathname === item.key;
     return (
@@ -263,7 +276,6 @@ const MainLayout: React.FC = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      {/* Desktop Sidebar - always collapsed, icons + labels */}
       {!isMobile && (
         <div
           style={{
@@ -281,23 +293,14 @@ const MainLayout: React.FC = () => {
             overflowX: 'hidden',
           }}
         >
-          {/* Logo */}
-          <div
-            style={{
-              height: 24,
-              flexShrink: 0,
-            }}
-          />
-
-          {/* Menu items */}
+          <div style={{ height: 24, flexShrink: 0 }} />
           <div style={{ flex: 1, paddingTop: 16, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', paddingBottom: 80 }}>
             {menuItems.map(renderSidebarItem)}
           </div>
-
         </div>
       )}
 
-      <Layout style={{ marginLeft: isMobile ? 0 : SIDEBAR_WIDTH }}>
+      <Layout style={{ marginLeft: isMobile ? 0 : SIDEBAR_WIDTH, height: '100vh', overflow: isMobile ? 'auto' : 'hidden' }}>
         <Header
           style={{
             padding: isMobile ? '0 12px' : '0 24px',
@@ -306,11 +309,12 @@ const MainLayout: React.FC = () => {
             justifyContent: 'space-between',
             alignItems: 'center',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            position: 'sticky',
-            top: 0,
+            flexShrink: 0,
             zIndex: 100,
             height: isMobile ? 48 : 64,
             lineHeight: isMobile ? '48px' : '64px',
+            position: isMobile ? 'sticky' : undefined,
+            top: isMobile ? 0 : undefined,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -361,14 +365,17 @@ const MainLayout: React.FC = () => {
             margin: isMobile ? 0 : '24px',
             padding: isMobile ? 12 : 24,
             background: isMobile ? '#1a2733' : '#f0f2f5',
-            minHeight: 280,
+            minHeight: isMobile ? 280 : 0,
+            flex: 1,
+            overflow: isMobile ? 'auto' : 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           <Outlet />
         </Content>
       </Layout>
 
-      {/* Mobile Menu Drawer */}
       <Drawer
         title={
           <span style={{ fontWeight: 700, fontSize: 16 }}>JARRIS</span>
@@ -379,7 +386,6 @@ const MainLayout: React.FC = () => {
         width={280}
         styles={{ body: { padding: 0, background: '#1a2733' }, header: { background: '#1a2733', borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#fff' }, content: { background: '#1a2733' } }}
       >
-        {/* User Info */}
         <div style={{
           padding: '16px',
           background: 'rgba(255,255,255,0.05)',
@@ -401,12 +407,10 @@ const MainLayout: React.FC = () => {
           </Space>
         </div>
 
-        {/* Menu Items */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '12px 16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '12px 16px', paddingBottom: 60, overflowY: 'auto' }}>
           {menuItems.map(renderMobileMenuItem)}
         </div>
 
-        {/* Logout at bottom */}
         <div style={{
           position: 'absolute',
           bottom: 0,

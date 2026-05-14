@@ -70,8 +70,8 @@ const TrasladosPage: React.FC = () => {
   const [mobilePage, setMobilePage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const { hasRole } = useAuth();
-  const canEdit = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
+  const { hasAccess } = useAuth();
+  const canEdit = hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['EDITAR_TRASLADOS']);
 
   // Modals
   const [editModalOpen, setEditModalOpen] = useState(false);

@@ -94,10 +94,10 @@ const AssetsPage: React.FC = () => {
   const [filterBrand, setFilterBrand] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
 
-  const { hasRole, user } = useAuth();
+  const { hasRole, hasAccess, user } = useAuth();
   const isPDV = hasRole(['PDV']) || hasRole(['ADMINISTRACION']);
-  const canEdit = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']);
-  const canDeactivate = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
+  const canEdit = hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'], ['EDITAR_ACTIVOS']);
+  const canDeactivate = hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['EDITAR_ACTIVOS']);
 
   const formatCOP = (value: number) => {
     return `$${Math.round(value).toLocaleString('es-CO')}`;

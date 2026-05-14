@@ -10,7 +10,7 @@ import {
   Tooltip,
   Row,
   Col,
-
+  Modal,
   DatePicker,
   Pagination,
 } from 'antd';
@@ -31,6 +31,7 @@ import {
   EditOutlined,
   ClearOutlined,
   FilterOutlined,
+  EnvironmentOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -60,6 +61,7 @@ interface WorkOrder {
   assigneeType?: string;
   assigneeName?: string;
   assigneeEmail?: string;
+  createdBy?: string;
   asset?: {
     id: string;
     code: string;
@@ -103,11 +105,13 @@ const WorkOrdersPage: React.FC = () => {
   const [photosModalOpen, setPhotosModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [changeAssetModalOpen, setChangeAssetModalOpen] = useState(false);
-  
+  const [changeLocationModalOpen, setChangeLocationModalOpen] = useState(false);
+  const [allLocations, setAllLocations] = useState<any[]>([]);
+
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
 
-  const { user, hasRole } = useAuth();
-  const isJefe = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
+  const { user, hasRole, hasAccess, hasPermission } = useAuth();
+  const isJefe = hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['EDITAR_OT', 'CERRAR_OT', 'ANULAR_OT']);
   const isTecnico = hasRole('TECNICO_INTERNO');
   const isContratista = hasRole('CONTRATISTA');
   const isPDV = hasRole('PDV') || hasRole('ADMINISTRACION');
@@ -217,6 +221,34 @@ const WorkOrdersPage: React.FC = () => {
     setViewModalOpen(true);
   };
 
+  const handleOpenChangeLocation = async (order: WorkOrder) => {
+    setSelectedOrder(order);
+    try {
+      const res = await locationsApi.getAll();
+      setAllLocations(res.data.filter((l: any) => l.active !== false));
+    } catch { /* ignore */ }
+    setChangeLocationModalOpen(true);
+  };
+
+  const [newLocationId, setNewLocationId] = useState<string | undefined>();
+  const [changeLocationLoading, setChangeLocationLoading] = useState(false);
+
+  const handleChangeLocation = async () => {
+    if (!selectedOrder || !newLocationId) return;
+    try {
+      setChangeLocationLoading(true);
+      await workOrdersApi.changeLocation(selectedOrder.id, newLocationId);
+      message.success('Ubicación actualizada');
+      setChangeLocationModalOpen(false);
+      setNewLocationId(undefined);
+      loadWorkOrders();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Error al cambiar ubicación');
+    } finally {
+      setChangeLocationLoading(false);
+    }
+  };
+
   const handleAssign = (order: WorkOrder) => {
     setSelectedOrder(order);
     setAssignModalOpen(true);
@@ -267,8 +299,9 @@ const WorkOrdersPage: React.FC = () => {
       )
     );
 
-    // Subir fotos
-    if (record.status !== 'CERRADA' && record.status !== 'RECHAZADA') {
+    // Subir fotos (solo creador o admin/jefe)
+    const isCreator = record.createdBy === user?.email;
+    if (record.status !== 'CERRADA' && record.status !== 'RECHAZADA' && (isCreator || isJefe)) {
       buttons.push(
         wrapTooltip("photos", "Subir fotos",
           <Button
@@ -313,6 +346,23 @@ const WorkOrdersPage: React.FC = () => {
             block={isMobileView}
           >
             {isMobileView && 'Activo'}
+          </Button>
+        )
+      );
+    }
+
+    // Cambiar ubicación (JEFE o perfil con permiso, antes de CERRADA/RECHAZADA)
+    if ((isJefe || hasPermission('CAMBIAR_UBICACION_OT')) && record.status !== 'CERRADA' && record.status !== 'RECHAZADA') {
+      buttons.push(
+        wrapTooltip("change-location", "Ubicación",
+          <Button
+            type={isMobileView ? 'default' : 'text'}
+            icon={<EnvironmentOutlined />}
+            onClick={() => handleOpenChangeLocation(record)}
+            style={{ color: '#722ed1' }}
+            block={isMobileView}
+          >
+            {isMobileView && 'Ubicación'}
           </Button>
         )
       );
@@ -641,7 +691,7 @@ const WorkOrdersPage: React.FC = () => {
               <FileTextOutlined style={{ fontSize: isMobile ? 14 : 18, color: '#E60012' }} />
               <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>{isPDV ? 'Mis Solicitudes' : 'Ordenes de Trabajo'}</span>
             </Space>
-            {(isPDV || isJefe || hasRole('ADMIN')) && (
+            {(isPDV || isJefe || hasRole('ADMIN') || hasAccess([], ['CREAR_OT_EQUIPO', 'CREAR_OT_LOCATIVO'])) && (
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -1015,6 +1065,44 @@ const WorkOrdersPage: React.FC = () => {
             locationId={selectedOrder.location.id}
             currentAssetId={selectedOrder.asset?.id}
           />
+
+          <Modal
+            title="Cambiar Ubicación"
+            open={changeLocationModalOpen}
+            onCancel={() => { setChangeLocationModalOpen(false); setNewLocationId(undefined); }}
+            onOk={handleChangeLocation}
+            confirmLoading={changeLocationLoading}
+            okText="Cambiar"
+            cancelText="Cancelar"
+            centered
+            width={420}
+          >
+            <div style={{ marginBottom: 12, fontSize: 13, color: '#595959' }}>
+              Ubicación actual: <strong>{selectedOrder.location?.name}</strong>
+            </div>
+            <Select
+              placeholder="Selecciona la nueva ubicación"
+              value={newLocationId}
+              onChange={setNewLocationId}
+              showSearch
+              optionFilterProp="children"
+              style={{ width: '100%' }}
+            >
+              {allLocations
+                .filter((l: any) => l.id !== selectedOrder.location?.id)
+                .sort((a: any, b: any) => (a.operationalCenter || 0) - (b.operationalCenter || 0))
+                .map((loc: any) => (
+                  <Select.Option key={loc.id} value={loc.id}>
+                    {loc.operationalCenter ? `${loc.operationalCenter} - ${loc.name}` : loc.name}
+                  </Select.Option>
+                ))}
+            </Select>
+            {selectedOrder.asset && (
+              <div style={{ marginTop: 12, padding: '8px 12px', background: '#fff7e6', border: '1px solid #ffd591', borderRadius: 6, fontSize: 13, color: '#ad6800' }}>
+                Esta OT tiene un activo asignado (<strong>{selectedOrder.asset.code}</strong>). Al cambiar la ubicación, deberá volver a asignar el activo correspondiente a la nueva ubicación.
+              </div>
+            )}
+          </Modal>
         </>
       )}
     </div>

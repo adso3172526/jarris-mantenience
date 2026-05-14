@@ -23,25 +23,30 @@ import LoginPage from './pages/Login/LoginPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import AssetsPage from './pages/Assets/AssetsPage';
 
-// Redirige según el rol del usuario
+// Redirige según el rol/perfil del usuario
 const RoleRedirect: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasAccess } = useAuth();
 
   if (!user) return <Navigate to="/login" replace />;
 
-  if (user.roles.includes('ADMIN') || user.roles.includes('JEFE_MANTENIMIENTO')) {
+  if (
+    hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['VER_DASHBOARD'])
+  ) {
     return <Navigate to="/dashboard" replace />;
   } else {
-    // TECNICO_INTERNO, CONTRATISTA, PDV, ADMINISTRACION
     return <Navigate to="/work-orders" replace />;
   }
 };
 
-// Protege rutas por rol: si no tiene permiso, redirige a su página principal
-const RoleRoute: React.FC<{ roles: string[]; children: React.ReactElement }> = ({ roles, children }) => {
-  const { hasRole } = useAuth();
+// Protege rutas por rol y/o permiso
+const RoleRoute: React.FC<{
+  roles: string[];
+  permissions?: string[];
+  children: React.ReactElement;
+}> = ({ roles, permissions, children }) => {
+  const { hasAccess } = useAuth();
 
-  if (!hasRole(roles)) {
+  if (!hasAccess(roles, permissions)) {
     return <RoleRedirect />;
   }
 
@@ -73,58 +78,58 @@ function App() {
             >
               <Route index element={<RoleRedirect />} />
               <Route path="dashboard" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']} permissions={['VER_DASHBOARD']}>
                   <DashboardPage />
                 </RoleRoute>
               } />
               <Route path="assets" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'ADMINISTRACION']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'PDV', 'ADMINISTRACION']} permissions={['VER_ACTIVOS']}>
                   <AssetsPage />
                 </RoleRoute>
               } />
               <Route path="work-orders" element={<WorkOrdersPage />} />
               <Route path="events" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']} permissions={['VER_EVENTOS']}>
                   <EventsPage />
                 </RoleRoute>
               } />
               <Route path="locative" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']} permissions={['VER_ACTIVOS']}>
                   <LocativePage />
                 </RoleRoute>
               } />
               <Route path="traslados" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']} permissions={['VER_TRASLADOS', 'CREAR_TRASLADOS', 'EDITAR_TRASLADOS']}>
                   <TrasladosPage />
                 </RoleRoute>
               } />
               <Route path="bajas" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']} permissions={['VER_BAJAS']}>
                   <BajasPage />
                 </RoleRoute>
               } />
               <Route path="locative-categories" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']} permissions={['VER_CATEGORIAS_LOCATIVOS']}>
                   <LocativeCategoriesPage />
                 </RoleRoute>
               } />
               <Route path="users" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']} permissions={['CREAR_USUARIOS']}>
                   <UsersPage />
                 </RoleRoute>
               } />
               <Route path="reports" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']} permissions={['GENERAR_REPORTES']}>
                   <ReportsPage />
                 </RoleRoute>
               } />
               <Route path="categories" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']} permissions={['VER_CATEGORIAS_ACTIVOS']}>
                   <CategoriesPage />
                 </RoleRoute>
               } />
               <Route path="locations" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']} permissions={['VER_UBICACIONES']}>
                   <LocationsPage />
                 </RoleRoute>
               } />
@@ -155,14 +160,14 @@ const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }
 
 // Componente para rutas públicas (redirige si ya está autenticado)
 const PublicRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
-  const { user, loading, hasRole } = useAuth();
+  const { user, loading, hasAccess } = useAuth();
 
   if (loading) {
     return <div>Cargando...</div>;
   }
 
   if (user) {
-    if (hasRole(['ADMIN', 'JEFE_MANTENIMIENTO'])) {
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['VER_DASHBOARD'])) {
       return <Navigate to="/dashboard" replace />;
     } else {
       return <Navigate to="/work-orders" replace />;

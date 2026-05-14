@@ -11,7 +11,6 @@ export class AuthService {
   ) {}
 
   async login(email: string, password: string) {
-    // ✅ ASEGURAR: Que findByEmailWithHash cargue la relación 'location'
     const user = await this.users.findByEmailWithHash(email);
     if (!user) throw new UnauthorizedException('Invalid credentials');
     if (!user.active) throw new UnauthorizedException('User inactive');
@@ -19,18 +18,40 @@ export class AuthService {
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
 
-    if (!user.roles || user.roles.length === 0) {
-      throw new BadRequestException('User has no roles');
+    // Resolve permissions from profile
+    let permissions: string[] = [];
+    let profileId: string | null = null;
+    let profileName: string | null = null;
+    let profileLocationIds: string[] = [];
+
+    if (user.profileId && user.profile) {
+      if (!user.profile.active) {
+        throw new BadRequestException('El perfil asignado está inactivo');
+      }
+      permissions = user.profile.permissions;
+      profileId = user.profile.id;
+      profileName = user.profile.name;
+      profileLocationIds = user.profile.locationIds || [];
     }
 
-    // ✅ AGREGADO: locationId al payload del JWT
-    const payload = { 
-      sub: user.id, 
-      email: user.email, 
+    // Must have roles OR an active profile
+    const hasRoles = user.roles && user.roles.length > 0;
+    const hasProfile = profileId !== null;
+    if (!hasRoles && !hasProfile) {
+      throw new BadRequestException('User has no roles or profile');
+    }
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
       roles: user.roles,
-      locationId: user.locationId, // ✅ NUEVO
+      locationId: user.locationId,
+      permissions,
+      profileId,
+      profileName,
+      profileLocationIds,
     };
-    
+
     const access_token = await this.jwt.signAsync(payload);
     return { access_token };
   }

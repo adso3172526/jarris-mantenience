@@ -10,7 +10,7 @@ import {
   Row,
   Col,
   Button,
-
+  Modal,
   Tooltip,
   Pagination,
   message,
@@ -28,6 +28,7 @@ import {
   CloseSquareOutlined,
   CameraOutlined,
   FilterOutlined,
+  EnvironmentOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -55,6 +56,7 @@ interface WorkOrder {
   assigneeType?: string;
   assigneeName?: string;
   assigneeEmail?: string;
+  createdBy?: string;
   asset?: {
     id: string;
     code: string;
@@ -98,8 +100,8 @@ const LocativePage: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
 
   // Auth
-  const { user, hasRole } = useAuth();
-  const isJefe = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
+  const { user, hasRole, hasAccess, hasPermission } = useAuth();
+  const isJefe = hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['EDITAR_OT', 'CERRAR_OT']);
   const isTecnico = hasRole('TECNICO_INTERNO');
   const isContratista = hasRole('CONTRATISTA');
 
@@ -128,17 +130,14 @@ const LocativePage: React.FC = () => {
       const ordersRequest = (isTecnico || isContratista) && user?.email
         ? workOrdersApi.getByAssignee(user.email)
         : workOrdersApi.getAll();
-      const [ordersRes, locationsRes, techRes] = await Promise.all([
-        ordersRequest,
-        locationsApi.getAll(),
-        usersApi.getTechniciansAndContractors(),
-      ]);
+      const ordersRes = await ordersRequest;
       const locativeOrders = ordersRes.data.filter(
         (wo: WorkOrder) => wo.maintenanceType === 'LOCATIVO'
       );
       setOrders(locativeOrders);
-      setLocations(locationsRes.data);
-      setTechnicians(techRes.data);
+      // Cargar datos de soporte sin bloquear
+      locationsApi.getAll().then(res => setLocations(res.data)).catch(() => {});
+      usersApi.getTechniciansAndContractors().then(res => setTechnicians(res.data)).catch(() => {});
     } catch (error: any) {
       console.error('Error loading locative orders:', error);
       message.error('Error al cargar órdenes locativas');
@@ -237,6 +236,37 @@ const LocativePage: React.FC = () => {
     setPhotosModalOpen(true);
   };
 
+  // Cambiar ubicación
+  const [changeLocationModalOpen, setChangeLocationModalOpen] = useState(false);
+  const [allLocations, setAllLocations] = useState<any[]>([]);
+  const [newLocationId, setNewLocationId] = useState<string | undefined>();
+  const [changeLocationLoading, setChangeLocationLoading] = useState(false);
+
+  const handleOpenChangeLocation = async (order: WorkOrder) => {
+    setSelectedOrder(order);
+    try {
+      const res = await locationsApi.getAll();
+      setAllLocations(res.data.filter((l: any) => l.active !== false));
+    } catch { /* ignore */ }
+    setChangeLocationModalOpen(true);
+  };
+
+  const handleChangeLocation = async () => {
+    if (!selectedOrder || !newLocationId) return;
+    setChangeLocationLoading(true);
+    try {
+      await workOrdersApi.changeLocation(selectedOrder.id, newLocationId);
+      message.success('Ubicación actualizada');
+      setChangeLocationModalOpen(false);
+      setNewLocationId(undefined);
+      loadData();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Error al cambiar ubicación');
+    } finally {
+      setChangeLocationLoading(false);
+    }
+  };
+
   const getActionButtons = (record: WorkOrder, isMobileView = false) => {
     const buttons = [];
 
@@ -257,8 +287,9 @@ const LocativePage: React.FC = () => {
       )
     );
 
-    // Subir fotos
-    if (record.status !== 'CERRADA' && record.status !== 'RECHAZADA') {
+    // Subir fotos (solo creador o admin/jefe)
+    const isCreator = record.createdBy === user?.email;
+    if (record.status !== 'CERRADA' && record.status !== 'RECHAZADA' && (isCreator || isJefe)) {
       buttons.push(
         wrapTooltip("photos", "Subir fotos",
           <Button
@@ -286,6 +317,23 @@ const LocativePage: React.FC = () => {
             style={isMobileView ? { color: '#faad14', background: '#fff' } : {}}
           >
             {isMobileView && 'Asignar'}
+          </Button>
+        )
+      );
+    }
+
+    // Cambiar ubicación
+    if ((isJefe || hasPermission('CAMBIAR_UBICACION_OT')) && record.status !== 'CERRADA' && record.status !== 'RECHAZADA') {
+      buttons.push(
+        wrapTooltip("change-location", "Ubicación",
+          <Button
+            type={isMobileView ? 'default' : 'text'}
+            icon={<EnvironmentOutlined />}
+            onClick={() => handleOpenChangeLocation(record)}
+            style={{ color: '#722ed1' }}
+            block={isMobileView}
+          >
+            {isMobileView && 'Ubicación'}
           </Button>
         )
       );
@@ -942,6 +990,39 @@ const LocativePage: React.FC = () => {
             onSuccess={loadData}
             workOrder={selectedOrder}
           />
+
+          <Modal
+            title="Cambiar Ubicación"
+            open={changeLocationModalOpen}
+            onCancel={() => { setChangeLocationModalOpen(false); setNewLocationId(undefined); }}
+            onOk={handleChangeLocation}
+            confirmLoading={changeLocationLoading}
+            okText="Cambiar"
+            cancelText="Cancelar"
+            centered
+            width={420}
+          >
+            <div style={{ marginBottom: 12, fontSize: 13, color: '#595959' }}>
+              Ubicación actual: <strong>{selectedOrder.location?.name}</strong>
+            </div>
+            <Select
+              placeholder="Selecciona la nueva ubicación"
+              value={newLocationId}
+              onChange={setNewLocationId}
+              showSearch
+              optionFilterProp="children"
+              style={{ width: '100%' }}
+            >
+              {allLocations
+                .filter((l: any) => l.id !== selectedOrder.location?.id)
+                .sort((a: any, b: any) => (a.operationalCenter || 0) - (b.operationalCenter || 0))
+                .map((loc: any) => (
+                  <Select.Option key={loc.id} value={loc.id}>
+                    {loc.operationalCenter ? `${loc.operationalCenter} - ${loc.name}` : loc.name}
+                  </Select.Option>
+                ))}
+            </Select>
+          </Modal>
         </>
       )}
     </div>

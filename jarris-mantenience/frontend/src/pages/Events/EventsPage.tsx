@@ -110,18 +110,15 @@ const EventsPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [eventsRes, locationsRes, techRes] = await Promise.all([
-        assetEventsApi.getAll(),
-        locationsApi.getAll(),
-        usersApi.getTechniciansAndContractors(),
-      ]);
+      const eventsRes = await assetEventsApi.getAll();
+      // Cargar datos de soporte sin bloquear
+      locationsApi.getAll().then(res => setLocations(res.data)).catch(() => {});
+      usersApi.getTechniciansAndContractors().then(res => setTechnicians(res.data)).catch(() => {});
       // Filtrar solo MANTENIMIENTO y REPARACION
       const maintenanceEvents = eventsRes.data.filter(
         (e: AssetEvent) => e.type === 'MANTENIMIENTO' || e.type === 'REPARACION'
       );
       setEvents(maintenanceEvents);
-      setLocations(locationsRes.data);
-      setTechnicians(techRes.data);
     } catch (error: any) {
       console.error('Error loading events:', error);
       message.error('Error al cargar eventos');

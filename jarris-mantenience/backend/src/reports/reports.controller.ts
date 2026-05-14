@@ -1,9 +1,11 @@
-  import { Controller, Get, Query, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { Permission } from '../common/enums/permission.enum';
 import { ROLES } from '../users/roles';
 
 @Controller('reports')
@@ -11,9 +13,9 @@ import { ROLES } from '../users/roles';
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
-  // ✅ NUEVO: Dashboard data
   @Get('dashboard')
   @Roles(ROLES.ADMIN, ROLES.JEFE_MANTENIMIENTO)
+  @Permissions(Permission.VER_DASHBOARD)
   async getDashboard(
     @Query('fechaDesde') fechaDesde: string,
     @Query('fechaHasta') fechaHasta: string,
@@ -26,9 +28,9 @@ export class ReportsController {
     );
   }
 
-  // ✅ NUEVO: Descargar Excel
   @Get('excel/download')
   @Roles(ROLES.ADMIN, ROLES.JEFE_MANTENIMIENTO)
+  @Permissions(Permission.GENERAR_REPORTES)
   async downloadExcel(
     @Query('fechaDesde') fechaDesde: string,
     @Query('fechaHasta') fechaHasta: string,
@@ -48,9 +50,9 @@ export class ReportsController {
     res.send(buffer);
   }
 
-  // ✅ NUEVO: Descargar Excel de Inventario de Activos
   @Get('excel/assets-download')
   @Roles(ROLES.ADMIN, ROLES.JEFE_MANTENIMIENTO)
+  @Permissions(Permission.GENERAR_REPORTES)
   async downloadAssetsExcel(@Res() res: Response) {
     const buffer = await this.reportsService.generateAssetsExcel();
 
@@ -67,18 +69,17 @@ export class ReportsController {
     res.send(buffer);
   }
 
-  // ✅ MANTENER: Endpoints existentes
   @Get('maintenance-costs-by-location')
   @Roles(ROLES.ADMIN, ROLES.JEFE_MANTENIMIENTO)
+  @Permissions(Permission.GENERAR_REPORTES)
   async getMaintenanceCostsByLocation() {
     return this.reportsService.getMaintenanceCostsByLocation();
   }
 
   @Get('maintenance-costs-by-category')
   @Roles(ROLES.ADMIN, ROLES.JEFE_MANTENIMIENTO)
+  @Permissions(Permission.GENERAR_REPORTES)
   async getMaintenanceCostsByCategory() {
     return this.reportsService.getMaintenanceCostsByCategory();
   }
-
-  // ... otros endpoints existentes
 }

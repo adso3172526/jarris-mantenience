@@ -1,13 +1,14 @@
-import { 
-  Column, 
-  CreateDateColumn, 
-  Entity, 
-  PrimaryGeneratedColumn, 
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
   JoinColumn
 } from 'typeorm';
 import { LocationEntity } from './location.entity';
+import { ProfileEntity } from './profile.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -33,9 +34,15 @@ export class UserEntity {
   active: boolean;
 
   @Column({ type: 'uuid', nullable: true })
+  profileId?: string | null;
+
+  @ManyToOne(() => ProfileEntity, { nullable: true, eager: true })
+  @JoinColumn({ name: 'profileId' })
+  profile?: ProfileEntity;
+
+  @Column({ type: 'uuid', nullable: true })
   locationId?: string | null;
 
-  // ? Relación con LocationEntity
   @ManyToOne(() => LocationEntity, { nullable: true })
   @JoinColumn({ name: 'locationId' })
   location?: LocationEntity;

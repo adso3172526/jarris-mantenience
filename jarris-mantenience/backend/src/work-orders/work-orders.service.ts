@@ -960,4 +960,24 @@ Fecha: ${new Date().toLocaleString('es-CO')}
 
     return this.woRepo.save(wo);
   }
+
+  async changeLocation(id: string, locationId: string) {
+    const wo = await this.woRepo.findOne({
+      where: { id },
+      relations: ['asset', 'location', 'locativeCategory'],
+    });
+    if (!wo) throw new NotFoundException('Work order not found');
+
+    const blockedStatuses = [WorkOrderStatus.CERRADA, WorkOrderStatus.RECHAZADA];
+    if (blockedStatuses.includes(wo.status)) {
+      throw new BadRequestException('No se puede cambiar la ubicación de una OT cerrada o rechazada');
+    }
+
+    const location = await this.locationRepo.findOne({ where: { id: locationId } });
+    if (!location) throw new NotFoundException('Ubicación no encontrada');
+
+    wo.location = location;
+
+    return this.woRepo.save(wo);
+  }
 }

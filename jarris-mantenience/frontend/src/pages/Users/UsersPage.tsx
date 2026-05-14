@@ -15,6 +15,9 @@ import {
   Tooltip,
   Badge,
   Pagination,
+  Radio,
+  Tabs,
+  Checkbox,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -24,8 +27,10 @@ import {
   MailOutlined,
   PhoneOutlined,
   EnvironmentOutlined,
+  IdcardOutlined,
 } from '@ant-design/icons';
-import { usersApi, locationsApi } from '../../services/api';
+import { usersApi, locationsApi, profilesApi } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface User {
   id: string;
@@ -35,9 +40,33 @@ interface User {
   roles: string[];
   phone?: string;
   locationId?: string;
+  profileId?: string;
+  profile?: {
+    id: string;
+    name: string;
+    permissions: string[];
+    active: boolean;
+  };
   location?: {
     name: string;
   };
+  active: boolean;
+}
+
+interface Profile {
+  id: string;
+  name: string;
+  permissions: string[];
+  locationIds: string[];
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface Location {
+  id: string;
+  name: string;
+  type: string;
   active: boolean;
 }
 
@@ -50,18 +79,118 @@ const roleLabels: Record<string, string> = {
   ADMINISTRACION: 'Administración',
 };
 
+const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
+  EDITAR_ACTIVOS: ['VER_ACTIVOS'],
+  VER_TRASLADOS: ['VER_ACTIVOS'],
+  CREAR_TRASLADOS: ['VER_ACTIVOS', 'VER_TRASLADOS'],
+  EDITAR_TRASLADOS: ['VER_ACTIVOS', 'CREAR_TRASLADOS'],
+  EDITAR_UBICACIONES: ['VER_UBICACIONES'],
+  EDITAR_OT: ['VER_ACTIVOS'],
+  CREAR_OT_EQUIPO: ['VER_ACTIVOS'],
+  CREAR_OT_LOCATIVO: ['VER_ACTIVOS'],
+  ANULAR_OT: ['VER_ACTIVOS'],
+  CERRAR_OT: ['VER_ACTIVOS'],
+  GENERAR_REPORTES: ['VER_DASHBOARD'],
+  VER_EVENTOS: ['VER_ACTIVOS'],
+  VER_BAJAS: ['VER_ACTIVOS'],
+  EDITAR_CATEGORIAS_ACTIVOS: ['VER_CATEGORIAS_ACTIVOS'],
+  EDITAR_CATEGORIAS_LOCATIVOS: ['VER_CATEGORIAS_LOCATIVOS'],
+  CAMBIAR_UBICACION_OT: ['EDITAR_OT'],
+  CAMBIAR_ACTIVO_OT: ['EDITAR_OT'],
+  ASIGNAR_TECNICO: ['EDITAR_OT'],
+  REASIGNAR_TECNICO: ['EDITAR_OT'],
+};
+
+const PERMISSION_CATEGORIES = [
+  {
+    title: 'Órdenes de Trabajo',
+    permissions: [
+      { key: 'CREAR_OT_EQUIPO', label: 'Crear OT de equipo' },
+      { key: 'CREAR_OT_LOCATIVO', label: 'Crear OT locativo' },
+      { key: 'EDITAR_OT', label: 'Editar órdenes de trabajo' },
+      { key: 'ASIGNAR_TECNICO', label: 'Asignar técnico' },
+      { key: 'REASIGNAR_TECNICO', label: 'Reasignar técnico/contratista' },
+      { key: 'CAMBIAR_ACTIVO_OT', label: 'Cambiar activo de la OT' },
+      { key: 'CAMBIAR_UBICACION_OT', label: 'Cambiar ubicación de la OT' },
+      { key: 'ANULAR_OT', label: 'Anular órdenes de trabajo' },
+      { key: 'CERRAR_OT', label: 'Cerrar órdenes de trabajo' },
+    ],
+  },
+  {
+    title: 'Activos',
+    permissions: [
+      { key: 'VER_ACTIVOS', label: 'Ver activos' },
+      { key: 'EDITAR_ACTIVOS', label: 'Editar activos' },
+      { key: 'VER_EVENTOS', label: 'Ver eventos' },
+      { key: 'VER_BAJAS', label: 'Ver bajas' },
+    ],
+  },
+  {
+    title: 'Traslados',
+    permissions: [
+      { key: 'VER_TRASLADOS', label: 'Ver traslados' },
+      { key: 'CREAR_TRASLADOS', label: 'Crear traslados' },
+      { key: 'EDITAR_TRASLADOS', label: 'Editar traslados' },
+    ],
+  },
+  {
+    title: 'Categorías',
+    permissions: [
+      { key: 'VER_CATEGORIAS_ACTIVOS', label: 'Ver categorías de activos' },
+      { key: 'EDITAR_CATEGORIAS_ACTIVOS', label: 'Editar categorías de activos' },
+      { key: 'VER_CATEGORIAS_LOCATIVOS', label: 'Ver categorías locativas' },
+      { key: 'EDITAR_CATEGORIAS_LOCATIVOS', label: 'Editar categorías locativas' },
+    ],
+  },
+  {
+    title: 'Ubicaciones',
+    permissions: [
+      { key: 'VER_UBICACIONES', label: 'Ver ubicaciones' },
+      { key: 'EDITAR_UBICACIONES', label: 'Editar ubicaciones' },
+    ],
+  },
+  {
+    title: 'Reportes',
+    permissions: [
+      { key: 'GENERAR_REPORTES', label: 'Generar reportes' },
+      { key: 'VER_DASHBOARD', label: 'Ver dashboard' },
+    ],
+  },
+  {
+    title: 'Usuarios',
+    permissions: [
+      { key: 'CREAR_USUARIOS', label: 'Crear usuarios' },
+      { key: 'CAMBIAR_PASSWORD_USUARIO', label: 'Cambiar contraseña de usuario' },
+    ],
+  },
+];
+
 const UsersPage: React.FC = () => {
+  const { hasAccess } = useAuth();
+  const isAdmin = hasAccess(['ADMIN']);
+
+  // --- Users state ---
   const [users, setUsers] = useState<User[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [assignType, setAssignType] = useState<'role' | 'profile'>('role');
   const [form] = Form.useForm();
   const [resetPasswordForm] = Form.useForm();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [mobilePage, setMobilePage] = useState(1);
+
+  // --- Profiles state ---
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
+  const [allLocations, setAllLocations] = useState(true);
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
+  const [profileForm] = Form.useForm();
+  const [profileMobilePage, setProfileMobilePage] = useState(1);
 
   useEffect(() => {
     const handleResize = () => {
@@ -78,12 +207,14 @@ const UsersPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [usersRes, locationsRes] = await Promise.all([
+      const [usersRes, locationsRes, profilesRes] = await Promise.all([
         usersApi.getAll(),
         locationsApi.getAll(),
+        profilesApi.getAll().catch(() => ({ data: [] })),
       ]);
       setUsers(usersRes.data);
       setLocations(locationsRes.data);
+      setProfiles(profilesRes.data);
     } catch (error) {
       message.error('Error al cargar datos');
     } finally {
@@ -91,8 +222,11 @@ const UsersPage: React.FC = () => {
     }
   };
 
+  // ===================== USERS HANDLERS =====================
+
   const handleCreate = () => {
     setEditingUser(null);
+    setAssignType('role');
     form.resetFields();
     form.setFieldsValue({ active: true });
     setModalOpen(true);
@@ -100,11 +234,14 @@ const UsersPage: React.FC = () => {
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
+    const type = user.profileId ? 'profile' : 'role';
+    setAssignType(type);
     form.setFieldsValue({
       name: user.name,
       email: user.email,
       phone: user.phone,
-      roles: user.roles?.[0] || undefined,
+      roles: type === 'role' ? (user.roles?.[0] || undefined) : undefined,
+      profileId: type === 'profile' ? user.profileId : undefined,
       locationId: user.locationId,
       active: user.active,
     });
@@ -113,7 +250,32 @@ const UsersPage: React.FC = () => {
 
   const handleSubmit = async (values: any) => {
     try {
-      const payload = { ...values, roles: [values.roles] };
+      let payload: any;
+
+      if (assignType === 'profile') {
+        payload = {
+          name: values.name,
+          email: values.email,
+          phone: values.phone,
+          password: values.password,
+          profileId: values.profileId,
+          roles: [],
+          locationId: values.locationId || null,
+          active: values.active,
+        };
+      } else {
+        payload = {
+          name: values.name,
+          email: values.email,
+          phone: values.phone,
+          password: values.password,
+          roles: [values.roles],
+          profileId: null,
+          locationId: values.locationId || null,
+          active: values.active,
+        };
+      }
+
       if (editingUser) {
         if (!payload.password) {
           delete payload.password;
@@ -151,12 +313,119 @@ const UsersPage: React.FC = () => {
     }
   };
 
+  // ===================== PROFILES HANDLERS =====================
+
+  const activeLocations = locations.filter((l: Location) => l.active !== false);
+
+  const openCreateProfile = () => {
+    setEditingProfile(null);
+    setAllLocations(true);
+    setSelectedLocationIds([]);
+    profileForm.resetFields();
+    profileForm.setFieldsValue({ permissions: [], active: true });
+    setProfileModalOpen(true);
+  };
+
+  const openEditProfile = (profile: Profile) => {
+    setEditingProfile(profile);
+    const hasSpecificLocations = profile.locationIds && profile.locationIds.length > 0;
+    setAllLocations(!hasSpecificLocations);
+    setSelectedLocationIds(profile.locationIds || []);
+    profileForm.setFieldsValue({
+      name: profile.name,
+      permissions: profile.permissions,
+      active: profile.active,
+    });
+    setProfileModalOpen(true);
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const values = await profileForm.validateFields();
+
+      if (!values.permissions || values.permissions.length === 0) {
+        message.error('Debe seleccionar al menos un permiso');
+        return;
+      }
+
+      if (!allLocations && selectedLocationIds.length === 0) {
+        message.error('Debe seleccionar al menos una ubicación o marcar "Todas las ubicaciones"');
+        return;
+      }
+
+      const payload = {
+        name: values.name,
+        permissions: values.permissions,
+        locationIds: allLocations ? [] : selectedLocationIds,
+        ...(editingProfile ? { active: values.active } : {}),
+      };
+
+      if (editingProfile) {
+        await profilesApi.update(editingProfile.id, payload);
+        message.success('Perfil actualizado');
+      } else {
+        await profilesApi.create(payload);
+        message.success('Perfil creado');
+      }
+
+      setProfileModalOpen(false);
+      loadData();
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        message.error(error.response.data.message);
+      }
+    }
+  };
+
+  const handleToggleAllLocations = (checked: boolean) => {
+    setAllLocations(checked);
+    if (checked) {
+      setSelectedLocationIds([]);
+    }
+  };
+
+  const handleLocationChange = (locationId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedLocationIds(prev => [...prev, locationId]);
+    } else {
+      setSelectedLocationIds(prev => prev.filter(id => id !== locationId));
+    }
+  };
+
+  const getLocationsSummary = (profile: Profile) => {
+    if (!profile.locationIds || profile.locationIds.length === 0) {
+      return <Tag style={{ background: '#fff' }}>Todas</Tag>;
+    }
+    return <Tag style={{ background: '#fff' }}>{profile.locationIds.length} ubicaciones</Tag>;
+  };
+
+  // ===================== USERS UI =====================
+
+  const selectedRole = Form.useWatch('roles', form);
+  const selectedProfileId = Form.useWatch('profileId', form);
+  const hasPDVRole = assignType === 'role' && (selectedRole === 'PDV' || selectedRole === 'ADMINISTRACION');
+  const selectedProfile = profiles.find(p => p.id === selectedProfileId);
+  const profileNeedsLocation = false;
 
   const activeCount = users.filter((u) => u.active).length;
   const inactiveCount = users.filter((u) => !u.active).length;
 
-  // Mobile Card View
-  const renderMobileCard = (record: User) => (
+  const getRoleOrProfileLabel = (user: User) => {
+    if (user.profile) {
+      return <Tag style={{ background: '#fff' }}>{user.profile.name}</Tag>;
+    }
+    return (
+      <Space wrap size={4}>
+        {user.roles.map((role) => (
+          <Tag key={role} style={{ margin: 0, background: '#fff' }}>
+            {roleLabels[role] || role}
+          </Tag>
+        ))}
+      </Space>
+    );
+  };
+
+  const renderUserMobileCard = (record: User) => (
     <Card
       key={record.id}
       style={{ marginBottom: 12 }}
@@ -173,13 +442,9 @@ const UsersPage: React.FC = () => {
             <PhoneOutlined /> {record.phone}
           </div>
         )}
-        <Space wrap size={4} style={{ marginBottom: 4 }}>
-          {record.roles.map((role) => (
-            <Tag key={role} style={{ fontSize: 11, margin: 0 }}>
-              {roleLabels[role] || role}
-            </Tag>
-          ))}
-        </Space>
+        <div style={{ marginBottom: 4 }}>
+          {getRoleOrProfileLabel(record)}
+        </div>
         {record.location && (
           <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 4 }}>
             <EnvironmentOutlined /> {record.location.name}
@@ -205,8 +470,7 @@ const UsersPage: React.FC = () => {
     </Card>
   );
 
-  // Desktop Table Columns
-  const columns: ColumnsType<User> = [
+  const userColumns: ColumnsType<User> = [
     {
       title: 'Usuario',
       key: 'user',
@@ -224,20 +488,15 @@ const UsersPage: React.FC = () => {
       ),
     },
     {
-      title: 'Roles',
-      dataIndex: 'roles',
-      key: 'roles',
+      title: 'Rol / Perfil',
+      key: 'roleProfile',
       width: 280,
-      sorter: (a, b) => (a.roles?.[0] || '').localeCompare(b.roles?.[0] || ''),
-      render: (roles: string[]) => (
-        <Space wrap size={4}>
-          {roles.map((role) => (
-            <Tag key={role} style={{ margin: 0 }}>
-              {roleLabels[role] || role}
-            </Tag>
-          ))}
-        </Space>
-      ),
+      sorter: (a, b) => {
+        const aLabel = a.profile?.name || a.roles?.[0] || '';
+        const bLabel = b.profile?.name || b.roles?.[0] || '';
+        return aLabel.localeCompare(bLabel);
+      },
+      render: (_, record) => getRoleOrProfileLabel(record),
     },
     {
       title: 'Estado',
@@ -277,88 +536,260 @@ const UsersPage: React.FC = () => {
     },
   ];
 
-  // Detectar si tiene rol PDV o ADMINISTRACION seleccionado
-  const selectedRole = Form.useWatch('roles', form);
-  const hasPDVRole = selectedRole === 'PDV' || selectedRole === 'ADMINISTRACION';
+  // ===================== PROFILES UI =====================
 
-  return (
-    <div style={{ height: isMobile ? 'auto' : 'calc(100vh - 112px)', display: 'flex', flexDirection: 'column' }}>
-      <Card
-        title={
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 8
-          }}>
+  const profileColumns = [
+    {
+      title: 'Nombre',
+      dataIndex: 'name',
+      key: 'name',
+      render: (name: string) => name,
+    },
+    {
+      title: 'Permisos',
+      dataIndex: 'permissions',
+      key: 'permissions',
+      render: (perms: string[]) => <Tag style={{ background: '#fff' }}>{perms.length} permisos</Tag>,
+    },
+    {
+      title: 'Ubicaciones',
+      key: 'locations',
+      render: (_: any, record: Profile) => getLocationsSummary(record),
+    },
+    {
+      title: 'Estado',
+      dataIndex: 'active',
+      key: 'active',
+      render: (active: boolean) => (
+        <Badge status={active ? 'success' : 'error'} text={active ? 'Activo' : 'Inactivo'} />
+      ),
+    },
+    {
+      title: 'Acciones',
+      key: 'actions',
+      render: (_: any, record: Profile) => (
+        <Button
+          type="link"
+          icon={<EditOutlined />}
+          onClick={() => openEditProfile(record)}
+        >
+          Editar
+        </Button>
+      ),
+    },
+  ];
+
+  const profilePageSize = 5;
+  const paginatedProfiles = profiles.slice((profileMobilePage - 1) * profilePageSize, profileMobilePage * profilePageSize);
+
+  const renderProfileMobileCard = (profile: Profile) => (
+    <Card
+      key={profile.id}
+      size="small"
+      style={{
+        marginBottom: 8,
+        borderRadius: 12,
+        background: '#fff',
+      }}
+      styles={{ body: { padding: '12px 16px' } }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
+            <IdcardOutlined style={{ marginRight: 6 }} />
+            {profile.name}
+          </div>
+          <Space size={4} wrap>
+            <Tag style={{ background: '#fff' }}>{profile.permissions.length} permisos</Tag>
+            {getLocationsSummary(profile)}
+            <Badge
+              status={profile.active ? 'success' : 'error'}
+              text={profile.active ? 'Activo' : 'Inactivo'}
+            />
+          </Space>
+        </div>
+        <Button
+          type="link"
+          icon={<EditOutlined />}
+          onClick={() => openEditProfile(profile)}
+        />
+      </div>
+    </Card>
+  );
+
+  // ===================== TAB ITEMS =====================
+
+  const usersTabContent = (
+    <Card
+      title={
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 8
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>
               Gestión de Usuarios
             </span>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleCreate}
-              size="middle"
-            >
-              {isMobile ? "Nuevo" : "Nuevo Usuario"}
-            </Button>
+            {!isMobile && (
+              <Space size={12} style={{ fontSize: 13, color: '#595959' }}>
+                <Badge status="success" text={`${activeCount} activos`} />
+                <Badge status="default" text={`${inactiveCount} inactivos`} />
+              </Space>
+            )}
           </div>
-        }
-        styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
-        style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
-      >
-        {/* Resumen */}
-        <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12 }}>
-          <Space size={12} style={{ fontSize: 13, color: '#595959' }}>
-            <Badge status="success" text={`${activeCount} activos`} />
-            <Badge status="default" text={`${inactiveCount} inactivos`} />
-          </Space>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleCreate}
+            size="middle"
+          >
+            {isMobile ? "Nuevo" : "Nuevo Usuario"}
+          </Button>
         </div>
-
-        {/* Lista */}
-        {isMobile ? (
-          loading ? (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>Cargando...</div>
-          ) : users.length > 0 ? (
-            <div>
-              {users.slice((mobilePage - 1) * 5, mobilePage * 5).map(renderMobileCard)}
-              <Pagination
-                current={mobilePage}
-                pageSize={5}
-                total={users.length}
-                onChange={(page) => setMobilePage(page)}
-                size="small"
-                simple
-                style={{ textAlign: 'center', marginTop: 8 }}
-              />
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>
-              No hay usuarios
-            </div>
-          )
-        ) : (
-          <div style={{ flex: 1, overflow: 'hidden' }}>
-            <Table
-              columns={columns}
-              dataSource={users}
-              rowKey="id"
-              loading={loading}
+      }
+      styles={{ body: { padding: isMobile ? 12 : '0 24px 12px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
+      style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+    >
+      {isMobile ? (
+        loading ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>Cargando...</div>
+        ) : users.length > 0 ? (
+          <div>
+            {users.slice((mobilePage - 1) * 5, mobilePage * 5).map(renderUserMobileCard)}
+            <Pagination
+              current={mobilePage}
+              pageSize={5}
+              total={users.length}
+              onChange={(page) => setMobilePage(page)}
               size="small"
-              scroll={{ y: 'calc(100vh - 290px)' }}
-              pagination={{
-                pageSize: 10,
-                showTotal: (total) => `Total: ${total} usuarios`,
-                size: 'small',
-                showSizeChanger: false,
-              }}
+              simple
+              style={{ textAlign: 'center', marginTop: 8 }}
             />
           </div>
-        )}
-      </Card>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>
+            No hay usuarios
+          </div>
+        )
+      ) : (
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <Table
+            columns={userColumns}
+            dataSource={users}
+            rowKey="id"
+            loading={loading}
+            size="small"
+            pagination={{
+              pageSize: 8,
+              showTotal: (total) => `Total: ${total} usuarios`,
+              size: 'small',
+              showSizeChanger: false,
+            }}
+          />
+        </div>
+      )}
+    </Card>
+  );
 
-      {/* Modal Crear/Editar */}
+  const profilesTabContent = (
+    <Card
+      title={
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 8
+        }}>
+          <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>
+            Gestión de Perfiles
+          </span>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={openCreateProfile}
+            size="middle"
+          >
+            {isMobile ? 'Nuevo' : 'Nuevo Perfil'}
+          </Button>
+        </div>
+      }
+      styles={{ body: { padding: isMobile ? 12 : '0 24px 12px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
+      style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+    >
+      {isMobile ? (
+        loading ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>Cargando...</div>
+        ) : (
+          <>
+            {paginatedProfiles.map(renderProfileMobileCard)}
+            {profiles.length > profilePageSize && (
+              <div style={{ textAlign: 'center', marginTop: 12 }}>
+                <Pagination
+                  current={profileMobilePage}
+                  total={profiles.length}
+                  pageSize={profilePageSize}
+                  onChange={setProfileMobilePage}
+                  size="small"
+                  simple
+                />
+              </div>
+            )}
+          </>
+        )
+      ) : (
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <Table
+            columns={profileColumns}
+            dataSource={profiles}
+            rowKey="id"
+            loading={loading}
+            pagination={{ pageSize: 10 }}
+            size="small"
+          />
+        </div>
+      )}
+    </Card>
+  );
+
+  const tabItems = [
+    {
+      key: 'users',
+      label: 'Usuarios',
+      children: usersTabContent,
+    },
+    ...(isAdmin ? [{
+      key: 'profiles',
+      label: 'Perfiles',
+      children: profilesTabContent,
+    }] : []),
+  ];
+
+  return (
+    <div style={{ height: isMobile ? 'auto' : '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <style>{`
+        .users-tabs { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .users-tabs > .ant-tabs-content-holder { flex: 1; overflow: hidden; }
+        .users-tabs .ant-tabs-content { height: 100%; }
+        .users-tabs .ant-tabs-tabpane-active { height: 100%; display: flex; flex-direction: column; }
+        ${isMobile ? `
+          .users-tabs .ant-tabs-tab { color: rgba(255,255,255,0.65) !important; }
+          .users-tabs .ant-tabs-tab-active .ant-tabs-tab-btn { color: #fff !important; }
+          .users-tabs .ant-tabs-ink-bar { background: #E60012 !important; }
+          .users-tabs .ant-tabs-nav::before { border-bottom-color: rgba(255,255,255,0.15) !important; }
+        ` : ''}
+      `}</style>
+      <Tabs
+        defaultActiveKey="users"
+        items={tabItems}
+        className="users-tabs"
+        size={isMobile ? 'small' : 'middle'}
+      />
+
+      {/* Modal Crear/Editar Usuario */}
       <Modal
         title={editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
         open={modalOpen}
@@ -437,33 +868,71 @@ const UsersPage: React.FC = () => {
             />
           </Form.Item>
 
-          <Form.Item
-            label="Roles"
-            name="roles"
-            rules={[{ required: true, message: 'Selecciona al menos un rol' }]}
-          >
-            <Select
-              placeholder="Selecciona un rol"
-              size={isMobile ? "large" : "middle"}
-              onChange={() => form.setFieldsValue({ locationId: undefined })}
+          {/* Tipo de asignación */}
+          <Form.Item label="Tipo de acceso">
+            <Radio.Group
+              value={assignType}
+              onChange={(e) => {
+                setAssignType(e.target.value);
+                form.setFieldsValue({ roles: undefined, profileId: undefined, locationId: undefined });
+              }}
+              optionType="button"
+              buttonStyle="solid"
             >
-              <Select.Option value="ADMIN">Administrador</Select.Option>
-              <Select.Option value="JEFE_MANTENIMIENTO">Jefe de Mantenimiento</Select.Option>
-              <Select.Option value="TECNICO_INTERNO">Técnico Interno</Select.Option>
-              <Select.Option value="CONTRATISTA">Contratista</Select.Option>
-              <Select.Option value="PDV">Punto de Venta</Select.Option>
-              <Select.Option value="ADMINISTRACION">Administración</Select.Option>
-            </Select>
+              <Radio.Button value="role">Rol fijo</Radio.Button>
+              <Radio.Button value="profile">Perfil personalizado</Radio.Button>
+            </Radio.Group>
           </Form.Item>
 
-          {hasPDVRole && (
+          {assignType === 'role' ? (
+            <Form.Item
+              label="Rol"
+              name="roles"
+              rules={[{ required: assignType === 'role', message: 'Selecciona un rol' }]}
+            >
+              <Select
+                placeholder="Selecciona un rol"
+                size={isMobile ? "large" : "middle"}
+                onChange={() => form.setFieldsValue({ locationId: undefined })}
+              >
+                <Select.Option value="ADMIN">Administrador</Select.Option>
+                <Select.Option value="JEFE_MANTENIMIENTO">Jefe de Mantenimiento</Select.Option>
+                <Select.Option value="TECNICO_INTERNO">Técnico Interno</Select.Option>
+                <Select.Option value="CONTRATISTA">Contratista</Select.Option>
+                <Select.Option value="PDV">Punto de Venta</Select.Option>
+                <Select.Option value="ADMINISTRACION">Administración</Select.Option>
+              </Select>
+            </Form.Item>
+          ) : (
+            <Form.Item
+              label="Perfil"
+              name="profileId"
+              rules={[{ required: assignType === 'profile', message: 'Selecciona un perfil' }]}
+            >
+              <Select
+                placeholder="Selecciona un perfil"
+                size={isMobile ? "large" : "middle"}
+                onChange={() => form.setFieldsValue({ locationId: undefined })}
+              >
+                {profiles
+                  .filter(p => p.active)
+                  .map(p => (
+                    <Select.Option key={p.id} value={p.id}>
+                      {p.name} ({p.permissions.length} permisos)
+                    </Select.Option>
+                  ))}
+              </Select>
+            </Form.Item>
+          )}
+
+          {(hasPDVRole || profileNeedsLocation) && (
             <Form.Item
               label="Ubicación"
               name="locationId"
               rules={[
                 {
-                  required: hasPDVRole,
-                  message: 'Ubicación requerida para usuarios PDV/Administración',
+                  required: hasPDVRole || profileNeedsLocation,
+                  message: 'Ubicación requerida',
                 },
               ]}
             >
@@ -472,7 +941,11 @@ const UsersPage: React.FC = () => {
                 size={isMobile ? "large" : "middle"}
               >
                 {locations
-                  .filter((loc) => loc.active !== false && (selectedRole === 'PDV' ? loc.type === 'PDV' : selectedRole === 'ADMINISTRACION' ? loc.type === 'DEPARTAMENTO' : true))
+                  .filter((loc) => loc.active !== false && (
+                    assignType === 'role'
+                      ? (selectedRole === 'PDV' ? loc.type === 'PDV' : selectedRole === 'ADMINISTRACION' ? loc.type === 'DEPARTAMENTO' : true)
+                      : (selectedProfile?.locationIds?.length ? selectedProfile.locationIds.includes(loc.id) : true)
+                  ))
                   .map((loc) => (
                     <Select.Option key={loc.id} value={loc.id}>
                       {loc.name}
@@ -498,7 +971,7 @@ const UsersPage: React.FC = () => {
             fontSize: isMobile ? 11 : 12
           }}>
             <p style={{ margin: 0 }}>
-              Los usuarios PDV y Administración requieren una ubicación asignada. Los demás roles tienen acceso global.
+              Los usuarios con rol fijo PDV/Administración o perfil sin "Todas las ubicaciones" requieren una ubicación asignada.
             </p>
           </div>
         )}
@@ -580,6 +1053,140 @@ const UsersPage: React.FC = () => {
               size={isMobile ? "large" : "middle"}
             />
           </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modal Crear/Editar Perfil */}
+      <Modal
+        title={editingProfile ? 'Editar Perfil' : 'Crear Perfil'}
+        open={profileModalOpen}
+        onOk={handleSaveProfile}
+        onCancel={() => setProfileModalOpen(false)}
+        okText="Guardar"
+        cancelText="Cancelar"
+        width={600}
+        centered
+        styles={{
+          body: {
+            maxHeight: 'calc(100vh - 200px)',
+            overflowY: 'auto',
+          },
+        }}
+      >
+        <Form form={profileForm} layout="vertical">
+          <Form.Item
+            label="Nombre del perfil"
+            name="name"
+            rules={[{ required: true, message: 'Ingrese el nombre del perfil' }]}
+          >
+            <Input placeholder="Ej: SUPERVISOR" style={{ textTransform: 'uppercase' }} />
+          </Form.Item>
+
+          {editingProfile && (
+            <Form.Item label="Activo" name="active" valuePropName="checked">
+              <Switch />
+            </Form.Item>
+          )}
+
+          <Form.Item
+            label="Permisos"
+            name="permissions"
+            rules={[{ required: true, message: 'Seleccione al menos un permiso' }]}
+          >
+            <Checkbox.Group
+              style={{ width: '100%' }}
+              onChange={(checkedValues) => {
+                const values = checkedValues as string[];
+                const withDeps = [...values];
+                values.forEach((perm) => {
+                  const deps = PERMISSION_DEPENDENCIES[perm];
+                  if (deps) {
+                    deps.forEach((dep) => {
+                      if (!withDeps.includes(dep)) {
+                        withDeps.push(dep);
+                      }
+                    });
+                  }
+                });
+                if (withDeps.length !== values.length) {
+                  profileForm.setFieldsValue({ permissions: withDeps });
+                }
+              }}
+            >
+              {PERMISSION_CATEGORIES.map((cat) => (
+                <div key={cat.title} style={{ marginBottom: 16 }}>
+                  <div style={{
+                    fontWeight: 600,
+                    fontSize: 13,
+                    marginBottom: 6,
+                    color: '#1a2733',
+                    borderBottom: '1px solid #f0f0f0',
+                    paddingBottom: 4,
+                  }}>
+                    {cat.title}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 8 }}>
+                    {cat.permissions.map((p) => (
+                      <Checkbox key={p.key} value={p.key}>
+                        {p.label}
+                      </Checkbox>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </Checkbox.Group>
+          </Form.Item>
+
+          {/* Alcance de ubicaciones */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{
+              fontWeight: 600,
+              fontSize: 13,
+              marginBottom: 8,
+              color: '#1a2733',
+              borderBottom: '1px solid #f0f0f0',
+              paddingBottom: 4,
+            }}>
+              <EnvironmentOutlined style={{ marginRight: 6 }} />
+              Alcance de Ubicaciones
+            </div>
+
+            <Checkbox
+              checked={allLocations}
+              onChange={(e) => handleToggleAllLocations(e.target.checked)}
+              style={{ marginBottom: 8, paddingLeft: 8 }}
+            >
+              <strong>Todas las ubicaciones</strong>
+            </Checkbox>
+
+            {!allLocations && (
+              <div style={{
+                paddingLeft: 8,
+                maxHeight: 200,
+                overflowY: 'auto',
+                border: '1px solid #f0f0f0',
+                borderRadius: 6,
+                padding: '8px 12px',
+              }}>
+                {activeLocations.length === 0 ? (
+                  <div style={{ color: '#8c8c8c', fontSize: 12 }}>No hay ubicaciones disponibles</div>
+                ) : (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px' }}>
+                    {activeLocations.map((loc) => (
+                      <Checkbox
+                        key={loc.id}
+                        checked={selectedLocationIds.includes(loc.id)}
+                        onChange={(e) => handleLocationChange(loc.id, e.target.checked)}
+                        style={{ minWidth: '45%' }}
+                      >
+                        {loc.name} <span style={{ color: '#8c8c8c', fontSize: 11 }}>({loc.type})</span>
+                      </Checkbox>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </Form>
       </Modal>
     </div>

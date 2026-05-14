@@ -13,6 +13,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ReportsModule } from './reports/reports.module';
 import { LocativeCategoriesModule } from './locative-categories/locative-categories.module';
+import { ProfilesModule } from './profiles/profiles.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -52,6 +53,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     AuthModule,
     ReportsModule,
     LocativeCategoriesModule,
+    ProfilesModule,
   ],
   controllers: [AppController],
   providers: [

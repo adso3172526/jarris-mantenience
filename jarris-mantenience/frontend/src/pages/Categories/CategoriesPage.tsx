@@ -15,7 +15,7 @@ import {
   Pagination,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { PlusOutlined, EditOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, AppstoreOutlined } from '@ant-design/icons';
 import { categoriesApi } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -36,8 +36,8 @@ const CategoriesPage: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [mobilePage, setMobilePage] = useState(1);
 
-  const { hasRole } = useAuth();
-  const canEdit = hasRole(['ADMIN', 'JEFE_MANTENIMIENTO']);
+  const { hasAccess } = useAuth();
+  const canEdit = hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['EDITAR_ACTIVOS']);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -221,6 +221,7 @@ const CategoriesPage: React.FC = () => {
             gap: 8,
           }}>
             <span style={{ fontSize: 16, fontWeight: 600 }}>
+              <AppstoreOutlined style={{ color: '#E60012', marginRight: 8 }} />
               Categorías Activos
             </span>
             {canEdit && (

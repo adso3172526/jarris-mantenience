@@ -124,7 +124,8 @@ export const workOrdersApi = {
   close: (id: string, data: any) => api.patch(`/work-orders/${id}/close`, data),
   editClosed: (id: string, data: any) => api.patch(`/work-orders/${id}/edit-closed`, data),
   changeAsset: (id: string, assetId: string) => api.patch(`/work-orders/${id}/change-asset`, { assetId }),
-  
+  changeLocation: (id: string, locationId: string) => api.patch(`/work-orders/${id}/change-location`, { locationId }),
+
   // Fotos
   uploadPhotos: (id: string, formData: FormData) =>
     api.post(`/work-orders/${id}/photos`, formData, {
@@ -189,6 +190,16 @@ export const reportsApi = {
   
   getTopMaintenanceAssets: (limit?: number) => 
     api.get(`/reports/top-maintenance-assets${limit ? `?limit=${limit}` : ''}`),
+};
+
+// Profiles
+export const profilesApi = {
+  getAll: () => api.get('/profiles'),
+  getById: (id: string) => api.get(`/profiles/${id}`),
+  create: (data: any) => api.post('/profiles', data),
+  update: (id: string, data: any) => api.patch(`/profiles/${id}`, data),
+  delete: (id: string) => api.delete(`/profiles/${id}`),
+  listPermissions: () => api.get('/profiles/permissions/list'),
 };
 
 // Asset Events

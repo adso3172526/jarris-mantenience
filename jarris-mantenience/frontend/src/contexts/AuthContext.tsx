@@ -6,24 +6,28 @@ interface User {
   userId: string;
   email: string;
   roles: string[];
-  locationId?: string; // ✅ AGREGADO
+  locationId?: string;
+  permissions: string[];
+  profileId?: string;
+  profileName?: string;
+  profileLocationIds: string[];
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<string>; // ⭐ Retorna ruta
+  login: (email: string, password: string) => Promise<string>;
   logout: () => void;
   hasRole: (role: string | string[]) => boolean;
+  hasPermission: (perm: string | string[]) => boolean;
+  hasAccess: (roles: string[], permissions?: string[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Verificar si el JWT ha expirado
 const isTokenExpired = (token: string): boolean => {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    // exp está en segundos, Date.now() en milisegundos
     return payload.exp * 1000 < Date.now();
   } catch {
     return true;
@@ -34,7 +38,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Cargar sesión guardada
   useEffect(() => {
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
@@ -55,7 +58,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
   }, []);
 
-  // Verificar periódicamente si el token sigue vigente (cada 60s)
   useEffect(() => {
     if (!user) return;
 
@@ -78,26 +80,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { access_token } = response.data;
 
       const payload = JSON.parse(atob(access_token.split('.')[1]));
-      
-      // ✅ AGREGADO: Extraer locationId del JWT
+
       const userData: User = {
         userId: payload.sub,
         email: payload.email,
         roles: payload.roles,
-        locationId: payload.locationId, // ✅ AGREGADO
+        locationId: payload.locationId,
+        permissions: payload.permissions || [],
+        profileId: payload.profileId || undefined,
+        profileName: payload.profileName || undefined,
+        profileLocationIds: payload.profileLocationIds || [],
       };
 
       localStorage.setItem('token', access_token);
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
-      
+
       message.success('¡Bienvenido!');
 
-      // ⭐ NUEVO: Determinar ruta de redirección según rol
-      if (userData.roles.includes('ADMIN') || userData.roles.includes('JEFE_MANTENIMIENTO')) {
+      // Redirect: fixed roles or profile with VER_DASHBOARD
+      if (
+        userData.roles.includes('ADMIN') ||
+        userData.roles.includes('JEFE_MANTENIMIENTO') ||
+        userData.permissions.includes('VER_DASHBOARD')
+      ) {
         return '/dashboard';
       } else {
-        // TECNICO_INTERNO, CONTRATISTA, PDV, ADMINISTRACION
         return '/work-orders';
       }
     } catch (error: any) {
@@ -115,16 +123,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasRole = (role: string | string[]): boolean => {
     if (!user) return false;
-    
     if (Array.isArray(role)) {
       return role.some(r => user.roles.includes(r));
     }
-    
     return user.roles.includes(role);
   };
 
+  const hasPermission = (perm: string | string[]): boolean => {
+    if (!user) return false;
+    if (Array.isArray(perm)) {
+      return perm.some(p => user.permissions.includes(p));
+    }
+    return user.permissions.includes(perm);
+  };
+
+  const hasAccess = (roles: string[], permissions?: string[]): boolean => {
+    if (!user) return false;
+    // Check fixed roles
+    if (user.roles.length > 0 && roles.some(r => user.roles.includes(r))) {
+      return true;
+    }
+    // Check profile permissions
+    if (permissions && permissions.length > 0 && user.permissions.length > 0) {
+      return permissions.some(p => user.permissions.includes(p));
+    }
+    return false;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasRole }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, hasRole, hasPermission, hasAccess }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { LocationEntity } from '../entities/location.entity';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
@@ -48,7 +48,13 @@ export class LocationsService {
     return this.repo.save(entity);
   }
 
-  findAll() {
+  findAll(profileLocationIds?: string[]) {
+    if (profileLocationIds && profileLocationIds.length > 0) {
+      return this.repo.find({
+        where: { id: In(profileLocationIds) },
+        order: { name: 'ASC' },
+      });
+    }
     return this.repo.find({ order: { name: 'ASC' } });
   }
 
