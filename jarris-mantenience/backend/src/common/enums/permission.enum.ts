@@ -1,7 +1,10 @@
 export enum Permission {
+  VER_OT = 'VER_OT',
   CREAR_OT_EQUIPO = 'CREAR_OT_EQUIPO',
   CREAR_OT_LOCATIVO = 'CREAR_OT_LOCATIVO',
   EDITAR_OT = 'EDITAR_OT',
+  INICIAR_OT = 'INICIAR_OT',
+  FINALIZAR_OT = 'FINALIZAR_OT',
   ASIGNAR_TECNICO = 'ASIGNAR_TECNICO',
   REASIGNAR_TECNICO = 'REASIGNAR_TECNICO',
   CAMBIAR_ACTIVO_OT = 'CAMBIAR_ACTIVO_OT',
@@ -25,14 +28,20 @@ export enum Permission {
   VER_DASHBOARD = 'VER_DASHBOARD',
   CREAR_USUARIOS = 'CREAR_USUARIOS',
   CAMBIAR_PASSWORD_USUARIO = 'CAMBIAR_PASSWORD_USUARIO',
+  VER_ALMACEN = 'VER_ALMACEN',
+  EDITAR_ALMACEN = 'EDITAR_ALMACEN',
+  GESTIONAR_INVENTARIO = 'GESTIONAR_INVENTARIO',
 }
 
 export const ALL_PERMISSIONS = Object.values(Permission);
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
+  [Permission.VER_OT]: 'Ver órdenes de trabajo asignadas',
   [Permission.CREAR_OT_EQUIPO]: 'Crear OT de equipo',
   [Permission.CREAR_OT_LOCATIVO]: 'Crear OT locativo',
   [Permission.EDITAR_OT]: 'Editar órdenes de trabajo',
+  [Permission.INICIAR_OT]: 'Iniciar orden de trabajo',
+  [Permission.FINALIZAR_OT]: 'Finalizar orden de trabajo',
   [Permission.ASIGNAR_TECNICO]: 'Asignar técnico',
   [Permission.REASIGNAR_TECNICO]: 'Reasignar técnico/contratista',
   [Permission.CAMBIAR_ACTIVO_OT]: 'Cambiar activo de la OT',
@@ -56,4 +65,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   [Permission.VER_DASHBOARD]: 'Ver dashboard',
   [Permission.CREAR_USUARIOS]: 'Crear usuarios',
   [Permission.CAMBIAR_PASSWORD_USUARIO]: 'Cambiar contraseña de usuario',
+  [Permission.VER_ALMACEN]: 'Ver almacén e inventario',
+  [Permission.EDITAR_ALMACEN]: 'Editar almacén e items',
+  [Permission.GESTIONAR_INVENTARIO]: 'Gestionar inventario (ingresos, traslados)',
 };

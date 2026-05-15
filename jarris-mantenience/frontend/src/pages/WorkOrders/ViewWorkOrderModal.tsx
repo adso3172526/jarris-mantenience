@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Descriptions, Tag, Timeline, Typography, Image, Button, Divider } from 'antd';
+import { Modal, Descriptions, Tag, Timeline, Typography, Image, Button, Divider, Table } from 'antd';
 import { workOrderStatusStyles, workOrderPriorityStyles, workOrderPriorityLabels } from '../../config/theme';
 import {
   FileTextOutlined,
@@ -10,6 +10,7 @@ import {
   EditOutlined,
 } from '@ant-design/icons';
 import { ToolOutlined, HomeOutlined } from '@ant-design/icons';
+import { warehouseApi } from '../../services/api';
 
 const { Title, Text } = Typography;
 
@@ -29,6 +30,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
   showEditButton = false,
 }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [consumptionData, setConsumptionData] = useState<any[]>([]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -37,6 +39,16 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Load consumption data for closed work orders
+  useEffect(() => {
+    if (open && workOrder?.id && workOrder.status === 'CERRADA') {
+      warehouseApi.getConsumption(workOrder.id)
+        .then((res) => setConsumptionData(res.data || []))
+        .catch(() => setConsumptionData([]));
+    }
+    if (!open) setConsumptionData([]);
+  }, [open, workOrder]);
 
   // Bloquear scroll del body cuando el modal está abierto en mobile
   useEffect(() => {
@@ -400,6 +412,29 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
         </>
       )}
 
+      {/* Materiales Consumidos */}
+      {consumptionData.length > 0 && (
+        <>
+          <Divider />
+          <div style={{ marginBottom: 16 }}>
+            <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 8 }}>
+              Detalle de Materiales
+            </Text>
+            {consumptionData.map((m: any, idx: number) => (
+              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid #f0f0f0' }}>
+                <span style={{ fontSize: 13 }}>{m.item?.name || '-'}</span>
+                <span style={{ fontSize: 13 }}>
+                  {Number(m.quantity).toLocaleString('es-CO')} x ${Number(m.unitCostAtTime).toLocaleString('es-CO')} = <strong>${Number(m.totalCost).toLocaleString('es-CO')}</strong>
+                </span>
+              </div>
+            ))}
+            <div style={{ textAlign: 'right', marginTop: 8, fontWeight: 600 }}>
+              Total materiales: ${consumptionData.reduce((s: number, m: any) => s + Number(m.totalCost), 0).toLocaleString('es-CO')}
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Factura */}
       {workOrder.invoiceFilePath && (
         <>
@@ -415,7 +450,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
                 rel="noopener noreferrer"
                 style={{ fontSize: 13 }}
               >
-                📄 {workOrder.invoiceFileName}
+                {workOrder.invoiceFileName}
               </a>
             </div>
             <div>
@@ -587,6 +622,33 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
               {formatCOP(workOrder.cost)}
             </Descriptions.Item>
           </Descriptions>
+        </>
+      )}
+
+      {/* Materiales Consumidos */}
+      {consumptionData.length > 0 && (
+        <>
+          <Title level={5} style={{ marginTop: 24 }}>Detalle de Materiales</Title>
+          <Table
+            dataSource={consumptionData}
+            rowKey="id"
+            size="small"
+            pagination={false}
+            columns={[
+              { title: 'Item', key: 'item', render: (_: any, r: any) => r.item?.name || '-' },
+              { title: 'Cantidad', dataIndex: 'quantity', render: (v: any) => Number(v).toLocaleString('es-CO') },
+              { title: 'Costo Unit.', dataIndex: 'unitCostAtTime', render: (v: any) => `$${Number(v).toLocaleString('es-CO')}` },
+              { title: 'Total', dataIndex: 'totalCost', render: (v: any) => `$${Number(v).toLocaleString('es-CO')}` },
+            ]}
+            summary={() => (
+              <Table.Summary.Row>
+                <Table.Summary.Cell index={0} colSpan={3}><strong>Total materiales</strong></Table.Summary.Cell>
+                <Table.Summary.Cell index={1}>
+                  <strong>${consumptionData.reduce((s: number, m: any) => s + Number(m.totalCost), 0).toLocaleString('es-CO')}</strong>
+                </Table.Summary.Cell>
+              </Table.Summary.Row>
+            )}
+          />
         </>
       )}
 

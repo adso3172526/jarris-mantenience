@@ -17,6 +17,7 @@ import {
   StopOutlined,
   UnorderedListOutlined,
   TagOutlined,
+  ShopOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -136,6 +137,15 @@ const MainLayout: React.FC = () => {
         icon: <EnvironmentOutlined />,
         label: 'Ubicaciones',
         onClick: () => navigate('/locations'),
+      });
+    }
+
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['VER_ALMACEN'])) {
+      items.push({
+        key: '/warehouse',
+        icon: <ShopOutlined />,
+        label: 'Almacenes',
+        onClick: () => navigate('/warehouse'),
       });
     }
 

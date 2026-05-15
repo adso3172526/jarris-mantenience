@@ -115,6 +115,12 @@ const WorkOrdersPage: React.FC = () => {
   const isTecnico = hasRole('TECNICO_INTERNO');
   const isContratista = hasRole('CONTRATISTA');
   const isPDV = hasRole('PDV') || hasRole('ADMINISTRACION');
+  // Users with VER_OT permission (custom profiles like "contratista")
+  const isPerfilOT = !isJefe && !isTecnico && !isContratista && !isPDV && hasPermission('VER_OT');
+  const canStart = isTecnico || isContratista || (isPerfilOT && hasPermission('INICIAR_OT'));
+  const canFinish = isTecnico || isContratista || (isPerfilOT && hasPermission('FINALIZAR_OT'));
+  // Determines if user sees only their assigned OTs
+  const isAssigneeView = isTecnico || isContratista || isPerfilOT;
 
   const formatCOP = (value: number) => {
     return `$${Math.round(value).toLocaleString('es-CO')}`;
@@ -133,7 +139,7 @@ const WorkOrdersPage: React.FC = () => {
     loadWorkOrders();
     usersApi.getTechniciansAndContractors().then((res) => setTechnicians(res.data)).catch(() => {});
     locationsApi.getAll().then((res) => setLocations(res.data)).catch(() => {});
-  }, [isTecnico, isContratista, isPDV, user?.email, user?.locationId]);
+  }, [isTecnico, isContratista, isPDV, isPerfilOT, user?.email, user?.locationId]);
 
   useEffect(() => {
     applyFilters();
@@ -151,13 +157,13 @@ const WorkOrdersPage: React.FC = () => {
       
       if (isPDV && user?.locationId) {
         response = await workOrdersApi.getByLocation(user.locationId);
-      } else if ((isTecnico || isContratista) && user?.email) {
+      } else if (isAssigneeView && user?.email) {
         response = await workOrdersApi.getByAssignee(user.email);
       } else {
         response = await workOrdersApi.getAll();
       }
 
-      const showAll = isPDV || isContratista;
+      const showAll = isPDV || isContratista || isPerfilOT;
       setWorkOrders(showAll ? response.data : response.data.filter((wo: any) => wo.maintenanceType === 'EQUIPO'));
     } catch (error: any) {
       console.error('Error loading work orders:', error);
@@ -386,7 +392,7 @@ const WorkOrdersPage: React.FC = () => {
     }
 
     // Iniciar
-    if ((isTecnico || isContratista) && record.status === 'ASIGNADA') {
+    if (canStart && record.status === 'ASIGNADA') {
       buttons.push(
         wrapTooltip("start", "Iniciar",
           <Button
@@ -403,7 +409,7 @@ const WorkOrdersPage: React.FC = () => {
     }
 
     // Finalizar (solo si ya inició)
-    if ((isTecnico || isContratista) && record.status === 'EN_PROCESO') {
+    if (canFinish && record.status === 'EN_PROCESO') {
       buttons.push(
         wrapTooltip("finish", "Finalizar",
           <Button
@@ -755,7 +761,7 @@ const WorkOrdersPage: React.FC = () => {
                       <Select.Option value="RECHAZADA">Rechazada</Select.Option>
                     </Select>
                   </Col>
-                  {!isTecnico && !isContratista && !isPDV && (
+                  {!isAssigneeView && !isPDV && (
                     <Col xs={24}>
                       <Select
                         placeholder="Técnico/Contratista"
@@ -871,7 +877,7 @@ const WorkOrdersPage: React.FC = () => {
                   <Select.Option value="RECHAZADA">Rechazada</Select.Option>
                 </Select>
               </Col>
-              {!isTecnico && !isContratista && !isPDV && (
+              {!isAssigneeView && !isPDV && (
                 <Col sm={12} md={4}>
                   <Select
                     placeholder="Técnico/Contratista"

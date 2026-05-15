@@ -202,6 +202,37 @@ export const profilesApi = {
   listPermissions: () => api.get('/profiles/permissions/list'),
 };
 
+// Warehouse
+export const warehouseApi = {
+  // Warehouses
+  getAll: () => api.get('/warehouse'),
+  getById: (id: string) => api.get(`/warehouse/${id}`),
+  getByLocation: (locationId: string) => api.get(`/warehouse/by-location/${locationId}`),
+  create: (data: any) => api.post('/warehouse', data),
+  update: (id: string, data: any) => api.patch(`/warehouse/${id}`, data),
+
+  // Items
+  getItems: (warehouseId: string) => api.get(`/warehouse/${warehouseId}/items`),
+  getItemById: (id: string) => api.get(`/warehouse/items/${id}`),
+  createItem: (data: any) => api.post('/warehouse/items', data),
+  updateItem: (id: string, data: any) => api.patch(`/warehouse/items/${id}`, data),
+  getLowStockItems: () => api.get('/warehouse/items/low-stock'),
+
+  // Stock
+  addStockEntry: (data: any) => api.post('/warehouse/stock-entry', data),
+
+  // Transfers
+  createTransfer: (data: any) => api.post('/warehouse/transfers', data),
+
+  // Consumption
+  consumeItems: (data: any) => api.post('/warehouse/consume', data),
+  getConsumption: (workOrderId: string) => api.get(`/warehouse/consumption/${workOrderId}`),
+  updateConsumption: (workOrderId: string, data: any) => api.put(`/warehouse/consumption/${workOrderId}`, data),
+
+  // Movements (Kardex)
+  getMovements: (params?: any) => api.get('/warehouse/movements', { params }),
+};
+
 // Asset Events
 export const assetEventsApi = {
   getAll: () => api.get('/asset-events'),

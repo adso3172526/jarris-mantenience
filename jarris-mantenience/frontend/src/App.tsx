@@ -14,6 +14,7 @@ import LocativePage from './pages/Locative/LocativePage';
 import TrasladosPage from './pages/Traslados/TrasladosPage';
 import BajasPage from './pages/Bajas/BajasPage';
 import LocativeCategoriesPage from './pages/LocativeCategories/LocativeCategoriesPage';
+import WarehousePage from './pages/Warehouse/WarehousePage';
 
 // Layouts
 import MainLayout from './components/Layout/MainLayout';
@@ -131,6 +132,11 @@ function App() {
               <Route path="locations" element={
                 <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']} permissions={['VER_UBICACIONES']}>
                   <LocationsPage />
+                </RoleRoute>
+              } />
+              <Route path="warehouse" element={
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']} permissions={['VER_ALMACEN']}>
+                  <WarehousePage />
                 </RoleRoute>
               } />
             </Route>

@@ -72,7 +72,7 @@ export class WorkOrdersController {
 
   @Get('by-assignee')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'CONTRATISTA')
-  @Permissions(Permission.EDITAR_OT)
+  @Permissions(Permission.EDITAR_OT, Permission.VER_OT, Permission.INICIAR_OT, Permission.FINALIZAR_OT)
   findByAssignee(@Query('email') email: string) {
     return this.service.findByAssignee(email);
   }
@@ -100,14 +100,14 @@ export class WorkOrdersController {
 
   @Patch(':id/start')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'CONTRATISTA')
-  @Permissions(Permission.EDITAR_OT)
+  @Permissions(Permission.EDITAR_OT, Permission.INICIAR_OT)
   start(@Param('id') id: string, @Body() dto: StartWorkOrderDto) {
     return this.service.start(id, dto);
   }
 
   @Patch(':id/finish')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'CONTRATISTA')
-  @Permissions(Permission.EDITAR_OT)
+  @Permissions(Permission.EDITAR_OT, Permission.FINALIZAR_OT)
   finish(@Param('id') id: string, @Body() dto: FinishWorkOrderDto) {
     return this.service.finish(id, dto);
   }

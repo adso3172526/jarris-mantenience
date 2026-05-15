@@ -10,6 +10,7 @@ import { LocationEntity } from '../entities/location.entity';
 import { AssetEventEntity, AssetEventType } from '../entities/asset-event.entity';
 import { LocativeCategoryEntity } from '../entities/locative-category.entity';
 
+import { StockMovementEntity, StockMovementType } from '../entities/stock-movement.entity';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { AssignWorkOrderDto } from './dto/assign-work-order.dto';
 import { FinishWorkOrderDto } from './dto/finish-work-order.dto';
@@ -748,14 +749,24 @@ Fecha: ${new Date().toLocaleString('es-CO')}
     // ✅ Para LOCATIVO, NO se crea evento en asset (no hay asset)
     // El costo queda registrado en la OT y se puede reportear por location
 
+    // Sum material consumption cost
+    const consumptionResult = await manager
+      .createQueryBuilder(StockMovementEntity, 'm')
+      .select('COALESCE(SUM(m.totalCost), 0)', 'total')
+      .where('m.workOrderId = :workOrderId', { workOrderId: wo.id })
+      .andWhere('m.type = :type', { type: StockMovementType.CONSUMO })
+      .getRawOne();
+    const materialCost = parseFloat(consumptionResult?.total || '0');
+
     wo.eventType = dto.eventType;
     wo.closedBy = dto.closedBy;
     wo.closedAt = new Date();
     wo.status = WorkOrderStatus.CERRADA;
+    wo.cost = Number(wo.cost) + materialCost;
 
     await manager.save(wo);
 
-    return { ok: true, workOrder: wo };
+    return { ok: true, workOrder: wo, materialCost };
   });
 }
 

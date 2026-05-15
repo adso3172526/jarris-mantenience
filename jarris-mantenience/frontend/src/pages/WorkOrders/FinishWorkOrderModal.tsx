@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, InputNumber, message, Upload, Button } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { Modal, Form, Input, InputNumber, message, Upload, Button, Collapse, Select } from 'antd';
+import { UploadOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd';
-import { workOrdersApi } from '../../services/api';
+import { workOrdersApi, warehouseApi } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface FinishWorkOrderModalProps {
@@ -24,6 +24,12 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const { user } = useAuth();
 
+  // Warehouse consumption
+  const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>('');
+  const [warehouseItems, setWarehouseItems] = useState<any[]>([]);
+  const [consumptionLines, setConsumptionLines] = useState<{ itemId: string; quantity: number }[]>([]);
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -31,6 +37,33 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Load all warehouses when modal opens
+  useEffect(() => {
+    if (open) {
+      warehouseApi.getAll()
+        .then((res) => setWarehouses(res.data))
+        .catch(() => setWarehouses([]));
+    }
+    if (!open) {
+      setWarehouses([]);
+      setSelectedWarehouseId('');
+      setWarehouseItems([]);
+      setConsumptionLines([]);
+    }
+  }, [open]);
+
+  // Load items when warehouse is selected
+  useEffect(() => {
+    if (selectedWarehouseId) {
+      warehouseApi.getItems(selectedWarehouseId)
+        .then((res) => setWarehouseItems(res.data))
+        .catch(() => setWarehouseItems([]));
+    } else {
+      setWarehouseItems([]);
+    }
+    setConsumptionLines([]);
+  }, [selectedWarehouseId]);
 
   const handleSubmit = async (values: any) => {
     try {
@@ -44,6 +77,21 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
       };
       
       await workOrdersApi.finish(workOrder.id, data);
+
+      // Consumir materiales si hay líneas
+      const validLines = consumptionLines.filter(l => l.itemId && l.quantity > 0);
+      if (validLines.length > 0 && selectedWarehouseId) {
+        try {
+          await warehouseApi.consumeItems({
+            warehouseId: selectedWarehouseId,
+            workOrderId: workOrder.id,
+            lines: validLines,
+            createdBy: user?.email || '',
+          });
+        } catch (err: any) {
+          message.warning(err.response?.data?.message || 'OT finalizada, pero hubo un error al registrar consumo de materiales');
+        }
+      }
 
       // Subir factura SI existe (opcional para técnico, obligatorio para contratista)
       if (invoiceFile?.originFileObj) {
@@ -218,7 +266,98 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
         </Form.Item>
       </Form>
 
-      {/* Información adicional */}
+      {/* Material Consumption Section */}
+      {warehouses.length > 0 && (
+        <Collapse
+          ghost
+          style={{ marginTop: 8 }}
+          items={[{
+            key: 'consumption',
+            label: <span style={{ fontWeight: 500 }}>Consumo de materiales (opcional)</span>,
+            children: (
+              <div>
+                <Select
+                  style={{ width: '100%', marginBottom: 12 }}
+                  placeholder="Seleccione almacén"
+                  value={selectedWarehouseId || undefined}
+                  onChange={(val) => setSelectedWarehouseId(val || '')}
+                  options={warehouses.map((w: any) => ({ label: w.name, value: w.id }))}
+                  allowClear
+                  size={isMobile ? 'large' : 'middle'}
+                />
+                {selectedWarehouseId && warehouseItems.length > 0 && (
+                  <>
+                    {consumptionLines.map((line, idx) => {
+                      const selectedItem = warehouseItems.find((i: any) => i.id === line.itemId);
+                      return (
+                        <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <Select
+                            style={{ flex: 1, minWidth: 150 }}
+                            placeholder="Buscar item..."
+                            value={line.itemId || undefined}
+                            onChange={(val) => {
+                              const newLines = [...consumptionLines];
+                              newLines[idx] = { ...newLines[idx], itemId: val };
+                              setConsumptionLines(newLines);
+                            }}
+                            options={warehouseItems.map((i: any) => ({
+                              label: `${i.name}${i.brand ? ` - ${i.brand}` : ''} (Stock: ${Number(i.stock).toLocaleString('es-CO')})`,
+                              value: i.id,
+                            }))}
+                            showSearch
+                            filterOption={(input, option) =>
+                              (option?.label as string ?? '').toLowerCase().includes(input.toLowerCase())
+                            }
+                            size={isMobile ? 'large' : 'middle'}
+                          />
+                          <InputNumber
+                            style={{ width: 100 }}
+                            placeholder="Cant."
+                            min={0.0001}
+                            max={selectedItem ? Number(selectedItem.stock) : undefined}
+                            value={line.quantity}
+                            onChange={(val) => {
+                              const newLines = [...consumptionLines];
+                              newLines[idx] = { ...newLines[idx], quantity: val || 0 };
+                              setConsumptionLines(newLines);
+                            }}
+                            size={isMobile ? 'large' : 'middle'}
+                          />
+                          {selectedItem && (
+                            <span style={{ fontSize: 12, color: '#888', whiteSpace: 'nowrap' }}>
+                              ${Number(selectedItem.unitCost).toLocaleString('es-CO')} c/u = ${(Number(selectedItem.unitCost) * (line.quantity || 0)).toLocaleString('es-CO')}
+                            </span>
+                          )}
+                          <Button
+                            danger
+                            size="small"
+                            icon={<DeleteOutlined />}
+                            onClick={() => setConsumptionLines(consumptionLines.filter((_, i) => i !== idx))}
+                          />
+                        </div>
+                      );
+                    })}
+                    <Button
+                      type="dashed"
+                      icon={<PlusOutlined />}
+                      onClick={() => setConsumptionLines([...consumptionLines, { itemId: '', quantity: 0 }])}
+                      size="small"
+                      block
+                    >
+                      Agregar item
+                    </Button>
+                  </>
+                )}
+                {selectedWarehouseId && warehouseItems.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: 12, color: '#888', fontSize: 13 }}>
+                    Este almacén no tiene items
+                  </div>
+                )}
+              </div>
+            ),
+          }]}
+        />
+      )}
     </Modal>
   );
 };

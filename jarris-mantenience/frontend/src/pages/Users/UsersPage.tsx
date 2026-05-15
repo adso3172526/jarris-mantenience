@@ -85,11 +85,13 @@ const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
   CREAR_TRASLADOS: ['VER_ACTIVOS', 'VER_TRASLADOS'],
   EDITAR_TRASLADOS: ['VER_ACTIVOS', 'CREAR_TRASLADOS'],
   EDITAR_UBICACIONES: ['VER_UBICACIONES'],
-  EDITAR_OT: ['VER_ACTIVOS'],
-  CREAR_OT_EQUIPO: ['VER_ACTIVOS'],
-  CREAR_OT_LOCATIVO: ['VER_ACTIVOS'],
-  ANULAR_OT: ['VER_ACTIVOS'],
-  CERRAR_OT: ['VER_ACTIVOS'],
+  INICIAR_OT: ['VER_OT'],
+  FINALIZAR_OT: ['VER_OT'],
+  EDITAR_OT: ['VER_OT'],
+  CREAR_OT_EQUIPO: ['VER_OT'],
+  CREAR_OT_LOCATIVO: ['VER_OT'],
+  ANULAR_OT: ['VER_OT'],
+  CERRAR_OT: ['VER_OT'],
   GENERAR_REPORTES: ['VER_DASHBOARD'],
   VER_EVENTOS: ['VER_ACTIVOS'],
   VER_BAJAS: ['VER_ACTIVOS'],
@@ -99,14 +101,19 @@ const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
   CAMBIAR_ACTIVO_OT: ['EDITAR_OT'],
   ASIGNAR_TECNICO: ['EDITAR_OT'],
   REASIGNAR_TECNICO: ['EDITAR_OT'],
+  EDITAR_ALMACEN: ['VER_ALMACEN'],
+  GESTIONAR_INVENTARIO: ['VER_ALMACEN', 'EDITAR_ALMACEN'],
 };
 
 const PERMISSION_CATEGORIES = [
   {
     title: 'Órdenes de Trabajo',
     permissions: [
+      { key: 'VER_OT', label: 'Ver OT asignadas' },
       { key: 'CREAR_OT_EQUIPO', label: 'Crear OT de equipo' },
       { key: 'CREAR_OT_LOCATIVO', label: 'Crear OT locativo' },
+      { key: 'INICIAR_OT', label: 'Iniciar orden de trabajo' },
+      { key: 'FINALIZAR_OT', label: 'Finalizar orden de trabajo' },
       { key: 'EDITAR_OT', label: 'Editar órdenes de trabajo' },
       { key: 'ASIGNAR_TECNICO', label: 'Asignar técnico' },
       { key: 'REASIGNAR_TECNICO', label: 'Reasignar técnico/contratista' },
@@ -147,6 +154,14 @@ const PERMISSION_CATEGORIES = [
     permissions: [
       { key: 'VER_UBICACIONES', label: 'Ver ubicaciones' },
       { key: 'EDITAR_UBICACIONES', label: 'Editar ubicaciones' },
+    ],
+  },
+  {
+    title: 'Almacén',
+    permissions: [
+      { key: 'VER_ALMACEN', label: 'Ver almacén e inventario' },
+      { key: 'EDITAR_ALMACEN', label: 'Editar almacén e items' },
+      { key: 'GESTIONAR_INVENTARIO', label: 'Gestionar inventario (ingresos, traslados)' },
     ],
   },
   {
