@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { WarehouseService } from './warehouse.service';
@@ -39,21 +40,22 @@ export class WarehouseController {
 
   @Get()
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'CONTRATISTA')
-  @Permissions(Permission.VER_ALMACEN, Permission.EDITAR_OT, Permission.FINALIZAR_OT)
-  findAll() {
-    return this.service.findAllWarehouses();
+  @Permissions(Permission.VER_TODOS_ALMACENES, Permission.EDITAR_OT, Permission.FINALIZAR_OT)
+  findAll(@Req() req: any) {
+    const profileLocationIds = req.user?.profileLocationIds || [];
+    return this.service.findAllWarehouses(profileLocationIds);
   }
 
   @Get('items/low-stock')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  @Permissions(Permission.VER_ALMACEN)
+  @Permissions(Permission.VER_TODOS_ALMACENES, Permission.VER_ALERTAS_ALMACEN)
   findLowStockItems() {
     return this.service.findLowStockItems();
   }
 
   @Get('movements')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  @Permissions(Permission.VER_ALMACEN, Permission.VER_TRASLADOS_ALMACEN)
+  @Permissions(Permission.VER_TODOS_ALMACENES, Permission.VER_MOVIMIENTOS_ALMACEN, Permission.VER_TRASLADOS_ALMACEN)
   findMovements(
     @Query('warehouseId') warehouseId?: string,
     @Query('itemId') itemId?: string,
@@ -72,21 +74,21 @@ export class WarehouseController {
 
   @Get('by-location/:locationId')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'CONTRATISTA', 'PDV', 'ADMINISTRACION')
-  @Permissions(Permission.VER_ALMACEN, Permission.EDITAR_OT)
+  @Permissions(Permission.VER_TODOS_ALMACENES, Permission.EDITAR_OT)
   findByLocation(@Param('locationId') locationId: string) {
     return this.service.findWarehouseByLocation(locationId);
   }
 
   @Get('consumption/:workOrderId')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'CONTRATISTA')
-  @Permissions(Permission.VER_ALMACEN, Permission.EDITAR_OT)
+  @Permissions(Permission.VER_TODOS_ALMACENES, Permission.EDITAR_OT)
   getConsumption(@Param('workOrderId') workOrderId: string) {
     return this.service.getConsumption(workOrderId);
   }
 
   @Get(':id')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  @Permissions(Permission.VER_ALMACEN)
+  @Permissions(Permission.VER_TODOS_ALMACENES)
   findOne(@Param('id') id: string) {
     return this.service.findWarehouseById(id);
   }
@@ -102,28 +104,28 @@ export class WarehouseController {
 
   @Post('items')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  @Permissions(Permission.EDITAR_ALMACEN)
+  @Permissions(Permission.EDITAR_ITEMS_ALMACEN)
   createItem(@Body() dto: CreateItemDto) {
     return this.service.createItem(dto);
   }
 
   @Get(':warehouseId/items')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'CONTRATISTA', 'PDV', 'ADMINISTRACION')
-  @Permissions(Permission.VER_ALMACEN, Permission.EDITAR_OT, Permission.FINALIZAR_OT)
+  @Permissions(Permission.VER_TODOS_ALMACENES, Permission.VER_ITEMS_ALMACEN, Permission.EDITAR_OT, Permission.FINALIZAR_OT)
   findItems(@Param('warehouseId') warehouseId: string) {
     return this.service.findItemsByWarehouse(warehouseId);
   }
 
   @Get('items/:id')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  @Permissions(Permission.VER_ALMACEN)
+  @Permissions(Permission.VER_TODOS_ALMACENES)
   findItem(@Param('id') id: string) {
     return this.service.findItemById(id);
   }
 
   @Patch('items/:id')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  @Permissions(Permission.EDITAR_ALMACEN)
+  @Permissions(Permission.EDITAR_ITEMS_ALMACEN)
   updateItem(@Param('id') id: string, @Body() dto: UpdateItemDto) {
     return this.service.updateItem(id, dto);
   }
@@ -132,7 +134,7 @@ export class WarehouseController {
 
   @Post('stock-entry')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  @Permissions(Permission.GESTIONAR_INVENTARIO)
+  @Permissions(Permission.INGRESAR_STOCK)
   addStockEntry(@Body() dto: StockEntryDto) {
     return this.service.addStockEntry(dto);
   }
@@ -141,7 +143,7 @@ export class WarehouseController {
 
   @Post('transfers')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  @Permissions(Permission.GESTIONAR_INVENTARIO, Permission.CREAR_TRASLADOS_ALMACEN)
+  @Permissions(Permission.CREAR_TRASLADOS_ALMACEN)
   createTransfer(@Body() dto: CreateTransferDto) {
     return this.service.createTransfer(dto);
   }

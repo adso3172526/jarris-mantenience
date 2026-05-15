@@ -5,7 +5,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
 import { WarehouseEntity } from '../entities/warehouse.entity';
 import { WarehouseItemEntity } from '../entities/warehouse-item.entity';
 import {
@@ -57,8 +57,13 @@ export class WarehouseService {
     return this.warehouseRepo.save(warehouse);
   }
 
-  async findAllWarehouses(): Promise<WarehouseEntity[]> {
+  async findAllWarehouses(profileLocationIds?: string[]): Promise<WarehouseEntity[]> {
+    const where: any = {};
+    if (profileLocationIds && profileLocationIds.length > 0) {
+      where.locationId = In(profileLocationIds);
+    }
     return this.warehouseRepo.find({
+      where,
       relations: ['location'],
       order: { name: 'ASC' },
     });

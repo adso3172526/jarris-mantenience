@@ -98,10 +98,13 @@ const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
   CAMBIAR_ACTIVO_OT: ['EDITAR_OT'],
   ASIGNAR_TECNICO: ['EDITAR_OT'],
   REASIGNAR_TECNICO: ['EDITAR_OT'],
-  EDITAR_ALMACEN: ['VER_ALMACEN'],
-  GESTIONAR_INVENTARIO: ['VER_ALMACEN', 'EDITAR_ALMACEN'],
-  VER_TRASLADOS_ALMACEN: ['VER_ALMACEN'],
-  CREAR_TRASLADOS_ALMACEN: ['VER_ALMACEN', 'VER_TRASLADOS_ALMACEN'],
+  VER_MOVIMIENTOS_ALMACEN: ['VER_TODOS_ALMACENES'],
+  VER_ALERTAS_ALMACEN: ['VER_TODOS_ALMACENES'],
+  EDITAR_ALMACEN: ['VER_TODOS_ALMACENES'],
+  EDITAR_ITEMS_ALMACEN: ['VER_TODOS_ALMACENES'],
+  INGRESAR_STOCK: ['VER_TODOS_ALMACENES'],
+  VER_TRASLADOS_ALMACEN: ['VER_TODOS_ALMACENES'],
+  CREAR_TRASLADOS_ALMACEN: ['VER_TODOS_ALMACENES', 'VER_TRASLADOS_ALMACEN'],
 };
 
 const PERMISSION_CATEGORIES = [
@@ -160,9 +163,12 @@ const PERMISSION_CATEGORIES = [
   {
     title: 'Almacén',
     permissions: [
-      { key: 'VER_ALMACEN', label: 'Ver almacén e inventario' },
-      { key: 'EDITAR_ALMACEN', label: 'Editar almacén e items' },
-      { key: 'GESTIONAR_INVENTARIO', label: 'Gestionar inventario (ingresos)' },
+      { key: 'VER_TODOS_ALMACENES', label: 'Ver todos los almacenes' },
+      { key: 'VER_MOVIMIENTOS_ALMACEN', label: 'Ver movimientos (Kardex)' },
+      { key: 'VER_ALERTAS_ALMACEN', label: 'Ver alertas de stock bajo' },
+      { key: 'EDITAR_ALMACEN', label: 'Editar almacén' },
+      { key: 'EDITAR_ITEMS_ALMACEN', label: 'Editar items de almacén' },
+      { key: 'INGRESAR_STOCK', label: 'Ingresar stock' },
       { key: 'VER_TRASLADOS_ALMACEN', label: 'Ver traslados de almacén' },
       { key: 'CREAR_TRASLADOS_ALMACEN', label: 'Crear traslados de almacén' },
     ],
@@ -431,8 +437,6 @@ const UsersPage: React.FC = () => {
   const watchedUserType = Form.useWatch('userType', form);
   const needsLocation = watchedUserType === 'PDV' || watchedUserType === 'ADMINISTRACION';
 
-  const activeCount = users.filter((u) => u.active).length;
-  const inactiveCount = users.filter((u) => !u.active).length;
 
   const getRoleOrProfileLabel = (user: User) => {
     if (user.profile) {

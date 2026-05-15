@@ -140,7 +140,7 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['VER_ALMACEN'])) {
+    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['VER_TODOS_ALMACENES'])) {
       items.push({
         key: '/warehouse',
         icon: <ShopOutlined />,

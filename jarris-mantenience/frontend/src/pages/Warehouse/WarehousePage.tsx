@@ -18,7 +18,6 @@ import {
   EditOutlined,
   ImportOutlined,
   SwapOutlined,
-  WarningOutlined,
   SearchOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
@@ -225,17 +224,17 @@ const WarehousePage: React.FC = () => {
       render: (_: any, r: any) =>
         r.active ? <Tag color="green">Activo</Tag> : <Tag color="red">Inactivo</Tag>,
     },
-    {
+    ...(hasPermission('EDITAR_ALMACEN') ? [{
       title: 'Acciones',
       key: 'actions',
       render: (_: any, r: any) => (
         <Button
           size="small"
           icon={<EditOutlined />}
-          onClick={(e) => { e.stopPropagation(); setEditWarehouseData(r); setEditWarehouseOpen(true); }}
+          onClick={(e: any) => { e.stopPropagation(); setEditWarehouseData(r); setEditWarehouseOpen(true); }}
         />
       ),
-    },
+    }] : []),
   ];
 
   const renderWarehousesTab = () => (
@@ -243,9 +242,11 @@ const WarehousePage: React.FC = () => {
       title={
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
           <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>Almacenes</span>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateWarehouseOpen(true)} size="middle">
-            {isMobile ? 'Nuevo' : 'Crear Almacén'}
-          </Button>
+          {hasPermission('EDITAR_ALMACEN') && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateWarehouseOpen(true)} size="middle">
+              {isMobile ? 'Nuevo' : 'Crear Almacén'}
+            </Button>
+          )}
         </div>
       }
       styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
@@ -260,7 +261,7 @@ const WarehousePage: React.FC = () => {
               hoverable
               onClick={() => handleWarehouseSelect(wh)}
               extra={
-                <Button size="small" icon={<EditOutlined />} onClick={(e) => { e.stopPropagation(); setEditWarehouseData(wh); setEditWarehouseOpen(true); }} />
+                hasPermission('EDITAR_ALMACEN') && <Button size="small" icon={<EditOutlined />} onClick={(e) => { e.stopPropagation(); setEditWarehouseData(wh); setEditWarehouseOpen(true); }} />
               }
             >
               <div><strong>{wh.name}</strong></div>
@@ -324,13 +325,13 @@ const WarehousePage: React.FC = () => {
       key: 'min',
       render: (v: any) => Number(v) > 0 ? Number(v).toLocaleString('es-CO') : '-',
     },
-    {
+    ...(hasPermission('EDITAR_ITEMS_ALMACEN') ? [{
       title: 'Acciones',
       key: 'actions',
       render: (_: any, r: any) => (
         <Button size="small" icon={<EditOutlined />} onClick={() => { setEditItemData(r); setEditItemOpen(true); }} />
       ),
-    },
+    }] : []),
   ];
 
   const renderItemsTab = () => (
@@ -350,12 +351,16 @@ const WarehousePage: React.FC = () => {
             />
           </div>
           <Space wrap>
-            <Button icon={<PlusOutlined />} disabled={!selectedWarehouseId} onClick={() => setCreateItemOpen(true)} size="middle">
-              {isMobile ? 'Item' : 'Crear Item'}
-            </Button>
-            <Button type="primary" icon={<ImportOutlined />} disabled={!selectedWarehouseId || items.length === 0} onClick={() => setStockEntryOpen(true)} size="middle">
-              {isMobile ? 'Ingreso' : 'Ingreso Stock'}
-            </Button>
+            {hasPermission('EDITAR_ITEMS_ALMACEN') && (
+              <Button icon={<PlusOutlined />} disabled={!selectedWarehouseId} onClick={() => setCreateItemOpen(true)} size="middle">
+                {isMobile ? 'Item' : 'Crear Item'}
+              </Button>
+            )}
+            {hasPermission('INGRESAR_STOCK') && (
+              <Button type="primary" icon={<ImportOutlined />} disabled={!selectedWarehouseId || items.length === 0} onClick={() => setStockEntryOpen(true)} size="middle">
+                {isMobile ? 'Ingreso' : 'Ingreso Stock'}
+              </Button>
+            )}
           </Space>
         </div>
       }
@@ -392,7 +397,7 @@ const WarehousePage: React.FC = () => {
                       size="small"
                       style={isLow ? { borderLeft: '3px solid #ff4d4f' } : undefined}
                       extra={
-                        <Button size="small" icon={<EditOutlined />} onClick={() => { setEditItemData(item); setEditItemOpen(true); }} />
+                        hasPermission('EDITAR_ITEMS_ALMACEN') && <Button size="small" icon={<EditOutlined />} onClick={() => { setEditItemData(item); setEditItemOpen(true); }} />
                       }
                     >
                       <div><strong>{item.name}</strong></div>
@@ -628,7 +633,7 @@ const WarehousePage: React.FC = () => {
               <Button icon={<ReloadOutlined />} onClick={loadMovements} size="middle">
                 {isMobile ? '' : 'Recargar'}
               </Button>
-              <Button type="primary" icon={<SwapOutlined />} onClick={() => setTransferOpen(true)} disabled={warehouses.length < 2 || !hasPermission(['GESTIONAR_INVENTARIO', 'CREAR_TRASLADOS_ALMACEN'])} size="middle">
+              <Button type="primary" icon={<SwapOutlined />} onClick={() => setTransferOpen(true)} disabled={warehouses.length < 2 || !hasPermission('CREAR_TRASLADOS_ALMACEN')} size="middle">
                 {isMobile ? 'Nuevo' : 'Crear Traslado'}
               </Button>
             </Space>
@@ -714,12 +719,7 @@ const WarehousePage: React.FC = () => {
     <Card
       title={
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <WarningOutlined style={{ color: '#faad14' }} />
-            <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>
-              Items con Stock Bajo ({lowStockItems.length})
-            </span>
-          </div>
+          <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>Stock Bajo</span>
           <Button icon={<ReloadOutlined />} onClick={loadLowStock} size="middle">
             {isMobile ? '' : 'Actualizar'}
           </Button>
@@ -776,16 +776,16 @@ const WarehousePage: React.FC = () => {
 
   // ─── Tabs ──────────────────────────────────────────
 
-  const tabItems = [
-    { key: 'warehouses', label: 'Almacenes', children: renderWarehousesTab() },
-    { key: 'items', label: 'Items', children: renderItemsTab() },
-    {
+  const allTabItems = [
+    hasPermission('VER_TODOS_ALMACENES') && { key: 'warehouses', label: 'Almacenes', children: renderWarehousesTab() },
+    hasPermission('VER_TODOS_ALMACENES') && { key: 'items', label: 'Items', children: renderItemsTab() },
+    hasPermission('VER_MOVIMIENTOS_ALMACEN') && {
       key: 'movements',
       label: 'Movimientos',
       children: renderMovementsTab(),
     },
-    { key: 'transfers', label: 'Traslados', children: renderTransfersTab() },
-    {
+    hasPermission(['VER_TRASLADOS_ALMACEN', 'CREAR_TRASLADOS_ALMACEN']) && { key: 'transfers', label: 'Traslados', children: renderTransfersTab() },
+    hasPermission('VER_ALERTAS_ALMACEN') && {
       key: 'alerts',
       label: (
         <span>
@@ -800,6 +800,7 @@ const WarehousePage: React.FC = () => {
       children: renderAlertsTab(),
     },
   ];
+  const tabItems = allTabItems.filter(Boolean) as any[];
 
   return (
     <div style={{ height: isMobile ? 'auto' : '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>

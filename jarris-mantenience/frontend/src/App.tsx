@@ -135,7 +135,7 @@ function App() {
                 </RoleRoute>
               } />
               <Route path="warehouse" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']} permissions={['VER_ALMACEN']}>
+                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO']} permissions={['VER_TODOS_ALMACENES']}>
                   <WarehousePage />
                 </RoleRoute>
               } />

@@ -21,16 +21,18 @@ const DEFAULT_PROFILES: Record<string, string[]> = {
     Permission.VER_CATEGORIAS_LOCATIVOS, Permission.EDITAR_CATEGORIAS_LOCATIVOS,
     Permission.VER_UBICACIONES, Permission.EDITAR_UBICACIONES,
     Permission.GENERAR_REPORTES, Permission.VER_DASHBOARD,
-    Permission.VER_ALMACEN, Permission.EDITAR_ALMACEN, Permission.GESTIONAR_INVENTARIO,
+    Permission.VER_TODOS_ALMACENES,
+    Permission.VER_MOVIMIENTOS_ALMACEN, Permission.VER_ALERTAS_ALMACEN,
+    Permission.EDITAR_ALMACEN, Permission.EDITAR_ITEMS_ALMACEN, Permission.INGRESAR_STOCK,
     Permission.VER_TRASLADOS_ALMACEN, Permission.CREAR_TRASLADOS_ALMACEN,
   ],
   'TECNICO INTERNO': [
     Permission.VER_OT, Permission.EDITAR_OT, Permission.INICIAR_OT,
-    Permission.FINALIZAR_OT, Permission.VER_ACTIVOS, Permission.VER_ALMACEN,
+    Permission.FINALIZAR_OT, Permission.VER_ACTIVOS, Permission.VER_TODOS_ALMACENES,
   ],
   'CONTRATISTA': [
     Permission.VER_OT, Permission.EDITAR_OT, Permission.INICIAR_OT,
-    Permission.FINALIZAR_OT, Permission.VER_ALMACEN,
+    Permission.FINALIZAR_OT, Permission.VER_TODOS_ALMACENES,
   ],
   'PUNTO DE VENTA': [
     Permission.VER_OT, Permission.CREAR_OT_EQUIPO, Permission.CREAR_OT_LOCATIVO,
