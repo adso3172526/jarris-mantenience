@@ -100,10 +100,13 @@ const LocativePage: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
 
   // Auth
-  const { user, hasRole, hasAccess, hasPermission } = useAuth();
-  const isJefe = hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['EDITAR_OT', 'CERRAR_OT']);
-  const isTecnico = hasRole('TECNICO_INTERNO');
-  const isContratista = hasRole('CONTRATISTA');
+  const { user, hasAccess, hasPermission } = useAuth();
+  const isJefe = hasAccess(['ADMIN'], ['EDITAR_OT', 'CERRAR_OT']);
+  const canSeeAllLocativo = hasPermission('VER_TODAS_OT_LOCATIVO');
+  const canStartFinish = hasPermission('INICIAR_OT') && hasPermission('FINALIZAR_OT');
+  const isAssigneeView = !isJefe && !canSeeAllLocativo && canStartFinish;
+  // PDV-like: can create OTs but can't start/finish, has a location
+  const isPDV = !isJefe && !canSeeAllLocativo && !isAssigneeView && (hasPermission('CREAR_OT_EQUIPO') || hasPermission('CREAR_OT_LOCATIVO')) && !!user?.locationId;
 
   // Filtros
   const [searchText, setSearchText] = useState('');
@@ -122,14 +125,16 @@ const LocativePage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [isTecnico, isContratista, user?.email]);
+  }, [isAssigneeView, canSeeAllLocativo, isPDV, user?.email]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const ordersRequest = (isTecnico || isContratista) && user?.email
-        ? workOrdersApi.getByAssignee(user.email)
-        : workOrdersApi.getAll();
+      const ordersRequest = isPDV && user?.email
+        ? workOrdersApi.getByCreator(user.email)
+        : isAssigneeView && user?.email
+          ? workOrdersApi.getByAssignee(user.email)
+          : workOrdersApi.getAll();
       const ordersRes = await ordersRequest;
       const locativeOrders = ordersRes.data.filter(
         (wo: WorkOrder) => wo.maintenanceType === 'LOCATIVO'
@@ -357,7 +362,7 @@ const LocativePage: React.FC = () => {
     }
 
     // Iniciar
-    if ((isTecnico || isContratista) && record.status === 'ASIGNADA') {
+    if (isAssigneeView && record.status === 'ASIGNADA') {
       buttons.push(
         wrapTooltip("start", "Iniciar",
           <Button
@@ -374,7 +379,7 @@ const LocativePage: React.FC = () => {
     }
 
     // Finalizar
-    if ((isTecnico || isContratista) && record.status === 'EN_PROCESO') {
+    if (isAssigneeView && record.status === 'EN_PROCESO') {
       buttons.push(
         wrapTooltip("finish", "Finalizar",
           <Button
@@ -562,7 +567,7 @@ const LocativePage: React.FC = () => {
               OT-{record.id.substring(0, 8)}
             </div>
             <div style={{ display: 'flex', gap: 4 }}>
-              <Tag color={isContratista ? undefined : 'purple-inverse'} style={{ width: 90, textAlign: 'center', display: 'inline-block' }}>
+              <Tag color={isAssigneeView ? undefined : 'purple-inverse'} style={{ width: 90, textAlign: 'center', display: 'inline-block' }}>
                 <HomeOutlined /> LOCATIVO
               </Tag>
               {record.priority && (
@@ -690,7 +695,7 @@ const LocativePage: React.FC = () => {
                       size="large"
                     />
                   </Col>
-                  {!isTecnico && !isContratista && (
+                  {!isAssigneeView && (
                     <Col xs={24}>
                       <Select
                         placeholder="Técnico/Contratista"
@@ -800,7 +805,7 @@ const LocativePage: React.FC = () => {
                   size="middle"
                 />
               </Col>
-              {!isTecnico && !isContratista && (
+              {!isAssigneeView && (
                 <Col sm={12} md={4}>
                   <Select
                     placeholder="Técnico/Contratista"

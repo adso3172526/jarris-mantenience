@@ -6,6 +6,7 @@ import dayjs, { Dayjs } from 'dayjs';
 const ReportsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [loadingAssets, setLoadingAssets] = useState(false);
+  const [loadingStock, setLoadingStock] = useState(false);
   const [fechaDesde, setFechaDesde] = useState<Dayjs>(dayjs().startOf('month'));
   const [fechaHasta, setFechaHasta] = useState<Dayjs>(dayjs().endOf('month'));
 
@@ -86,6 +87,43 @@ const ReportsPage: React.FC = () => {
     }
   };
 
+  const handleDownloadStock = async () => {
+    try {
+      setLoadingStock(true);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/reports/excel/stock-download`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Error al descargar el reporte de stock');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Reporte_Stock_Almacen.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      message.success('Reporte de stock descargado exitosamente');
+    } catch (error: any) {
+      console.error('Error downloading stock report:', error);
+      message.error('Error al descargar el reporte de stock');
+    } finally {
+      setLoadingStock(false);
+    }
+  };
+
   const tabItems = [
     {
       key: 'ot',
@@ -154,6 +192,31 @@ const ReportsPage: React.FC = () => {
             loading={loadingAssets}
           >
             Descargar Inventario Excel
+          </Button>
+        </div>
+      ),
+    },
+    {
+      key: 'stock',
+      label: (
+        <span>
+          Stock Almacén
+        </span>
+      ),
+      children: (
+        <div style={{ padding: '24px 0' }}>
+          <p style={{ color: '#666', marginBottom: 24 }}>
+            Descarga el stock actual de todos los almacenes, incluyendo costos,
+            cantidades y alertas de stock mínimo.
+          </p>
+
+          <Button
+            type="primary"
+            icon={<DownloadOutlined />}
+            onClick={handleDownloadStock}
+            loading={loadingStock}
+          >
+            Descargar Stock Excel
           </Button>
         </div>
       ),

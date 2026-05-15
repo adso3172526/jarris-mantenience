@@ -488,6 +488,95 @@ export class ReportsService {
     }
   }
 
+  async generateStockExcel(): Promise<Buffer> {
+    try {
+      const query = `
+        SELECT
+          wi.name AS item,
+          wi.brand AS marca,
+          wi."unitOfMeasure" AS unidad,
+          wi."weightOrSize" AS peso_medida,
+          wi."unitCost" AS costo_unitario,
+          wi.stock,
+          wi."minimumStock" AS stock_minimo,
+          (wi."unitCost" * wi.stock) AS valor_total,
+          wi.observations AS observaciones,
+          w.name AS almacen,
+          l.name AS ubicacion,
+          l."operationalCenter" AS co,
+          l."costCenter" AS cc
+        FROM warehouse_items wi
+        JOIN warehouses w ON wi."warehouseId" = w.id
+        LEFT JOIN locations l ON w."locationId" = l.id
+        WHERE wi.active = true
+        ORDER BY l.name, w.name, wi.name
+      `;
+      const data = await this.dataSource.query(query);
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Stock Almacén');
+
+      worksheet.columns = [
+        { header: 'Almacén', key: 'almacen', width: 20 },
+        { header: 'Ubicación', key: 'ubicacion', width: 20 },
+        { header: 'CO', key: 'co', width: 10 },
+        { header: 'CC', key: 'cc', width: 10 },
+        { header: 'Item', key: 'item', width: 30 },
+        { header: 'Marca', key: 'marca', width: 15 },
+        { header: 'Unidad', key: 'unidad', width: 12 },
+        { header: 'Peso/Medida', key: 'peso_medida', width: 15 },
+        { header: 'Stock', key: 'stock', width: 12 },
+        { header: 'Stock Mínimo', key: 'stock_minimo', width: 14 },
+        { header: 'Costo Unitario', key: 'costo_unitario', width: 16 },
+        { header: 'Valor Total', key: 'valor_total', width: 16 },
+        { header: 'Observaciones', key: 'observaciones', width: 30 },
+      ];
+
+      worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE60012' },
+      };
+
+      data.forEach((row) => {
+        const added = worksheet.addRow({
+          almacen: row.almacen || 'N/A',
+          ubicacion: row.ubicacion || 'N/A',
+          co: row.co != null ? Number(row.co) : '',
+          cc: row.cc != null ? Number(row.cc) : '',
+          item: row.item || 'N/A',
+          marca: row.marca || '',
+          unidad: row.unidad || '',
+          peso_medida: row.peso_medida || '',
+          stock: Number(row.stock || 0),
+          stock_minimo: Number(row.stock_minimo || 0),
+          costo_unitario: Number(row.costo_unitario || 0),
+          valor_total: Number(row.valor_total || 0),
+          observaciones: row.observaciones || '',
+        });
+
+        // Resaltar items con stock bajo
+        if (Number(row.stock) <= Number(row.stock_minimo)) {
+          added.getCell('stock').font = { color: { argb: 'FFFF0000' }, bold: true };
+        }
+      });
+
+      worksheet.getColumn('costo_unitario').numFmt = '"$"#,##0';
+      worksheet.getColumn('valor_total').numFmt = '"$"#,##0';
+      worksheet.getColumn('stock').numFmt = '#,##0.##';
+      worksheet.getColumn('stock_minimo').numFmt = '#,##0.##';
+
+      worksheet.autoFilter = { from: 'A1', to: 'M1' };
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      return Buffer.from(buffer);
+    } catch (error) {
+      console.error('Error generando Excel de stock:', error);
+      throw new Error(`Error al generar Excel de stock: ${error.message}`);
+    }
+  }
+
   // ✅ MANTENER: Métodos existentes para retrocompatibilidad
   async getMaintenanceCostsByLocation() {
     // ... código existente

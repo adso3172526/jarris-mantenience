@@ -1,20 +1,25 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Repository } from 'typeorm';
+import { Repository, Not, IsNull } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { UserEntity } from '../entities/user.entity';
 import { ROLES } from './roles';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ProfilesService, ROLE_TO_PROFILE_NAME } from '../profiles/profiles.service';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(UserEntity)
     private readonly repo: Repository<UserEntity>,
     private readonly config: ConfigService,
+    @Inject(forwardRef(() => ProfilesService))
+    private readonly profilesService: ProfilesService,
   ) {}
 
   async onModuleInit() {
@@ -36,18 +41,51 @@ export class UsersService implements OnModuleInit {
     });
 
     await this.repo.save(admin);
-    console.log(`[seed] Admin creado: ${email}`);
+    this.logger.log(`[seed] Admin creado: ${email}`);
+
+    // Migrate existing users with roles (except ADMIN) to profiles
+    await this.migrateUsersToProfiles();
+  }
+
+  async migrateUsersToProfiles() {
+    const users = await this.repo.find();
+    let migrated = 0;
+
+    for (const user of users) {
+      // Skip users that already have a profile or are ADMIN
+      if (user.profileId) continue;
+      if (!user.roles || user.roles.length === 0) continue;
+      if (user.roles.includes(ROLES.ADMIN)) continue;
+
+      const roleName = user.roles[0];
+      const profileName = ROLE_TO_PROFILE_NAME[roleName];
+      if (!profileName) continue;
+
+      const profile = await this.profilesService.findByName(profileName);
+      if (!profile) continue;
+
+      user.profileId = profile.id;
+      user.roles = [];
+      await this.repo.save(user);
+      migrated++;
+    }
+
+    if (migrated > 0) {
+      this.logger.log(`[migration] ${migrated} usuarios migrados a perfiles`);
+    }
   }
 
   async create(dto: CreateUserDto) {
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
+    const isAdmin = dto.roles?.includes(ROLES.ADMIN);
+
     const user = this.repo.create({
       name: dto.name,
       email: dto.email.toLowerCase().trim(),
       passwordHash,
-      roles: dto.profileId ? [] : (dto.roles || []),
-      profileId: dto.profileId || null,
+      roles: isAdmin ? [ROLES.ADMIN] : [],
+      profileId: isAdmin ? null : (dto.profileId || null),
       active: true,
       locationId: dto.locationId ?? null,
     });
@@ -82,12 +120,21 @@ export class UsersService implements OnModuleInit {
   async findTechniciansAndContractors() {
     const users = await this.repo.find({
       where: { active: true },
-      select: ['id', 'name', 'email', 'roles'],
+      select: ['id', 'name', 'email', 'roles', 'profileId'],
+      relations: ['profile'],
     });
 
+    const techProfileNames = [
+      ROLE_TO_PROFILE_NAME[ROLES.TECNICO_INTERNO],
+      ROLE_TO_PROFILE_NAME[ROLES.CONTRATISTA],
+    ];
+
     return users.filter(u =>
+      // Legacy: check old roles array
       u.roles.includes(ROLES.TECNICO_INTERNO) ||
-      u.roles.includes(ROLES.CONTRATISTA)
+      u.roles.includes(ROLES.CONTRATISTA) ||
+      // New: check profile name
+      (u.profile && techProfileNames.includes(u.profile.name))
     );
   }
 
@@ -101,18 +148,18 @@ export class UsersService implements OnModuleInit {
     if (dto.locationId !== undefined) user.locationId = dto.locationId ?? null;
     if (dto.active !== undefined) user.active = dto.active;
 
-    // Handle profile vs roles exclusivity
-    if (dto.profileId !== undefined) {
-      if (dto.profileId) {
-        user.profileId = dto.profileId;
-        user.roles = [];
-      } else {
+    // ADMIN gets roles=['ADMIN'] and no profile; everyone else gets a profile
+    if (dto.roles !== undefined || dto.profileId !== undefined) {
+      const isAdmin = dto.roles?.includes(ROLES.ADMIN);
+      if (isAdmin) {
+        user.roles = [ROLES.ADMIN];
         user.profileId = null;
-        if (dto.roles) user.roles = dto.roles;
+      } else {
+        user.roles = [];
+        if (dto.profileId !== undefined) {
+          user.profileId = dto.profileId || null;
+        }
       }
-    } else if (dto.roles) {
-      user.roles = dto.roles;
-      user.profileId = null;
     }
 
     if (dto.password && dto.password.trim().length > 0) {

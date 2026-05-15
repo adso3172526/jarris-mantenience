@@ -94,10 +94,11 @@ const AssetsPage: React.FC = () => {
   const [filterBrand, setFilterBrand] = useState('');
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
 
-  const { hasRole, hasAccess, user } = useAuth();
-  const isPDV = hasRole(['PDV']) || hasRole(['ADMINISTRACION']);
-  const canEdit = hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'], ['EDITAR_ACTIVOS']);
-  const canDeactivate = hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['EDITAR_ACTIVOS']);
+  const { hasAccess, hasPermission, user } = useAuth();
+  // PDV-like: has VER_ACTIVOS but NOT EDITAR_ACTIVOS, and has a location
+  const isPDV = hasPermission('VER_ACTIVOS') && !hasPermission('EDITAR_ACTIVOS') && !!user?.locationId;
+  const canEdit = hasAccess(['ADMIN'], ['EDITAR_ACTIVOS']);
+  const canDeactivate = hasAccess(['ADMIN'], ['EDITAR_ACTIVOS']);
 
   const formatCOP = (value: number) => {
     return `$${Math.round(value).toLocaleString('es-CO')}`;

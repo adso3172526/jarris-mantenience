@@ -51,7 +51,7 @@ export class WorkOrdersController {
 
   @Get()
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO')
-  @Permissions(Permission.VER_ACTIVOS, Permission.EDITAR_OT, Permission.CREAR_OT_EQUIPO, Permission.CREAR_OT_LOCATIVO, Permission.CERRAR_OT, Permission.ANULAR_OT)
+  @Permissions(Permission.VER_ACTIVOS, Permission.EDITAR_OT, Permission.CREAR_OT_EQUIPO, Permission.CREAR_OT_LOCATIVO, Permission.CERRAR_OT, Permission.ANULAR_OT, Permission.VER_TODAS_OT, Permission.VER_TODAS_OT_LOCATIVO)
   findAll() {
     return this.service.findAll();
   }

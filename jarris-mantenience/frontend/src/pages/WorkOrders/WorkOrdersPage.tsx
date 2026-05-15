@@ -110,17 +110,15 @@ const WorkOrdersPage: React.FC = () => {
 
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
 
-  const { user, hasRole, hasAccess, hasPermission } = useAuth();
-  const isJefe = hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['EDITAR_OT', 'CERRAR_OT', 'ANULAR_OT']);
-  const isTecnico = hasRole('TECNICO_INTERNO');
-  const isContratista = hasRole('CONTRATISTA');
-  const isPDV = hasRole('PDV') || hasRole('ADMINISTRACION');
-  // Users with VER_OT permission (custom profiles like "contratista")
-  const isPerfilOT = !isJefe && !isTecnico && !isContratista && !isPDV && hasPermission('VER_OT');
-  const canStart = isTecnico || isContratista || (isPerfilOT && hasPermission('INICIAR_OT'));
-  const canFinish = isTecnico || isContratista || (isPerfilOT && hasPermission('FINALIZAR_OT'));
-  // Determines if user sees only their assigned OTs
-  const isAssigneeView = isTecnico || isContratista || isPerfilOT;
+  const { user, hasAccess, hasPermission } = useAuth();
+  const isJefe = hasAccess(['ADMIN'], ['EDITAR_OT', 'CERRAR_OT', 'ANULAR_OT']);
+  const canSeeAllOT = hasPermission('VER_TODAS_OT');
+  // PDV-like: can create OTs but can't start/finish, and has a location
+  const isPDV = !isJefe && !canSeeAllOT && (hasPermission('CREAR_OT_EQUIPO') || hasPermission('CREAR_OT_LOCATIVO')) && !hasPermission('INICIAR_OT') && !!user?.locationId;
+  const canStart = hasPermission('INICIAR_OT');
+  const canFinish = hasPermission('FINALIZAR_OT');
+  // Assignee view: users who are not managers and not PDV, but can see OTs
+  const isAssigneeView = !isJefe && !canSeeAllOT && !isPDV && hasPermission('VER_OT');
 
   const formatCOP = (value: number) => {
     return `$${Math.round(value).toLocaleString('es-CO')}`;
@@ -139,7 +137,7 @@ const WorkOrdersPage: React.FC = () => {
     loadWorkOrders();
     usersApi.getTechniciansAndContractors().then((res) => setTechnicians(res.data)).catch(() => {});
     locationsApi.getAll().then((res) => setLocations(res.data)).catch(() => {});
-  }, [isTecnico, isContratista, isPDV, isPerfilOT, user?.email, user?.locationId]);
+  }, [isJefe, canSeeAllOT, isPDV, isAssigneeView, user?.email, user?.locationId]);
 
   useEffect(() => {
     applyFilters();
@@ -155,16 +153,16 @@ const WorkOrdersPage: React.FC = () => {
       setLoading(true);
       let response;
       
-      if (isPDV && user?.locationId) {
-        response = await workOrdersApi.getByLocation(user.locationId);
+      if (isPDV && user?.email) {
+        response = await workOrdersApi.getByCreator(user.email);
       } else if (isAssigneeView && user?.email) {
         response = await workOrdersApi.getByAssignee(user.email);
       } else {
         response = await workOrdersApi.getAll();
       }
 
-      const showAll = isPDV || isContratista || isPerfilOT;
-      setWorkOrders(showAll ? response.data : response.data.filter((wo: any) => wo.maintenanceType === 'EQUIPO'));
+      // WorkOrders page only shows EQUIPO. LOCATIVO goes to LocativePage.
+      setWorkOrders(response.data.filter((wo: any) => wo.maintenanceType === 'EQUIPO'));
     } catch (error: any) {
       console.error('Error loading work orders:', error);
       message.error('Error al cargar ordenes de trabajo');
@@ -697,7 +695,7 @@ const WorkOrdersPage: React.FC = () => {
               <FileTextOutlined style={{ fontSize: isMobile ? 14 : 18, color: '#E60012' }} />
               <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>{isPDV ? 'Mis Solicitudes' : 'Ordenes de Trabajo'}</span>
             </Space>
-            {(isPDV || isJefe || hasRole('ADMIN') || hasAccess([], ['CREAR_OT_EQUIPO', 'CREAR_OT_LOCATIVO'])) && (
+            {(isJefe || hasPermission('CREAR_OT_EQUIPO') || hasPermission('CREAR_OT_LOCATIVO')) && (
               <Button
                 type="primary"
                 icon={<PlusOutlined />}

@@ -1,5 +1,7 @@
 export enum Permission {
   VER_OT = 'VER_OT',
+  VER_TODAS_OT = 'VER_TODAS_OT',
+  VER_TODAS_OT_LOCATIVO = 'VER_TODAS_OT_LOCATIVO',
   CREAR_OT_EQUIPO = 'CREAR_OT_EQUIPO',
   CREAR_OT_LOCATIVO = 'CREAR_OT_LOCATIVO',
   EDITAR_OT = 'EDITAR_OT',
@@ -37,6 +39,8 @@ export const ALL_PERMISSIONS = Object.values(Permission);
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
   [Permission.VER_OT]: 'Ver órdenes de trabajo asignadas',
+  [Permission.VER_TODAS_OT]: 'Ver todas las OT de equipo',
+  [Permission.VER_TODAS_OT_LOCATIVO]: 'Ver todas las OT locativas',
   [Permission.CREAR_OT_EQUIPO]: 'Crear OT de equipo',
   [Permission.CREAR_OT_LOCATIVO]: 'Crear OT locativo',
   [Permission.EDITAR_OT]: 'Editar órdenes de trabajo',

@@ -15,7 +15,6 @@ import {
   Tooltip,
   Badge,
   Pagination,
-  Radio,
   Tabs,
   Checkbox,
 } from 'antd';
@@ -88,8 +87,6 @@ const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
   INICIAR_OT: ['VER_OT'],
   FINALIZAR_OT: ['VER_OT'],
   EDITAR_OT: ['VER_OT'],
-  CREAR_OT_EQUIPO: ['VER_OT'],
-  CREAR_OT_LOCATIVO: ['VER_OT'],
   ANULAR_OT: ['VER_OT'],
   CERRAR_OT: ['VER_OT'],
   GENERAR_REPORTES: ['VER_DASHBOARD'],
@@ -110,6 +107,8 @@ const PERMISSION_CATEGORIES = [
     title: 'Órdenes de Trabajo',
     permissions: [
       { key: 'VER_OT', label: 'Ver OT asignadas' },
+      { key: 'VER_TODAS_OT', label: 'Ver todas las OT de equipo' },
+      { key: 'VER_TODAS_OT_LOCATIVO', label: 'Ver todas las OT locativas' },
       { key: 'CREAR_OT_EQUIPO', label: 'Crear OT de equipo' },
       { key: 'CREAR_OT_LOCATIVO', label: 'Crear OT locativo' },
       { key: 'INICIAR_OT', label: 'Iniciar orden de trabajo' },
@@ -193,7 +192,7 @@ const UsersPage: React.FC = () => {
   const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [assignType, setAssignType] = useState<'role' | 'profile'>('role');
+  const [userType, setUserType] = useState<string>('TECNICO_INTERNO');
   const [form] = Form.useForm();
   const [resetPasswordForm] = Form.useForm();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -239,24 +238,46 @@ const UsersPage: React.FC = () => {
 
   // ===================== USERS HANDLERS =====================
 
+  // Map user types to their default profile names
+  const userTypeToProfileName: Record<string, string> = {
+    JEFE_MANTENIMIENTO: 'JEFE DE MANTENIMIENTO',
+    TECNICO_INTERNO: 'TECNICO INTERNO',
+    CONTRATISTA: 'CONTRATISTA',
+    PDV: 'PUNTO DE VENTA',
+    ADMINISTRACION: 'ADMINISTRACION',
+  };
+
   const handleCreate = () => {
     setEditingUser(null);
-    setAssignType('role');
+    setUserType('TECNICO_INTERNO');
     form.resetFields();
-    form.setFieldsValue({ active: true });
+    form.setFieldsValue({ active: true, userType: 'TECNICO_INTERNO' });
+    // Pre-select default profile for TECNICO_INTERNO
+    const defaultProfile = profiles.find(p => p.name === 'TECNICO INTERNO' && p.active);
+    if (defaultProfile) {
+      form.setFieldsValue({ profileId: defaultProfile.id });
+    }
     setModalOpen(true);
   };
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
-    const type = user.profileId ? 'profile' : 'role';
-    setAssignType(type);
+    // Determine user type from roles or profile
+    let type = 'TECNICO_INTERNO';
+    if (user.roles?.includes('ADMIN')) {
+      type = 'ADMIN';
+    } else if (user.profile) {
+      // Find which user type maps to this profile name
+      const entry = Object.entries(userTypeToProfileName).find(([, pName]) => pName === user.profile?.name);
+      type = entry ? entry[0] : 'TECNICO_INTERNO';
+    }
+    setUserType(type);
     form.setFieldsValue({
       name: user.name,
       email: user.email,
       phone: user.phone,
-      roles: type === 'role' ? (user.roles?.[0] || undefined) : undefined,
-      profileId: type === 'profile' ? user.profileId : undefined,
+      userType: type,
+      profileId: user.profileId || undefined,
       locationId: user.locationId,
       active: user.active,
     });
@@ -265,31 +286,18 @@ const UsersPage: React.FC = () => {
 
   const handleSubmit = async (values: any) => {
     try {
-      let payload: any;
+      const isAdmin = values.userType === 'ADMIN';
 
-      if (assignType === 'profile') {
-        payload = {
-          name: values.name,
-          email: values.email,
-          phone: values.phone,
-          password: values.password,
-          profileId: values.profileId,
-          roles: [],
-          locationId: values.locationId || null,
-          active: values.active,
-        };
-      } else {
-        payload = {
-          name: values.name,
-          email: values.email,
-          phone: values.phone,
-          password: values.password,
-          roles: [values.roles],
-          profileId: null,
-          locationId: values.locationId || null,
-          active: values.active,
-        };
-      }
+      const payload: any = {
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        password: values.password,
+        roles: isAdmin ? ['ADMIN'] : [],
+        profileId: isAdmin ? null : (values.profileId || null),
+        locationId: values.locationId || null,
+        active: values.active,
+      };
 
       if (editingUser) {
         if (!payload.password) {
@@ -416,11 +424,8 @@ const UsersPage: React.FC = () => {
 
   // ===================== USERS UI =====================
 
-  const selectedRole = Form.useWatch('roles', form);
-  const selectedProfileId = Form.useWatch('profileId', form);
-  const hasPDVRole = assignType === 'role' && (selectedRole === 'PDV' || selectedRole === 'ADMINISTRACION');
-  const selectedProfile = profiles.find(p => p.id === selectedProfileId);
-  const profileNeedsLocation = false;
+  const watchedUserType = Form.useWatch('userType', form);
+  const needsLocation = watchedUserType === 'PDV' || watchedUserType === 'ADMINISTRACION';
 
   const activeCount = users.filter((u) => u.active).length;
   const inactiveCount = users.filter((u) => !u.active).length;
@@ -883,46 +888,45 @@ const UsersPage: React.FC = () => {
             />
           </Form.Item>
 
-          {/* Tipo de asignación */}
-          <Form.Item label="Tipo de acceso">
-            <Radio.Group
-              value={assignType}
-              onChange={(e) => {
-                setAssignType(e.target.value);
-                form.setFieldsValue({ roles: undefined, profileId: undefined, locationId: undefined });
+          {/* Tipo de usuario */}
+          <Form.Item
+            label="Tipo de usuario"
+            name="userType"
+            rules={[{ required: true, message: 'Selecciona un tipo' }]}
+          >
+            <Select
+              placeholder="Selecciona tipo de usuario"
+              size={isMobile ? "large" : "middle"}
+              onChange={(value: string) => {
+                setUserType(value);
+                if (value === 'ADMIN') {
+                  form.setFieldsValue({ profileId: undefined, locationId: undefined });
+                } else {
+                  // Pre-select default profile for this user type
+                  const profileName = userTypeToProfileName[value];
+                  const defaultProfile = profiles.find(p => p.name === profileName && p.active);
+                  form.setFieldsValue({
+                    profileId: defaultProfile?.id || undefined,
+                    locationId: undefined,
+                  });
+                }
               }}
-              optionType="button"
-              buttonStyle="solid"
             >
-              <Radio.Button value="role">Rol fijo</Radio.Button>
-              <Radio.Button value="profile">Perfil personalizado</Radio.Button>
-            </Radio.Group>
+              <Select.Option value="ADMIN">Administrador</Select.Option>
+              <Select.Option value="JEFE_MANTENIMIENTO">Jefe de Mantenimiento</Select.Option>
+              <Select.Option value="TECNICO_INTERNO">Técnico Interno</Select.Option>
+              <Select.Option value="CONTRATISTA">Contratista</Select.Option>
+              <Select.Option value="PDV">Punto de Venta</Select.Option>
+              <Select.Option value="ADMINISTRACION">Administración</Select.Option>
+            </Select>
           </Form.Item>
 
-          {assignType === 'role' ? (
-            <Form.Item
-              label="Rol"
-              name="roles"
-              rules={[{ required: assignType === 'role', message: 'Selecciona un rol' }]}
-            >
-              <Select
-                placeholder="Selecciona un rol"
-                size={isMobile ? "large" : "middle"}
-                onChange={() => form.setFieldsValue({ locationId: undefined })}
-              >
-                <Select.Option value="ADMIN">Administrador</Select.Option>
-                <Select.Option value="JEFE_MANTENIMIENTO">Jefe de Mantenimiento</Select.Option>
-                <Select.Option value="TECNICO_INTERNO">Técnico Interno</Select.Option>
-                <Select.Option value="CONTRATISTA">Contratista</Select.Option>
-                <Select.Option value="PDV">Punto de Venta</Select.Option>
-                <Select.Option value="ADMINISTRACION">Administración</Select.Option>
-              </Select>
-            </Form.Item>
-          ) : (
+          {/* Profile selector (not shown for ADMIN) */}
+          {userType !== 'ADMIN' && (
             <Form.Item
               label="Perfil"
               name="profileId"
-              rules={[{ required: assignType === 'profile', message: 'Selecciona un perfil' }]}
+              rules={[{ required: userType !== 'ADMIN', message: 'Selecciona un perfil' }]}
             >
               <Select
                 placeholder="Selecciona un perfil"
@@ -940,16 +944,11 @@ const UsersPage: React.FC = () => {
             </Form.Item>
           )}
 
-          {(hasPDVRole || profileNeedsLocation) && (
+          {needsLocation && (
             <Form.Item
               label="Ubicación"
               name="locationId"
-              rules={[
-                {
-                  required: hasPDVRole || profileNeedsLocation,
-                  message: 'Ubicación requerida',
-                },
-              ]}
+              rules={[{ required: needsLocation, message: 'Ubicación requerida' }]}
             >
               <Select
                 placeholder="Selecciona la ubicación"
@@ -957,9 +956,9 @@ const UsersPage: React.FC = () => {
               >
                 {locations
                   .filter((loc) => loc.active !== false && (
-                    assignType === 'role'
-                      ? (selectedRole === 'PDV' ? loc.type === 'PDV' : selectedRole === 'ADMINISTRACION' ? loc.type === 'DEPARTAMENTO' : true)
-                      : (selectedProfile?.locationIds?.length ? selectedProfile.locationIds.includes(loc.id) : true)
+                    watchedUserType === 'PDV' ? loc.type === 'PDV'
+                      : watchedUserType === 'ADMINISTRACION' ? loc.type === 'DEPARTAMENTO'
+                      : true
                   ))
                   .map((loc) => (
                     <Select.Option key={loc.id} value={loc.id}>
@@ -986,7 +985,7 @@ const UsersPage: React.FC = () => {
             fontSize: isMobile ? 11 : 12
           }}>
             <p style={{ margin: 0 }}>
-              Los usuarios con rol fijo PDV/Administración o perfil sin "Todas las ubicaciones" requieren una ubicación asignada.
+              Administrador tiene acceso total. Los demás tipos requieren un perfil con permisos asignados.
             </p>
           </div>
         )}

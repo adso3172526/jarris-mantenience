@@ -24,7 +24,11 @@ export class AuthService {
     let profileName: string | null = null;
     let profileLocationIds: string[] = [];
 
-    if (user.profileId && user.profile) {
+    const isAdmin = user.roles?.includes('ADMIN');
+
+    if (isAdmin) {
+      // ADMIN doesn't need a profile
+    } else if (user.profileId && user.profile) {
       if (!user.profile.active) {
         throw new BadRequestException('El perfil asignado está inactivo');
       }
@@ -32,13 +36,9 @@ export class AuthService {
       profileId = user.profile.id;
       profileName = user.profile.name;
       profileLocationIds = user.profile.locationIds || [];
-    }
-
-    // Must have roles OR an active profile
-    const hasRoles = user.roles && user.roles.length > 0;
-    const hasProfile = profileId !== null;
-    if (!hasRoles && !hasProfile) {
-      throw new BadRequestException('User has no roles or profile');
+    } else {
+      // Non-ADMIN without profile cannot login
+      throw new BadRequestException('El usuario no tiene un perfil asignado. Contacte al administrador.');
     }
 
     const payload = {

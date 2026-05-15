@@ -69,6 +69,25 @@ export class ReportsController {
     res.send(buffer);
   }
 
+  @Get('excel/stock-download')
+  @Roles(ROLES.ADMIN, ROLES.JEFE_MANTENIMIENTO)
+  @Permissions(Permission.GENERAR_REPORTES)
+  async downloadStockExcel(@Res() res: Response) {
+    const buffer = await this.reportsService.generateStockExcel();
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="Reporte_Stock_Almacen.xlsx"',
+    );
+    res.setHeader('Content-Length', buffer.length);
+
+    res.send(buffer);
+  }
+
   @Get('maintenance-costs-by-location')
   @Roles(ROLES.ADMIN, ROLES.JEFE_MANTENIMIENTO)
   @Permissions(Permission.GENERAR_REPORTES)

@@ -17,6 +17,7 @@ export class RolesGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
+    // No decorators = public endpoint
     if (
       (!requiredRoles || requiredRoles.length === 0) &&
       (!requiredPermissions || requiredPermissions.length === 0)
@@ -27,12 +28,12 @@ export class RolesGuard implements CanActivate {
     const { user } = context.switchToHttp().getRequest();
     if (!user) return false;
 
-    if (requiredRoles && requiredRoles.length > 0 && user.roles?.length > 0) {
-      if (requiredRoles.some((role) => user.roles.includes(role))) {
-        return true;
-      }
+    // ADMIN = superuser, full access to everything
+    if (user.roles?.includes('ADMIN')) {
+      return true;
     }
 
+    // For all non-ADMIN users: only check permissions from profile
     if (
       requiredPermissions &&
       requiredPermissions.length > 0 &&

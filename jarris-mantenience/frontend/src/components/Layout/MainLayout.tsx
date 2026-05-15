@@ -188,20 +188,13 @@ const MainLayout: React.FC = () => {
     return items;
   };
 
-  const getRoleLabel = (roles: string[]) => {
-    // If user has a profile name, show that instead
-    if (user?.profileName) {
-      return user.profileName;
-    }
-    const roleLabels: Record<string, string> = {
-      ADMIN: 'Admin',
-      JEFE_MANTENIMIENTO: 'Jefe',
-      TECNICO_INTERNO: 'Técnico',
-      CONTRATISTA: 'Contratista',
-      PDV: 'PDV',
-      ADMINISTRACION: 'Administración',
-    };
-    return roles.map((r) => roleLabels[r] || r).join(', ');
+  const getRoleLabel = () => {
+    if (!user) return '';
+    // ADMIN shows "Administrador"
+    if (user.roles.includes('ADMIN')) return 'Administrador';
+    // Everyone else shows their profile name
+    if (user.profileName) return user.profileName;
+    return '';
   };
 
   const menuItems = getMenuItems();
@@ -361,7 +354,7 @@ const MainLayout: React.FC = () => {
                       {user?.email.split('@')[0]}
                     </div>
                     <div style={{ fontSize: 12, color: '#8c8c8c', lineHeight: 1.2 }}>
-                      {user?.roles && getRoleLabel(user.roles)}
+                      {getRoleLabel()}
                     </div>
                   </div>
                 )}
@@ -411,7 +404,7 @@ const MainLayout: React.FC = () => {
                 {user?.email.split('@')[0]}
               </div>
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-                {user?.roles && getRoleLabel(user.roles)}
+                {getRoleLabel()}
               </div>
             </div>
           </Space>

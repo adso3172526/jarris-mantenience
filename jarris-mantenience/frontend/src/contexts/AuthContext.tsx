@@ -98,10 +98,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       message.success('¡Bienvenido!');
 
-      // Redirect: fixed roles or profile with VER_DASHBOARD
+      // Redirect: ADMIN or profile with VER_DASHBOARD
       if (
         userData.roles.includes('ADMIN') ||
-        userData.roles.includes('JEFE_MANTENIMIENTO') ||
         userData.permissions.includes('VER_DASHBOARD')
       ) {
         return '/dashboard';
@@ -123,6 +122,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasRole = (role: string | string[]): boolean => {
     if (!user) return false;
+    // ADMIN is a superuser
+    if (user.roles.includes('ADMIN')) return true;
+    // For non-ADMIN, hasRole only matches ADMIN explicitly
     if (Array.isArray(role)) {
       return role.some(r => user.roles.includes(r));
     }
@@ -131,19 +133,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasPermission = (perm: string | string[]): boolean => {
     if (!user) return false;
+    // ADMIN has all permissions
+    if (user.roles.includes('ADMIN')) return true;
     if (Array.isArray(perm)) {
       return perm.some(p => user.permissions.includes(p));
     }
     return user.permissions.includes(perm);
   };
 
-  const hasAccess = (roles: string[], permissions?: string[]): boolean => {
+  const hasAccess = (_roles: string[], permissions?: string[]): boolean => {
     if (!user) return false;
-    // Check fixed roles
-    if (user.roles.length > 0 && roles.some(r => user.roles.includes(r))) {
-      return true;
-    }
-    // Check profile permissions
+    // ADMIN = superuser, full access
+    if (user.roles.includes('ADMIN')) return true;
+    // For non-ADMIN: only check permissions (ignore roles param)
     if (permissions && permissions.length > 0 && user.permissions.length > 0) {
       return permissions.some(p => user.permissions.includes(p));
     }
