@@ -33,6 +33,8 @@ export enum Permission {
   VER_ALMACEN = 'VER_ALMACEN',
   EDITAR_ALMACEN = 'EDITAR_ALMACEN',
   GESTIONAR_INVENTARIO = 'GESTIONAR_INVENTARIO',
+  VER_TRASLADOS_ALMACEN = 'VER_TRASLADOS_ALMACEN',
+  CREAR_TRASLADOS_ALMACEN = 'CREAR_TRASLADOS_ALMACEN',
 }
 
 export const ALL_PERMISSIONS = Object.values(Permission);
@@ -72,4 +74,6 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   [Permission.VER_ALMACEN]: 'Ver almacén e inventario',
   [Permission.EDITAR_ALMACEN]: 'Editar almacén e items',
   [Permission.GESTIONAR_INVENTARIO]: 'Gestionar inventario (ingresos, traslados)',
+  [Permission.VER_TRASLADOS_ALMACEN]: 'Ver traslados de almacén',
+  [Permission.CREAR_TRASLADOS_ALMACEN]: 'Crear traslados de almacén',
 };

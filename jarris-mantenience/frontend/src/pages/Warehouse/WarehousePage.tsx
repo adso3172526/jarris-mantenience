@@ -54,7 +54,7 @@ const MOVEMENT_TYPE_CONFIG: Record<string, { color: string; label: string }> = {
 };
 
 const WarehousePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const isMobile = window.innerWidth < 768;
 
   // ─── State ─────────────────────────────────────────
@@ -207,6 +207,12 @@ const WarehousePage: React.FC = () => {
   // ─── Warehouses Tab ────────────────────────────────
 
   const warehouseColumns = [
+    {
+      title: 'CO',
+      key: 'co',
+      width: 80,
+      render: (_: any, r: any) => r.location?.operationalCenter ?? '-',
+    },
     { title: 'Nombre', dataIndex: 'name', key: 'name' },
     {
       title: 'Ubicación',
@@ -242,7 +248,7 @@ const WarehousePage: React.FC = () => {
           </Button>
         </div>
       }
-      styles={{ body: { padding: isMobile ? 12 : '0 24px 12px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
+      styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
       style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
       {isMobile ? (
@@ -258,7 +264,10 @@ const WarehousePage: React.FC = () => {
               }
             >
               <div><strong>{wh.name}</strong></div>
-              <div style={{ color: '#888', fontSize: 12 }}>{wh.location?.name || '-'}</div>
+              <div style={{ color: '#888', fontSize: 12 }}>
+                {wh.location?.operationalCenter != null && <span style={{ fontWeight: 600 }}>CO {wh.location.operationalCenter} - </span>}
+                {wh.location?.name || '-'}
+              </div>
               {wh.active ? <Tag color="green">Activo</Tag> : <Tag color="red">Inactivo</Tag>}
             </Card>
           ))}
@@ -269,7 +278,13 @@ const WarehousePage: React.FC = () => {
             dataSource={warehouses}
             columns={warehouseColumns}
             rowKey="id"
-            pagination={false}
+            pagination={{
+              total: warehouses.length,
+              pageSize: 10,
+              showTotal: (total) => `Total: ${total} almacenes`,
+              size: 'small',
+              showSizeChanger: false,
+            }}
             size="small"
             onRow={(record) => ({ onClick: () => handleWarehouseSelect(record), style: { cursor: 'pointer' } })}
           />
@@ -344,7 +359,7 @@ const WarehousePage: React.FC = () => {
           </Space>
         </div>
       }
-      styles={{ body: { padding: isMobile ? 12 : '0 24px 12px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
+      styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
       style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
       {!selectedWarehouseId ? (
@@ -403,7 +418,13 @@ const WarehousePage: React.FC = () => {
                   dataSource={filteredItems}
                   columns={itemColumns}
                   rowKey="id"
-                  pagination={false}
+                  pagination={{
+                    total: filteredItems.length,
+                    pageSize: 10,
+                    showTotal: (total) => `Total: ${total} items`,
+                    size: 'small',
+                    showSizeChanger: false,
+                  }}
                   size="small"
                   loading={loading}
                 />
@@ -490,7 +511,7 @@ const WarehousePage: React.FC = () => {
           <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>Movimientos (Kardex)</span>
         </div>
       }
-      styles={{ body: { padding: isMobile ? 12 : '0 24px 12px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
+      styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
       style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
       <div style={{ marginBottom: 12, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
@@ -566,7 +587,13 @@ const WarehousePage: React.FC = () => {
             dataSource={movements}
             columns={movementColumns}
             rowKey="id"
-            pagination={{ pageSize: 50 }}
+            pagination={{
+              total: movements.length,
+              pageSize: 10,
+              showTotal: (total) => `Total: ${total} movimientos`,
+              size: 'small',
+              showSizeChanger: false,
+            }}
             size="small"
             loading={loading}
             scroll={{ x: 1100 }}
@@ -601,7 +628,7 @@ const WarehousePage: React.FC = () => {
               <Button icon={<ReloadOutlined />} onClick={loadMovements} size="middle">
                 {isMobile ? '' : 'Recargar'}
               </Button>
-              <Button type="primary" icon={<SwapOutlined />} onClick={() => setTransferOpen(true)} disabled={warehouses.length < 2} size="middle">
+              <Button type="primary" icon={<SwapOutlined />} onClick={() => setTransferOpen(true)} disabled={warehouses.length < 2 || !hasPermission(['GESTIONAR_INVENTARIO', 'CREAR_TRASLADOS_ALMACEN'])} size="middle">
                 {isMobile ? 'Nuevo' : 'Crear Traslado'}
               </Button>
             </Space>
@@ -733,7 +760,13 @@ const WarehousePage: React.FC = () => {
             dataSource={lowStockItems}
             columns={alertColumns}
             rowKey="id"
-            pagination={false}
+            pagination={{
+              total: lowStockItems.length,
+              pageSize: 10,
+              showTotal: (total) => `Total: ${total} alertas`,
+              size: 'small',
+              showSizeChanger: false,
+            }}
             size="small"
           />
         </div>

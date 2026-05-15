@@ -22,6 +22,7 @@ const DEFAULT_PROFILES: Record<string, string[]> = {
     Permission.VER_UBICACIONES, Permission.EDITAR_UBICACIONES,
     Permission.GENERAR_REPORTES, Permission.VER_DASHBOARD,
     Permission.VER_ALMACEN, Permission.EDITAR_ALMACEN, Permission.GESTIONAR_INVENTARIO,
+    Permission.VER_TRASLADOS_ALMACEN, Permission.CREAR_TRASLADOS_ALMACEN,
   ],
   'TECNICO INTERNO': [
     Permission.VER_OT, Permission.EDITAR_OT, Permission.INICIAR_OT,

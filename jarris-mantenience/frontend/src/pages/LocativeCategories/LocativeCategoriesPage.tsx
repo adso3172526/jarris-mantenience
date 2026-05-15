@@ -134,7 +134,6 @@ const LocativeCategoriesPage: React.FC = () => {
       dataIndex: 'code',
       key: 'code',
       width: 90,
-      align: 'center',
       sorter: (a, b) => (a.code ?? 0) - (b.code ?? 0),
       render: (code: number | null) => code ?? <span style={{ color: '#8c8c8c' }}>-</span>,
     },

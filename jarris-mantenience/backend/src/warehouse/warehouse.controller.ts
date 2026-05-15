@@ -53,7 +53,7 @@ export class WarehouseController {
 
   @Get('movements')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  @Permissions(Permission.VER_ALMACEN)
+  @Permissions(Permission.VER_ALMACEN, Permission.VER_TRASLADOS_ALMACEN)
   findMovements(
     @Query('warehouseId') warehouseId?: string,
     @Query('itemId') itemId?: string,
@@ -141,7 +141,7 @@ export class WarehouseController {
 
   @Post('transfers')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  @Permissions(Permission.GESTIONAR_INVENTARIO)
+  @Permissions(Permission.GESTIONAR_INVENTARIO, Permission.CREAR_TRASLADOS_ALMACEN)
   createTransfer(@Body() dto: CreateTransferDto) {
     return this.service.createTransfer(dto);
   }

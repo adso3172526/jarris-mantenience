@@ -224,10 +224,10 @@ const ReportsPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div style={{ padding: '24px', display: 'flex', justifyContent: 'center', paddingTop: '10vh' }}>
       <Card
         title="Reportes"
-        style={{ maxWidth: 600, margin: '0 auto' }}
+        style={{ maxWidth: 600, width: '100%' }}
       >
         <Tabs defaultActiveKey="ot" items={tabItems} />
       </Card>

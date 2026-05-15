@@ -100,6 +100,8 @@ const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
   REASIGNAR_TECNICO: ['EDITAR_OT'],
   EDITAR_ALMACEN: ['VER_ALMACEN'],
   GESTIONAR_INVENTARIO: ['VER_ALMACEN', 'EDITAR_ALMACEN'],
+  VER_TRASLADOS_ALMACEN: ['VER_ALMACEN'],
+  CREAR_TRASLADOS_ALMACEN: ['VER_ALMACEN', 'VER_TRASLADOS_ALMACEN'],
 };
 
 const PERMISSION_CATEGORIES = [
@@ -160,7 +162,9 @@ const PERMISSION_CATEGORIES = [
     permissions: [
       { key: 'VER_ALMACEN', label: 'Ver almacén e inventario' },
       { key: 'EDITAR_ALMACEN', label: 'Editar almacén e items' },
-      { key: 'GESTIONAR_INVENTARIO', label: 'Gestionar inventario (ingresos, traslados)' },
+      { key: 'GESTIONAR_INVENTARIO', label: 'Gestionar inventario (ingresos)' },
+      { key: 'VER_TRASLADOS_ALMACEN', label: 'Ver traslados de almacén' },
+      { key: 'CREAR_TRASLADOS_ALMACEN', label: 'Crear traslados de almacén' },
     ],
   },
   {
@@ -653,12 +657,6 @@ const UsersPage: React.FC = () => {
             <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>
               Gestión de Usuarios
             </span>
-            {!isMobile && (
-              <Space size={12} style={{ fontSize: 13, color: '#595959' }}>
-                <Badge status="success" text={`${activeCount} activos`} />
-                <Badge status="default" text={`${inactiveCount} inactivos`} />
-              </Space>
-            )}
           </div>
           <Button
             type="primary"
@@ -670,7 +668,7 @@ const UsersPage: React.FC = () => {
           </Button>
         </div>
       }
-      styles={{ body: { padding: isMobile ? 12 : '0 24px 12px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
+      styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
       style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
       {isMobile ? (
@@ -737,7 +735,7 @@ const UsersPage: React.FC = () => {
           </Button>
         </div>
       }
-      styles={{ body: { padding: isMobile ? 12 : '0 24px 12px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
+      styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
       style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
       {isMobile ? (
