@@ -142,7 +142,7 @@ const LocativeCategoriesPage: React.FC = () => {
       dataIndex: 'name',
       key: 'name',
       sorter: (a, b) => a.name.localeCompare(b.name),
-      render: (name) => <span style={{ fontWeight: 600 }}>{name}</span>,
+      render: (name) => <span style={{ fontWeight: 600, fontSize: 13 }}>{name}</span>,
     },
     {
       title: 'Estado',
