@@ -44,15 +44,19 @@ export class WarehouseService {
     });
     if (!location) throw new NotFoundException('Ubicación no encontrada');
 
-    const existing = await this.warehouseRepo.findOne({
-      where: { locationId: dto.locationId },
-    });
-    if (existing)
-      throw new ConflictException('Esta ubicación ya tiene un almacén asignado');
+    if (dto.costCenter != null) {
+      const existingCC = await this.warehouseRepo.findOne({
+        where: { costCenter: dto.costCenter },
+      });
+      if (existingCC) {
+        throw new ConflictException(`Ya existe un almacén con el Centro de Costos ${dto.costCenter}`);
+      }
+    }
 
     const warehouse = this.warehouseRepo.create({
       name: dto.name.trim(),
       locationId: dto.locationId,
+      costCenter: dto.costCenter ?? null,
     });
     return this.warehouseRepo.save(warehouse);
   }
@@ -94,6 +98,23 @@ export class WarehouseService {
   ): Promise<WarehouseEntity> {
     const warehouse = await this.findWarehouseById(id);
     if (dto.name !== undefined) warehouse.name = dto.name.trim();
+    if (dto.locationId !== undefined) {
+      const location = await this.locationRepo.findOne({ where: { id: dto.locationId } });
+      if (!location) throw new NotFoundException('Ubicación no encontrada');
+      warehouse.location = location;
+      warehouse.locationId = dto.locationId;
+    }
+    if (dto.costCenter !== undefined) {
+      if (dto.costCenter != null) {
+        const existingCC = await this.warehouseRepo.findOne({
+          where: { costCenter: dto.costCenter },
+        });
+        if (existingCC && existingCC.id !== id) {
+          throw new ConflictException(`Ya existe un almacén con el Centro de Costos ${dto.costCenter}`);
+        }
+      }
+      warehouse.costCenter = dto.costCenter ?? null;
+    }
     if (dto.active !== undefined) warehouse.active = dto.active;
     return this.warehouseRepo.save(warehouse);
   }

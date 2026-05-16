@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
@@ -770,8 +770,13 @@ Fecha: ${new Date().toLocaleString('es-CO')}
   });
 }
 
-  findAll() {
+  findAll(profileLocationIds?: string[]) {
+    const where: any = {};
+    if (profileLocationIds && profileLocationIds.length > 0) {
+      where.location = { id: In(profileLocationIds) };
+    }
     return this.woRepo.find({
+      where,
       relations: ['asset', 'location', 'locativeCategory'],
       order: { createdAt: 'DESC' },
     });

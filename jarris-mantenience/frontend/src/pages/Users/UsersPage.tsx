@@ -597,12 +597,10 @@ const UsersPage: React.FC = () => {
       key: 'actions',
       render: (_: any, record: Profile) => (
         <Button
-          type="link"
-          icon={<EditOutlined />}
+          type="text"
+          icon={<EditOutlined style={{ color: '#1890ff' }} />}
           onClick={() => openEditProfile(record)}
-        >
-          Editar
-        </Button>
+        />
       ),
     },
   ];

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID, IsOptional, IsInt, ValidateIf } from 'class-validator';
 
 export class CreateWarehouseDto {
   @IsString()
@@ -8,4 +8,9 @@ export class CreateWarehouseDto {
   @IsUUID()
   @IsNotEmpty()
   locationId: string;
+
+  @ValidateIf((o) => o.costCenter !== null)
+  @IsInt()
+  @IsOptional()
+  costCenter?: number | null;
 }

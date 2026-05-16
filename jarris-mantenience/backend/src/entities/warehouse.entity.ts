@@ -2,7 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  OneToOne,
+  ManyToOne,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
@@ -17,12 +17,15 @@ export class WarehouseEntity {
   @Column({ length: 150 })
   name: string;
 
-  @OneToOne(() => LocationEntity)
+  @ManyToOne(() => LocationEntity)
   @JoinColumn({ name: 'locationId' })
   location: LocationEntity;
 
   @Column({ type: 'uuid' })
   locationId: string;
+
+  @Column({ type: 'int', nullable: true, unique: true })
+  costCenter: number | null;
 
   @Column({ default: true })
   active: boolean;

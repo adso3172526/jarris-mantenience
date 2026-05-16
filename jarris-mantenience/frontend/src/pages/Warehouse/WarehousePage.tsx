@@ -201,7 +201,6 @@ const WarehousePage: React.FC = () => {
     if (saved) { loadWarehouses(); if (selectedWarehouseId) loadItems(selectedWarehouseId); loadLowStock(); }
   };
 
-  const existingWarehouseLocationIds = warehouses.map((w: any) => w.locationId);
 
   // ─── Warehouses Tab ────────────────────────────────
 
@@ -448,13 +447,13 @@ const WarehousePage: React.FC = () => {
       title: 'Fecha',
       dataIndex: 'createdAt',
       key: 'date',
-      width: 140,
       render: (v: string) => dayjs(v).format('DD/MM/YYYY HH:mm'),
     },
     {
       title: 'Tipo',
       dataIndex: 'type',
       key: 'type',
+      align: 'center' as const,
       render: (v: string) => {
         const cfg = MOVEMENT_TYPE_CONFIG[v] || { color: 'default', label: v };
         return <Tag color={cfg.color}>{cfg.label}</Tag>;
@@ -468,32 +467,37 @@ const WarehousePage: React.FC = () => {
     {
       title: 'Item',
       key: 'item',
-      render: (_: any, r: any) => r.item?.name || '-',
       ellipsis: true,
+      render: (_: any, r: any) => r.item?.name || '-',
     },
     {
-      title: 'Cantidad',
+      title: 'Cant.',
       dataIndex: 'quantity',
       key: 'quantity',
+      width: 70,
+      align: 'center' as const,
       render: (v: any) => Number(v).toLocaleString('es-CO', { minimumFractionDigits: 0 }),
     },
     {
       title: 'Costo Unit.',
       dataIndex: 'unitCostAtTime',
       key: 'unitCost',
+      align: 'center' as const,
       render: (v: any) => `$${Number(v).toLocaleString('es-CO', { minimumFractionDigits: 0 })}`,
     },
     {
       title: 'Costo Total',
       dataIndex: 'totalCost',
       key: 'totalCost',
+      align: 'center' as const,
       render: (v: any) => `$${Number(v).toLocaleString('es-CO', { minimumFractionDigits: 0 })}`,
     },
     {
       title: 'OT',
       dataIndex: 'workOrderId',
       key: 'wo',
-      render: (v: string) => v ? <Tooltip title={v}>{v.substring(0, 8)}...</Tooltip> : '-',
+      align: 'center' as const,
+      render: (v: string) => v ? <Tooltip title={v}>{v.substring(0, 8)}</Tooltip> : '-',
     },
     { title: 'Usuario', dataIndex: 'createdBy', key: 'user', ellipsis: true },
     { title: 'Observación', dataIndex: 'observation', key: 'obs', ellipsis: true, render: (v: any) => v || '-' },
@@ -601,7 +605,7 @@ const WarehousePage: React.FC = () => {
             }}
             size="small"
             loading={loading}
-            scroll={{ x: 1100 }}
+            tableLayout="auto"
           />
         </div>
       )}
@@ -829,12 +833,12 @@ const WarehousePage: React.FC = () => {
         open={createWarehouseOpen}
         onClose={handleCreateWarehouseClose}
         locations={locations}
-        existingWarehouseLocationIds={existingWarehouseLocationIds}
       />
       <EditWarehouseModal
         open={editWarehouseOpen}
         onClose={handleEditWarehouseClose}
         warehouse={editWarehouseData}
+        locations={locations}
       />
       <CreateItemModal
         open={createItemOpen}
