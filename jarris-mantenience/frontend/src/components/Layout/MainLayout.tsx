@@ -82,7 +82,7 @@ const MainLayout: React.FC = () => {
     items.push({
       key: '/work-orders',
       icon: <FileTextOutlined />,
-      label: 'Órdenes',
+      label: 'OT Equipos',
       onClick: () => navigate('/work-orders'),
     });
 
@@ -90,7 +90,7 @@ const MainLayout: React.FC = () => {
       items.push({
         key: '/locative',
         icon: <HomeOutlined />,
-        label: 'Locativo',
+        label: 'OT Locativos',
         onClick: () => navigate('/locative'),
       });
     }

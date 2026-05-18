@@ -44,7 +44,7 @@ const CreateWarehouseModal: React.FC<CreateWarehouseModalProps> = ({
 
   return (
     <Modal
-      title="Crear Nueva Bodega"
+      title="Nuevo Almacén"
       open={open}
       onCancel={handleCancel}
       onOk={() => form.submit()}
