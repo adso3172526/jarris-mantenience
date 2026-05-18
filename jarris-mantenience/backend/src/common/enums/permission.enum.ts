@@ -40,6 +40,12 @@ export enum Permission {
   INGRESAR_STOCK = 'INGRESAR_STOCK',
   VER_TRASLADOS_ALMACEN = 'VER_TRASLADOS_ALMACEN',
   CREAR_TRASLADOS_ALMACEN = 'CREAR_TRASLADOS_ALMACEN',
+  VER_SOLICITUDES = 'VER_SOLICITUDES',
+  VER_ORDENES_CERRADAS = 'VER_ORDENES_CERRADAS',
+  EDITAR_SOLICITUD = 'EDITAR_SOLICITUD',
+  CERRAR_SOLICITUD = 'CERRAR_SOLICITUD',
+  RECHAZAR_SOLICITUD = 'RECHAZAR_SOLICITUD',
+  EDITAR_OT_CERRADA = 'EDITAR_OT_CERRADA',
 }
 
 export const ALL_PERMISSIONS = Object.values(Permission);
@@ -86,4 +92,10 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   [Permission.INGRESAR_STOCK]: 'Ingresar stock',
   [Permission.VER_TRASLADOS_ALMACEN]: 'Ver traslados de almacén',
   [Permission.CREAR_TRASLADOS_ALMACEN]: 'Crear traslados de almacén',
+  [Permission.VER_SOLICITUDES]: 'Ver módulo Solicitudes',
+  [Permission.VER_ORDENES_CERRADAS]: 'Ver módulo Órdenes de Trabajo',
+  [Permission.EDITAR_SOLICITUD]: 'Editar solicitudes',
+  [Permission.CERRAR_SOLICITUD]: 'Cerrar solicitudes',
+  [Permission.RECHAZAR_SOLICITUD]: 'Rechazar solicitudes',
+  [Permission.EDITAR_OT_CERRADA]: 'Editar OT cerrada',
 };

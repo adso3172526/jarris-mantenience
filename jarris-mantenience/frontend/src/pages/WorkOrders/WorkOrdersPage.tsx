@@ -10,45 +10,28 @@ import {
   Tooltip,
   Row,
   Col,
-  Modal,
   DatePicker,
   Pagination,
+  message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
-  PlusOutlined,
   EyeOutlined,
-  UserAddOutlined,
-  PlayCircleOutlined,
-  CheckCircleOutlined,
-  SendOutlined,
   FileTextOutlined,
   SearchOutlined,
-  CloseSquareOutlined,
-  CameraOutlined,
   ToolOutlined,
   HomeOutlined,
   EditOutlined,
   ClearOutlined,
   FilterOutlined,
-  EnvironmentOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { workOrdersApi, usersApi, locationsApi } from '../../services/api';
 import { workOrderStatusStyles, workOrderPriorityStyles, workOrderPriorityLabels } from '../../config/theme';
 import { useAuth } from '../../contexts/AuthContext';
-import CreateWorkOrderModal from './CreateWorkOrderModal';
 import ViewWorkOrderModal from './ViewWorkOrderModal';
-import AssignWorkOrderModal from './AssignWorkOrderModal';
-import StartWorkOrderModal from './StartWorkOrderModal';
-import FinishWorkOrderModal from './FinishWorkOrderModal';
-import CloseWorkOrderModal from './CloseWorkOrderModal';
-import RejectWorkOrderModal from './RejectWorkOrderModal';
-import UploadPhotosModal from './UploadPhotosModal';
 import EditClosedWorkOrderModal from './EditClosedWorkOrderModal';
-import ChangeAssetModal from './ChangeAssetModal';
-import { message } from 'antd';
 
 
 interface WorkOrder {
@@ -83,9 +66,9 @@ const WorkOrdersPage: React.FC = () => {
   const [filteredOrders, setFilteredOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string | undefined>();
   const [filterLocation, setFilterLocation] = useState<string | undefined>();
   const [filterAssignee, setFilterAssignee] = useState<string | undefined>();
+  const [filterType, setFilterType] = useState<string | undefined>();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
@@ -95,36 +78,23 @@ const WorkOrdersPage: React.FC = () => {
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   // Modals
-  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [assignModalOpen, setAssignModalOpen] = useState(false);
-  const [startModalOpen, setStartModalOpen] = useState(false);
-  const [finishModalOpen, setFinishModalOpen] = useState(false);
-  const [closeModalOpen, setCloseModalOpen] = useState(false);
-  const [rejectModalOpen, setRejectModalOpen] = useState(false);
-  const [photosModalOpen, setPhotosModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [changeAssetModalOpen, setChangeAssetModalOpen] = useState(false);
-  const [changeLocationModalOpen, setChangeLocationModalOpen] = useState(false);
-  const [allLocations, setAllLocations] = useState<any[]>([]);
-
   const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null);
 
   const { user, hasAccess, hasPermission } = useAuth();
   const isJefe = hasAccess(['ADMIN'], ['EDITAR_OT', 'CERRAR_OT', 'ANULAR_OT']);
   const canSeeAllOT = hasPermission('VER_TODAS_OT');
-  // PDV-like: can create OTs but can't start/finish, and has a location
-  const isPDV = !isJefe && !canSeeAllOT && (hasPermission('CREAR_OT_EQUIPO') || hasPermission('CREAR_OT_LOCATIVO')) && !hasPermission('INICIAR_OT') && !!user?.locationId;
-  const canStart = hasPermission('INICIAR_OT');
-  const canFinish = hasPermission('FINALIZAR_OT');
-  // Assignee view: users who are not managers and not PDV, but can see OTs
-  const isAssigneeView = !isJefe && !canSeeAllOT && !isPDV && hasPermission('VER_OT');
+  const canSeeAllLocativo = hasPermission('VER_TODAS_OT_LOCATIVO');
+  const isPDV = !isJefe && !canSeeAllOT && !canSeeAllLocativo && (hasPermission('CREAR_OT_EQUIPO') || hasPermission('CREAR_OT_LOCATIVO')) && !hasPermission('INICIAR_OT') && !!user?.locationId;
+  const isAssigneeView = !isJefe && !canSeeAllOT && !canSeeAllLocativo && !isPDV && hasPermission('VER_OT');
+
+  const canEditClosed = hasPermission('EDITAR_OT_CERRADA');
 
   const formatCOP = (value: number) => {
     return `$${Math.round(value).toLocaleString('es-CO')}`;
   };
 
-  // Detect mobile on resize
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -137,22 +107,21 @@ const WorkOrdersPage: React.FC = () => {
     loadWorkOrders();
     usersApi.getTechniciansAndContractors().then((res) => setTechnicians(res.data)).catch(() => {});
     locationsApi.getAll().then((res) => setLocations(res.data)).catch(() => {});
-  }, [isJefe, canSeeAllOT, isPDV, isAssigneeView, user?.email, user?.locationId]);
+  }, [isJefe, canSeeAllOT, canSeeAllLocativo, isPDV, isAssigneeView, user?.email, user?.locationId]);
 
   useEffect(() => {
     applyFilters();
-  }, [workOrders, searchText, filterStatus, filterLocation, filterAssignee, dateRange]);
+  }, [workOrders, searchText, filterLocation, filterAssignee, filterType, dateRange]);
 
-  // Resetear página solo cuando cambian los filtros
   useEffect(() => {
     setMobilePage(1);
-  }, [searchText, filterStatus, filterLocation, filterAssignee, dateRange]);
+  }, [searchText, filterLocation, filterAssignee, filterType, dateRange]);
 
   const loadWorkOrders = async () => {
     try {
       setLoading(true);
       let response;
-      
+
       if (isPDV && user?.email) {
         response = await workOrdersApi.getByCreator(user.email);
       } else if (isAssigneeView && user?.email) {
@@ -161,23 +130,35 @@ const WorkOrdersPage: React.FC = () => {
         response = await workOrdersApi.getAll();
       }
 
-      // WorkOrders page only shows EQUIPO. LOCATIVO goes to LocativePage.
-      setWorkOrders(response.data.filter((wo: any) => wo.maintenanceType === 'EQUIPO'));
+      // Only show CERRADA orders, both EQUIPO and LOCATIVO
+      let closedOrders = response.data.filter((wo: any) => wo.status === 'CERRADA');
+
+      // Filter by type based on permissions:
+      // VER_TODAS_OT → can see EQUIPO, VER_TODAS_OT_LOCATIVO → can see LOCATIVO
+      if (!isJefe) {
+        if (canSeeAllOT && !canSeeAllLocativo) {
+          closedOrders = closedOrders.filter((wo: any) => wo.maintenanceType === 'EQUIPO');
+        } else if (!canSeeAllOT && canSeeAllLocativo) {
+          closedOrders = closedOrders.filter((wo: any) => wo.maintenanceType === 'LOCATIVO');
+        }
+      }
+
+      setWorkOrders(closedOrders);
     } catch (error: any) {
       console.error('Error loading work orders:', error);
-      message.error('Error al cargar ordenes de trabajo');
+      message.error('Error al cargar órdenes de trabajo');
     } finally {
       setLoading(false);
     }
   };
 
-  const hasActiveFilters = !!(searchText || filterStatus || filterLocation || filterAssignee || dateRange);
+  const hasActiveFilters = !!(searchText || filterLocation || filterAssignee || filterType || dateRange);
 
   const handleClearFilters = () => {
     setSearchText('');
-    setFilterStatus(undefined);
     setFilterLocation(undefined);
     setFilterAssignee(undefined);
+    setFilterType(undefined);
     setDateRange(null);
   };
 
@@ -196,10 +177,6 @@ const WorkOrdersPage: React.FC = () => {
       );
     }
 
-    if (filterStatus) {
-      filtered = filtered.filter((wo) => wo.status === filterStatus);
-    }
-
     if (filterLocation) {
       filtered = filtered.filter((wo) => wo.location?.id === filterLocation);
     }
@@ -208,11 +185,15 @@ const WorkOrdersPage: React.FC = () => {
       filtered = filtered.filter((wo) => wo.assigneeEmail === filterAssignee);
     }
 
+    if (filterType) {
+      filtered = filtered.filter((wo) => wo.maintenanceType === filterType);
+    }
+
     if (dateRange && dateRange[0] && dateRange[1]) {
       const start = dateRange[0].startOf('day');
       const end = dateRange[1].endOf('day');
       filtered = filtered.filter((wo) => {
-        const date = dayjs(wo.createdAt);
+        const date = dayjs(wo.closedAt || wo.createdAt);
         return date.isAfter(start) && date.isBefore(end);
       });
     }
@@ -225,62 +206,9 @@ const WorkOrdersPage: React.FC = () => {
     setViewModalOpen(true);
   };
 
-  const handleOpenChangeLocation = async (order: WorkOrder) => {
+  const handleEdit = (order: WorkOrder) => {
     setSelectedOrder(order);
-    try {
-      const res = await locationsApi.getAll();
-      setAllLocations(res.data.filter((l: any) => l.active !== false));
-    } catch { /* ignore */ }
-    setChangeLocationModalOpen(true);
-  };
-
-  const [newLocationId, setNewLocationId] = useState<string | undefined>();
-  const [changeLocationLoading, setChangeLocationLoading] = useState(false);
-
-  const handleChangeLocation = async () => {
-    if (!selectedOrder || !newLocationId) return;
-    try {
-      setChangeLocationLoading(true);
-      await workOrdersApi.changeLocation(selectedOrder.id, newLocationId);
-      message.success('Ubicación actualizada');
-      setChangeLocationModalOpen(false);
-      setNewLocationId(undefined);
-      loadWorkOrders();
-    } catch (error: any) {
-      message.error(error.response?.data?.message || 'Error al cambiar ubicación');
-    } finally {
-      setChangeLocationLoading(false);
-    }
-  };
-
-  const handleAssign = (order: WorkOrder) => {
-    setSelectedOrder(order);
-    setAssignModalOpen(true);
-  };
-
-  const handleStart = (order: WorkOrder) => {
-    setSelectedOrder(order);
-    setStartModalOpen(true);
-  };
-
-  const handleFinish = (order: WorkOrder) => {
-    setSelectedOrder(order);
-    setFinishModalOpen(true);
-  };
-
-  const handleClose = (order: WorkOrder) => {
-    setSelectedOrder(order);
-    setCloseModalOpen(true);
-  };
-
-  const handleReject = (order: WorkOrder) => {
-    setSelectedOrder(order);
-    setRejectModalOpen(true);
-  };
-
-  const handlePhotos = (order: WorkOrder) => {
-    setSelectedOrder(order);
-    setPhotosModalOpen(true);
+    setEditModalOpen(true);
   };
 
   const getActionButtons = (record: WorkOrder, isMobileView = false) => {
@@ -289,7 +217,6 @@ const WorkOrdersPage: React.FC = () => {
     const wrapTooltip = (key: string, title: string, btn: React.ReactNode) =>
       isMobileView ? <React.Fragment key={key}>{btn}</React.Fragment> : <Tooltip key={key} title={title}>{btn}</Tooltip>;
 
-    // Ver siempre disponible
     buttons.push(
       wrapTooltip("view", "Ver detalles",
         <Button
@@ -303,156 +230,17 @@ const WorkOrdersPage: React.FC = () => {
       )
     );
 
-    // Subir fotos (solo creador o admin/jefe)
-    const isCreator = record.createdBy === user?.email;
-    if (record.status !== 'CERRADA' && record.status !== 'RECHAZADA' && (isCreator || isJefe)) {
+    // Edit closed OT - controlled by EDITAR_OT_CERRADA
+    if (isJefe || canEditClosed) {
       buttons.push(
-        wrapTooltip("photos", "Subir fotos",
+        wrapTooltip("edit", "Editar OT cerrada",
           <Button
             type={isMobileView ? "default" : "text"}
-            icon={<CameraOutlined />}
-            onClick={() => handlePhotos(record)}
-            style={{ color: '#722ed1' }}
+            icon={<EditOutlined style={{ color: '#faad14' }} />}
+            onClick={() => handleEdit(record)}
             block={isMobileView}
           >
-            {isMobileView && "Fotos"}
-          </Button>
-        )
-      );
-    }
-
-    // Asignar
-    if (isJefe && record.status === 'NUEVA') {
-      buttons.push(
-        wrapTooltip("assign", "Asignar",
-          <Button
-            type={isMobileView ? "default" : "text"}
-            icon={<UserAddOutlined />}
-            onClick={() => handleAssign(record)}
-            block={isMobileView}
-            style={isMobileView ? { color: '#faad14', background: '#fff' } : {}}
-          >
-            {isMobileView && "Asignar"}
-          </Button>
-        )
-      );
-    }
-
-    // Cambiar activo (solo JEFE, solo OT de EQUIPO, antes de CERRADA/RECHAZADA)
-    if (isJefe && record.maintenanceType === 'EQUIPO' && record.status !== 'CERRADA' && record.status !== 'RECHAZADA') {
-      buttons.push(
-        wrapTooltip("change-asset", "Activo",
-          <Button
-            type={isMobileView ? 'default' : 'text'}
-            icon={<EditOutlined />}
-            onClick={() => { setSelectedOrder(record); setChangeAssetModalOpen(true); }}
-            style={{ color: '#1890ff' }}
-            block={isMobileView}
-          >
-            {isMobileView && 'Activo'}
-          </Button>
-        )
-      );
-    }
-
-    // Cambiar ubicación (JEFE o perfil con permiso, antes de CERRADA/RECHAZADA)
-    if ((isJefe || hasPermission('CAMBIAR_UBICACION_OT')) && record.status !== 'CERRADA' && record.status !== 'RECHAZADA') {
-      buttons.push(
-        wrapTooltip("change-location", "Ubicación",
-          <Button
-            type={isMobileView ? 'default' : 'text'}
-            icon={<EnvironmentOutlined />}
-            onClick={() => handleOpenChangeLocation(record)}
-            style={{ color: '#722ed1' }}
-            block={isMobileView}
-          >
-            {isMobileView && 'Ubicación'}
-          </Button>
-        )
-      );
-    }
-
-    // Reasignar
-    if (isJefe && record.status === 'ASIGNADA') {
-      buttons.push(
-        wrapTooltip("reassign", "Reasignar",
-          <Button
-            type={isMobileView ? "default" : "text"}
-            icon={<UserAddOutlined />}
-            onClick={() => handleAssign(record)}
-            style={{ color: '#faad14' }}
-            block={isMobileView}
-          >
-            {isMobileView && "Reasignar"}
-          </Button>
-        )
-      );
-    }
-
-    // Iniciar
-    if (canStart && record.status === 'ASIGNADA') {
-      buttons.push(
-        wrapTooltip("start", "Iniciar",
-          <Button
-            type={isMobileView ? "primary" : "text"}
-            icon={<PlayCircleOutlined />}
-            onClick={() => handleStart(record)}
-            style={!isMobileView ? { color: '#52c41a' } : { backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-            block={isMobileView}
-          >
-            {isMobileView && "Iniciar"}
-          </Button>
-        )
-      );
-    }
-
-    // Finalizar (solo si ya inició)
-    if (canFinish && record.status === 'EN_PROCESO') {
-      buttons.push(
-        wrapTooltip("finish", "Finalizar",
-          <Button
-            type={isMobileView ? "primary" : "text"}
-            icon={<CheckCircleOutlined />}
-            onClick={() => handleFinish(record)}
-            style={!isMobileView ? { color: '#faad14' } : { backgroundColor: '#faad14', borderColor: '#faad14' }}
-            block={isMobileView}
-          >
-            {isMobileView && "Finalizar"}
-          </Button>
-        )
-      );
-    }
-
-    // Cerrar
-    if (isJefe && record.status === 'TERMINADA') {
-      buttons.push(
-        wrapTooltip("close", "Cerrar OT",
-          <Button
-            type={isMobileView ? "default" : "text"}
-            icon={<SendOutlined style={{ color: '#52c41a' }} />}
-            onClick={() => handleClose(record)}
-            style={!isMobileView ? { color: '#E60012' } : { color: '#E60012', background: '#fff' }}
-            block={isMobileView}
-          >
-            {isMobileView && "Cerrar"}
-          </Button>
-        )
-      );
-    }
-
-    // Rechazar
-    if (isJefe && record.status === 'NUEVA') {
-      buttons.push(
-        wrapTooltip("reject", "Rechazar",
-          <Button
-            type={isMobileView ? "default" : "text"}
-            danger={!isMobileView}
-            icon={<CloseSquareOutlined />}
-            onClick={() => handleReject(record)}
-            block={isMobileView}
-            style={isMobileView ? { color: '#ff4d4f', background: '#fff' } : {}}
-          >
-            {isMobileView && "Rechazar"}
+            {isMobileView && "Editar"}
           </Button>
         )
       );
@@ -467,7 +255,6 @@ const WorkOrdersPage: React.FC = () => {
     );
   };
 
-  // Mobile Card View
   const renderMobileCard = (record: WorkOrder) => (
     <Card
       key={record.id}
@@ -520,7 +307,7 @@ const WorkOrdersPage: React.FC = () => {
            {record.location.name}
         </div>
 
-        {!isPDV && record.assigneeName && (
+        {record.assigneeName && (
           <div style={{ fontSize: 12, marginBottom: 4 }}>
             <div><strong>Asignado:</strong> {record.assigneeName}</div>
             <Tag color={record.assigneeType === 'INTERNO' ? 'blue' : 'orange'}>
@@ -529,14 +316,12 @@ const WorkOrdersPage: React.FC = () => {
           </div>
         )}
 
-        {!isPDV && (
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#E60012', marginBottom: 4 }}>
-            {formatCOP(record.cost)}
-          </div>
-        )}
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#E60012', marginBottom: 4 }}>
+          {formatCOP(record.cost)}
+        </div>
 
         <div style={{ fontSize: 11, color: '#8c8c8c' }}>
-          {new Date(record.createdAt).toLocaleDateString('es-CO')}
+          Cerrada: {record.closedAt ? new Date(record.closedAt).toLocaleDateString('es-CO') : new Date(record.createdAt).toLocaleDateString('es-CO')}
         </div>
       </div>
 
@@ -551,17 +336,15 @@ const WorkOrdersPage: React.FC = () => {
     </Card>
   );
 
-  // Desktop Table Columns
   const allColumns: ColumnsType<WorkOrder> = [
     {
-      title: 'Creada',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
+      title: 'Cerrada',
+      key: 'closedAt',
       width: 100,
       ellipsis: true,
-      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      sorter: (a, b) => new Date(a.closedAt || a.createdAt).getTime() - new Date(b.closedAt || b.createdAt).getTime(),
       defaultSortOrder: 'descend',
-      render: (date) => new Date(date).toLocaleDateString('es-CO'),
+      render: (_, record) => new Date(record.closedAt || record.createdAt).toLocaleDateString('es-CO'),
     },
     {
       title: 'OT',
@@ -580,6 +363,7 @@ const WorkOrdersPage: React.FC = () => {
       dataIndex: ['location', 'name'],
       key: 'location',
       width: 120,
+      align: 'center',
       ellipsis: true,
       sorter: (a, b) => (a.location?.name || '').localeCompare(b.location?.name || ''),
     },
@@ -619,7 +403,6 @@ const WorkOrdersPage: React.FC = () => {
       key: 'status',
       width: 110,
       ellipsis: true,
-      sorter: (a, b) => a.status.localeCompare(b.status),
       render: (status) => (
         <Tag style={{ backgroundColor: workOrderStatusStyles[status]?.bg, color: workOrderStatusStyles[status]?.color, border: 'none', width: 90, textAlign: 'center', display: 'inline-block' }}>
           {status}
@@ -675,16 +458,12 @@ const WorkOrdersPage: React.FC = () => {
     {
       title: 'Acciones',
       key: 'actions',
-      width: 160,
+      width: 120,
       render: (_, record) => getActionButtons(record, false),
     },
   ];
 
-  // PDV: hide columns not relevant to them
-  const hiddenForPDV = ['assignee', 'cost'];
-  const columns = isPDV
-    ? allColumns.filter((c) => !hiddenForPDV.includes(c.key as string))
-    : allColumns;
+  const columns = allColumns;
 
   return (
     <div style={{ height: isMobile ? 'auto' : 'calc(100vh - 112px)', display: 'flex', flexDirection: 'column' }}>
@@ -693,18 +472,8 @@ const WorkOrdersPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
             <Space>
               <FileTextOutlined style={{ fontSize: isMobile ? 14 : 18, color: '#E60012' }} />
-              <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>{isPDV ? 'Mis Solicitudes' : 'Ordenes de Trabajo'}</span>
+              <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>Órdenes de Trabajo</span>
             </Space>
-            {(isJefe || hasPermission('CREAR_OT_EQUIPO') || hasPermission('CREAR_OT_LOCATIVO')) && (
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => setCreateModalOpen(true)}
-                size="middle"
-              >
-                {isMobile ? "Nueva" : "Nueva Solicitud"}
-              </Button>
-            )}
           </div>
         }
         styles={{ header: isMobile ? { padding: '0 12px', minHeight: 40 } : {}, body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'auto' : 'hidden' } }}
@@ -727,7 +496,7 @@ const WorkOrdersPage: React.FC = () => {
                 borderColor: hasActiveFilters ? '#E60012' : '#d9d9d9',
               }}
             >
-              Filtros{hasActiveFilters ? ` (${[searchText, filterStatus, filterAssignee, filterLocation, dateRange].filter(Boolean).length})` : ''}
+              Filtros{hasActiveFilters ? ` (${[searchText, filterAssignee, filterLocation, filterType, dateRange].filter(Boolean).length})` : ''}
             </Button>
             {filtersOpen && (
               <Card size="small" style={{ marginTop: 8, background: '#fafafa' }}>
@@ -744,19 +513,15 @@ const WorkOrdersPage: React.FC = () => {
                   </Col>
                   <Col xs={24}>
                     <Select
-                      placeholder="Estado"
+                      placeholder="Tipo"
                       style={{ width: '100%' }}
-                      value={filterStatus}
-                      onChange={setFilterStatus}
+                      value={filterType}
+                      onChange={setFilterType}
                       allowClear
                       size="large"
                     >
-                      <Select.Option value="NUEVA">Nueva</Select.Option>
-                      <Select.Option value="ASIGNADA">Asignada</Select.Option>
-                      <Select.Option value="EN_PROCESO">En Proceso</Select.Option>
-                      <Select.Option value="TERMINADA">Terminada</Select.Option>
-                      <Select.Option value="CERRADA">Cerrada</Select.Option>
-                      <Select.Option value="RECHAZADA">Rechazada</Select.Option>
+                      <Select.Option value="EQUIPO">Equipo</Select.Option>
+                      <Select.Option value="LOCATIVO">Locativo</Select.Option>
                     </Select>
                   </Col>
                   {!isAssigneeView && !isPDV && (
@@ -858,21 +623,17 @@ const WorkOrdersPage: React.FC = () => {
                   size="middle"
                 />
               </Col>
-              <Col sm={12} md={3}>
+              <Col sm={12} md={2}>
                 <Select
-                  placeholder="Estado"
+                  placeholder="Tipo"
                   style={{ width: '100%' }}
-                  value={filterStatus}
-                  onChange={setFilterStatus}
+                  value={filterType}
+                  onChange={setFilterType}
                   allowClear
                   size="middle"
                 >
-                  <Select.Option value="NUEVA">Nueva</Select.Option>
-                  <Select.Option value="ASIGNADA">Asignada</Select.Option>
-                  <Select.Option value="EN_PROCESO">En Proceso</Select.Option>
-                  <Select.Option value="TERMINADA">Terminada</Select.Option>
-                  <Select.Option value="CERRADA">Cerrada</Select.Option>
-                  <Select.Option value="RECHAZADA">Rechazada</Select.Option>
+                  <Select.Option value="EQUIPO">Equipo</Select.Option>
+                  <Select.Option value="LOCATIVO">Locativo</Select.Option>
                 </Select>
               </Col>
               {!isAssigneeView && !isPDV && (
@@ -967,7 +728,7 @@ const WorkOrdersPage: React.FC = () => {
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#8c8c8c' }}>
-              No hay ordenes de trabajo
+              No hay órdenes de trabajo cerradas
             </div>
           )
         ) : (
@@ -983,7 +744,7 @@ const WorkOrdersPage: React.FC = () => {
               pagination={{
                 total: filteredOrders.length,
                 pageSize: 10,
-                showTotal: (total) => `Total: ${total} ordenes`,
+                showTotal: (total) => `Total: ${total} órdenes`,
                 size: 'small',
                 showSizeChanger: false,
               }}
@@ -993,65 +754,17 @@ const WorkOrdersPage: React.FC = () => {
       </Card>
 
       {/* Modals */}
-      <CreateWorkOrderModal
-        open={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        onSuccess={loadWorkOrders}
-      />
-
       {selectedOrder && (
         <>
           <ViewWorkOrderModal
             open={viewModalOpen}
             onClose={() => setViewModalOpen(false)}
             workOrder={selectedOrder}
-            showEditButton={isJefe && selectedOrder.status === 'CERRADA'}
+            showEditButton={(isJefe || canEditClosed)}
             onEdit={() => {
               setViewModalOpen(false);
               setEditModalOpen(true);
             }}
-          />
-
-          <AssignWorkOrderModal
-            open={assignModalOpen}
-            onClose={() => setAssignModalOpen(false)}
-            onSuccess={loadWorkOrders}
-            workOrder={selectedOrder}
-          />
-
-          <StartWorkOrderModal
-            open={startModalOpen}
-            onClose={() => setStartModalOpen(false)}
-            onSuccess={loadWorkOrders}
-            workOrder={selectedOrder}
-          />
-
-          <FinishWorkOrderModal
-            open={finishModalOpen}
-            onClose={() => setFinishModalOpen(false)}
-            onSuccess={loadWorkOrders}
-            workOrder={selectedOrder}
-          />
-
-          <CloseWorkOrderModal
-            open={closeModalOpen}
-            onClose={() => setCloseModalOpen(false)}
-            onSuccess={loadWorkOrders}
-            workOrder={selectedOrder}
-          />
-
-          <RejectWorkOrderModal
-            open={rejectModalOpen}
-            onClose={() => setRejectModalOpen(false)}
-            onSuccess={loadWorkOrders}
-            workOrder={selectedOrder}
-          />
-
-          <UploadPhotosModal
-            open={photosModalOpen}
-            onClose={() => setPhotosModalOpen(false)}
-            onSuccess={loadWorkOrders}
-            workOrder={selectedOrder}
           />
 
           <EditClosedWorkOrderModal
@@ -1060,53 +773,6 @@ const WorkOrdersPage: React.FC = () => {
             onSuccess={loadWorkOrders}
             workOrder={selectedOrder}
           />
-
-          <ChangeAssetModal
-            open={changeAssetModalOpen}
-            onClose={() => setChangeAssetModalOpen(false)}
-            onSuccess={loadWorkOrders}
-            workOrderId={selectedOrder.id}
-            locationId={selectedOrder.location.id}
-            currentAssetId={selectedOrder.asset?.id}
-          />
-
-          <Modal
-            title="Cambiar Ubicación"
-            open={changeLocationModalOpen}
-            onCancel={() => { setChangeLocationModalOpen(false); setNewLocationId(undefined); }}
-            onOk={handleChangeLocation}
-            confirmLoading={changeLocationLoading}
-            okText="Cambiar"
-            cancelText="Cancelar"
-            centered
-            width={420}
-          >
-            <div style={{ marginBottom: 12, fontSize: 13, color: '#595959' }}>
-              Ubicación actual: <strong>{selectedOrder.location?.name}</strong>
-            </div>
-            <Select
-              placeholder="Selecciona la nueva ubicación"
-              value={newLocationId}
-              onChange={setNewLocationId}
-              showSearch
-              optionFilterProp="children"
-              style={{ width: '100%' }}
-            >
-              {allLocations
-                .filter((l: any) => l.id !== selectedOrder.location?.id)
-                .sort((a: any, b: any) => (a.operationalCenter || 0) - (b.operationalCenter || 0))
-                .map((loc: any) => (
-                  <Select.Option key={loc.id} value={loc.id}>
-                    {loc.operationalCenter ? `${loc.operationalCenter} - ${loc.name}` : loc.name}
-                  </Select.Option>
-                ))}
-            </Select>
-            {selectedOrder.asset && (
-              <div style={{ marginTop: 12, padding: '8px 12px', background: '#fff7e6', border: '1px solid #ffd591', borderRadius: 6, fontSize: 13, color: '#ad6800' }}>
-                Esta OT tiene un activo asignado (<strong>{selectedOrder.asset.code}</strong>). Al cambiar la ubicación, deberá volver a asignar el activo correspondiente a la nueva ubicación.
-              </div>
-            )}
-          </Modal>
         </>
       )}
     </div>

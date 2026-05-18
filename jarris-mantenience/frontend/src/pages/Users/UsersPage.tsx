@@ -98,6 +98,10 @@ const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
   CAMBIAR_ACTIVO_OT: ['EDITAR_OT'],
   ASIGNAR_TECNICO: ['EDITAR_OT'],
   REASIGNAR_TECNICO: ['EDITAR_OT'],
+  EDITAR_SOLICITUD: ['VER_SOLICITUDES'],
+  CERRAR_SOLICITUD: ['VER_SOLICITUDES'],
+  RECHAZAR_SOLICITUD: ['VER_SOLICITUDES'],
+  EDITAR_OT_CERRADA: ['VER_ORDENES_CERRADAS'],
   VER_MOVIMIENTOS_ALMACEN: ['VER_TODOS_ALMACENES'],
   VER_ALERTAS_ALMACEN: ['VER_TODOS_ALMACENES'],
   EDITAR_ALMACEN: ['VER_TODOS_ALMACENES'],
@@ -109,22 +113,33 @@ const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
 
 const PERMISSION_CATEGORIES = [
   {
-    title: 'Órdenes de Trabajo',
+    title: 'Solicitudes',
     permissions: [
+      { key: 'VER_SOLICITUDES', label: 'Ver módulo Solicitudes' },
       { key: 'VER_OT', label: 'Ver OT asignadas' },
-      { key: 'VER_TODAS_OT', label: 'Ver todas las OT de equipo' },
-      { key: 'VER_TODAS_OT_LOCATIVO', label: 'Ver todas las OT locativas' },
       { key: 'CREAR_OT_EQUIPO', label: 'Crear OT de equipo' },
       { key: 'CREAR_OT_LOCATIVO', label: 'Crear OT locativo' },
       { key: 'INICIAR_OT', label: 'Iniciar orden de trabajo' },
       { key: 'FINALIZAR_OT', label: 'Finalizar orden de trabajo' },
       { key: 'EDITAR_OT', label: 'Editar órdenes de trabajo' },
+      { key: 'EDITAR_SOLICITUD', label: 'Editar solicitudes' },
+      { key: 'CERRAR_SOLICITUD', label: 'Cerrar solicitudes' },
+      { key: 'RECHAZAR_SOLICITUD', label: 'Rechazar solicitudes' },
       { key: 'ASIGNAR_TECNICO', label: 'Asignar técnico' },
       { key: 'REASIGNAR_TECNICO', label: 'Reasignar técnico/contratista' },
       { key: 'CAMBIAR_ACTIVO_OT', label: 'Cambiar activo de la OT' },
       { key: 'CAMBIAR_UBICACION_OT', label: 'Cambiar ubicación de la OT' },
       { key: 'ANULAR_OT', label: 'Anular órdenes de trabajo' },
       { key: 'CERRAR_OT', label: 'Cerrar órdenes de trabajo' },
+    ],
+  },
+  {
+    title: 'Órdenes de Trabajo (Cerradas)',
+    permissions: [
+      { key: 'VER_ORDENES_CERRADAS', label: 'Ver módulo Órdenes de Trabajo' },
+      { key: 'VER_TODAS_OT', label: 'Ver todas las OT de equipo' },
+      { key: 'VER_TODAS_OT_LOCATIVO', label: 'Ver todas las OT locativas' },
+      { key: 'EDITAR_OT_CERRADA', label: 'Editar OT cerrada' },
     ],
   },
   {

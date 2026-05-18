@@ -79,19 +79,21 @@ const MainLayout: React.FC = () => {
       });
     }
 
-    items.push({
-      key: '/work-orders',
-      icon: <FileTextOutlined />,
-      label: 'OT Equipos',
-      onClick: () => navigate('/work-orders'),
-    });
-
-    if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO'], ['VER_ACTIVOS'])) {
+    if (hasAccess(['ADMIN'], ['VER_SOLICITUDES'])) {
       items.push({
-        key: '/locative',
+        key: '/solicitudes',
+        icon: <FileTextOutlined />,
+        label: 'Solicitudes',
+        onClick: () => navigate('/solicitudes'),
+      });
+    }
+
+    if (hasAccess(['ADMIN'], ['VER_ORDENES_CERRADAS'])) {
+      items.push({
+        key: '/work-orders',
         icon: <HomeOutlined />,
-        label: 'OT Locativos',
-        onClick: () => navigate('/locative'),
+        label: 'Órdenes de Trabajo',
+        onClick: () => navigate('/work-orders'),
       });
     }
 

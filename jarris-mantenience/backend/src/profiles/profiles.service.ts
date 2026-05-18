@@ -25,22 +25,29 @@ const DEFAULT_PROFILES: Record<string, string[]> = {
     Permission.VER_MOVIMIENTOS_ALMACEN, Permission.VER_ALERTAS_ALMACEN,
     Permission.EDITAR_ALMACEN, Permission.EDITAR_ITEMS_ALMACEN, Permission.INGRESAR_STOCK,
     Permission.VER_TRASLADOS_ALMACEN, Permission.CREAR_TRASLADOS_ALMACEN,
+    Permission.VER_SOLICITUDES, Permission.VER_ORDENES_CERRADAS,
+    Permission.EDITAR_SOLICITUD, Permission.CERRAR_SOLICITUD, Permission.RECHAZAR_SOLICITUD,
+    Permission.EDITAR_OT_CERRADA,
   ],
   'TECNICO INTERNO': [
     Permission.VER_OT, Permission.EDITAR_OT, Permission.INICIAR_OT,
     Permission.FINALIZAR_OT, Permission.VER_ACTIVOS, Permission.VER_TODOS_ALMACENES,
+    Permission.VER_SOLICITUDES, Permission.VER_ORDENES_CERRADAS,
   ],
   'CONTRATISTA': [
     Permission.VER_OT, Permission.EDITAR_OT, Permission.INICIAR_OT,
     Permission.FINALIZAR_OT, Permission.VER_TODOS_ALMACENES,
+    Permission.VER_SOLICITUDES, Permission.VER_ORDENES_CERRADAS,
   ],
   'PUNTO DE VENTA': [
     Permission.VER_OT, Permission.CREAR_OT_EQUIPO, Permission.CREAR_OT_LOCATIVO,
     Permission.VER_ACTIVOS,
+    Permission.VER_SOLICITUDES, Permission.VER_ORDENES_CERRADAS,
   ],
   'ADMINISTRACION': [
     Permission.VER_OT, Permission.CREAR_OT_EQUIPO, Permission.CREAR_OT_LOCATIVO,
     Permission.VER_ACTIVOS,
+    Permission.VER_SOLICITUDES, Permission.VER_ORDENES_CERRADAS,
   ],
 };
 

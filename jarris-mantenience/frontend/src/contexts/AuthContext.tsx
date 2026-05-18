@@ -105,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ) {
         return '/dashboard';
       } else {
-        return '/work-orders';
+        return '/solicitudes';
       }
     } catch (error: any) {
       message.error(error.response?.data?.message || 'Error al iniciar sesión');

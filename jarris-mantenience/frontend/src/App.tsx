@@ -10,7 +10,7 @@ import WorkOrdersPage from './pages/WorkOrders/WorkOrdersPage';
 import ReportsPage from './pages/Reports/ReportsPage';
 import UsersPage from './pages/Users/UsersPage';
 import EventsPage from './pages/Events/EventsPage';
-import LocativePage from './pages/Locative/LocativePage';
+import SolicitudesPage from './pages/Solicitudes/SolicitudesPage';
 import TrasladosPage from './pages/Traslados/TrasladosPage';
 import BajasPage from './pages/Bajas/BajasPage';
 import LocativeCategoriesPage from './pages/LocativeCategories/LocativeCategoriesPage';
@@ -35,7 +35,7 @@ const RoleRedirect: React.FC = () => {
   ) {
     return <Navigate to="/dashboard" replace />;
   } else {
-    return <Navigate to="/work-orders" replace />;
+    return <Navigate to="/solicitudes" replace />;
   }
 };
 
@@ -88,15 +88,19 @@ function App() {
                   <AssetsPage />
                 </RoleRoute>
               } />
-              <Route path="work-orders" element={<WorkOrdersPage />} />
+              <Route path="solicitudes" element={
+                <RoleRoute roles={['ADMIN']} permissions={['VER_SOLICITUDES']}>
+                  <SolicitudesPage />
+                </RoleRoute>
+              } />
+              <Route path="work-orders" element={
+                <RoleRoute roles={['ADMIN']} permissions={['VER_ORDENES_CERRADAS']}>
+                  <WorkOrdersPage />
+                </RoleRoute>
+              } />
               <Route path="events" element={
                 <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']} permissions={['VER_EVENTOS']}>
                   <EventsPage />
-                </RoleRoute>
-              } />
-              <Route path="locative" element={
-                <RoleRoute roles={['ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO']} permissions={['VER_ACTIVOS']}>
-                  <LocativePage />
                 </RoleRoute>
               } />
               <Route path="traslados" element={
@@ -176,7 +180,7 @@ const PublicRoute: React.FC<{ children: React.ReactElement }> = ({ children }) =
     if (hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['VER_DASHBOARD'])) {
       return <Navigate to="/dashboard" replace />;
     } else {
-      return <Navigate to="/work-orders" replace />;
+      return <Navigate to="/solicitudes" replace />;
     }
   }
 
