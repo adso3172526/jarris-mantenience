@@ -759,6 +759,7 @@ Fecha: ${new Date().toLocaleString('es-CO')}
     const materialCost = parseFloat(consumptionResult?.total || '0');
 
     wo.eventType = dto.eventType;
+    wo.closingDescription = dto.eventDescription?.trim() || undefined;
     wo.closedBy = dto.closedBy;
     wo.closedAt = new Date();
     wo.status = WorkOrderStatus.CERRADA;

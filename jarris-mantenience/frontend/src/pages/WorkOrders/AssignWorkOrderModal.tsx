@@ -74,9 +74,9 @@ const AssignWorkOrderModal: React.FC<AssignWorkOrderModalProps> = ({
 
   const filteredTechnicians = technicians.filter(tech => {
     if (assigneeType === 'INTERNO') {
-      return tech.roles.includes('TECNICO_INTERNO');
+      return tech.roles.includes('TECNICO_INTERNO') || tech.profile?.name === 'TECNICO INTERNO';
     } else {
-      return tech.roles.includes('CONTRATISTA');
+      return tech.roles.includes('CONTRATISTA') || tech.profile?.name === 'CONTRATISTA';
     }
   });
 

@@ -66,15 +66,14 @@ const CloseWorkOrderModal: React.FC<CloseWorkOrderModalProps> = ({
     }
   }, [open, workOrder]);
 
-  // Load items when warehouse changes (manual selection)
+  // Load items when warehouse changes
   useEffect(() => {
-    if (selectedWarehouseId && !hasExistingConsumption) {
+    if (selectedWarehouseId) {
       warehouseApi.getItems(selectedWarehouseId)
         .then((res) => setWarehouseItems(res.data))
         .catch(() => setWarehouseItems([]));
-      setConsumptionLines([]);
     }
-  }, [selectedWarehouseId, hasExistingConsumption]);
+  }, [selectedWarehouseId]);
 
   const materialCostTotal = consumptionLines.reduce((sum, line) => {
     const item = warehouseItems.find((i: any) => i.id === line.itemId);
@@ -166,15 +165,15 @@ const CloseWorkOrderModal: React.FC<CloseWorkOrderModalProps> = ({
               value={selectedWarehouseId || undefined}
               onChange={(val) => {
                 setSelectedWarehouseId(val || '');
-                if (!hasExistingConsumption) {
-                  setConsumptionLines([]);
-                }
+                setConsumptionLines([]);
+                setWarehouseItems([]);
+                setHasExistingConsumption(false);
                 setConsumptionEdited(true);
               }}
               options={warehouses.map((w: any) => ({ label: w.name, value: w.id }))}
               allowClear
             />
-            {consumptionLines.map((line, idx) => {
+            {selectedWarehouseId && consumptionLines.map((line, idx) => {
               const item = warehouseItems.find((i: any) => i.id === line.itemId);
               const cost = line.unitCost || (item ? Number(item.unitCost) : 0);
               return (
@@ -219,13 +218,24 @@ const CloseWorkOrderModal: React.FC<CloseWorkOrderModalProps> = ({
                     size="small"
                     icon={<DeleteOutlined />}
                     onClick={() => {
-                      setConsumptionLines(consumptionLines.filter((_, i) => i !== idx));
+                      const remaining = consumptionLines.filter((_, i) => i !== idx);
+                      setConsumptionLines(remaining);
                       setConsumptionEdited(true);
+                      if (remaining.length === 0) {
+                        setSelectedWarehouseId('');
+                        setWarehouseItems([]);
+                        setHasExistingConsumption(false);
+                      }
                     }}
                   />
                 </div>
               );
             })}
+            {!selectedWarehouseId && (
+              <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 8, fontStyle: 'italic' }}>
+                Seleccione un almacén para agregar materiales consumidos. Si no se usaron materiales, deje este campo vacío.
+              </div>
+            )}
             <Button
               type="dashed"
               icon={<PlusOutlined />}
@@ -235,17 +245,18 @@ const CloseWorkOrderModal: React.FC<CloseWorkOrderModalProps> = ({
               }}
               size="small"
               block
+              disabled={!selectedWarehouseId}
             >
               Agregar item
             </Button>
 
-            {consumptionLines.length > 0 && (
-              <div style={{ marginTop: 12, padding: 8, background: '#f6ffed', borderRadius: 4, display: 'flex', justifyContent: 'space-between' }}>
-                <span>Costo trabajo: ${Number(workOrder.cost).toLocaleString('es-CO')}</span>
+            <div style={{ marginTop: 12, padding: 8, background: '#f6ffed', borderRadius: 4, display: 'flex', justifyContent: 'space-between' }}>
+              <span>Costo trabajo: ${Number(workOrder.cost).toLocaleString('es-CO')}</span>
+              {consumptionLines.length > 0 && (
                 <span>Costo materiales: ${materialCostTotal.toLocaleString('es-CO')}</span>
-                <strong>Total: ${(Number(workOrder.cost) + materialCostTotal).toLocaleString('es-CO')}</strong>
-              </div>
-            )}
+              )}
+              <strong>Total: ${(Number(workOrder.cost) + materialCostTotal).toLocaleString('es-CO')}</strong>
+            </div>
           </div>
         </>
       )}

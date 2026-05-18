@@ -412,6 +412,18 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
         </>
       )}
 
+      {workOrder.closingDescription && (
+        <>
+          <Divider />
+          <div style={{ marginBottom: 16 }}>
+            <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 8 }}>
+              Observaciones de Cierre
+            </Text>
+            <div style={{ fontSize: 13 }}>{workOrder.closingDescription}</div>
+          </div>
+        </>
+      )}
+
       {/* Materiales Consumidos */}
       {consumptionData.length > 0 && (
         <>
@@ -620,6 +632,17 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
             </Descriptions.Item>
             <Descriptions.Item label="Costo">
               {formatCOP(workOrder.cost)}
+            </Descriptions.Item>
+          </Descriptions>
+        </>
+      )}
+
+      {workOrder.closingDescription && (
+        <>
+          <Title level={5} style={{ marginTop: 24 }}>Observaciones de Cierre</Title>
+          <Descriptions bordered size="small" column={1}>
+            <Descriptions.Item label="Descripción">
+              {workOrder.closingDescription}
             </Descriptions.Item>
           </Descriptions>
         </>

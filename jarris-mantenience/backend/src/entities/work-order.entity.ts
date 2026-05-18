@@ -144,6 +144,9 @@ export class WorkOrderEntity {
   @Column({ type: 'varchar', length: 20, nullable: true, name: 'event_type' })
   eventType?: string;
 
+  @Column({ type: 'text', nullable: true })
+  closingDescription?: string;
+
   @Column({ nullable: true })
   closedBy?: string;
 
