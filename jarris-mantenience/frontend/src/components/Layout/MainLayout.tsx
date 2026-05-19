@@ -298,8 +298,7 @@ const MainLayout: React.FC = () => {
             overflowX: 'hidden',
           }}
         >
-          <div style={{ height: 24, flexShrink: 0 }} />
-          <div style={{ flex: 1, paddingTop: 16, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', paddingBottom: 80 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', overflowY: 'auto' }}>
             {menuItems.map(renderSidebarItem)}
           </div>
         </div>
