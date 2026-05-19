@@ -27,6 +27,7 @@ import {
   PhoneOutlined,
   EnvironmentOutlined,
   IdcardOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import { usersApi, locationsApi, profilesApi } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -237,6 +238,7 @@ const UsersPage: React.FC = () => {
   // --- Profiles state ---
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
+  const [copiedFromProfile, setCopiedFromProfile] = useState<string | null>(null);
   const [allLocations, setAllLocations] = useState(true);
   const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
   const [profileForm] = Form.useForm();
@@ -378,6 +380,7 @@ const UsersPage: React.FC = () => {
 
   const openCreateProfile = () => {
     setEditingProfile(null);
+    setCopiedFromProfile(null);
     setAllLocations(true);
     setSelectedLocationIds([]);
     profileForm.resetFields();
@@ -386,6 +389,7 @@ const UsersPage: React.FC = () => {
   };
 
   const openEditProfile = (profile: Profile) => {
+    setCopiedFromProfile(null);
     setEditingProfile(profile);
     const hasSpecificLocations = profile.locationIds && profile.locationIds.length > 0;
     setAllLocations(!hasSpecificLocations);
@@ -398,7 +402,7 @@ const UsersPage: React.FC = () => {
     setProfileModalOpen(true);
   };
 
-  const handleSaveProfile = async () => {
+  const doSaveProfile = async () => {
     try {
       const values = await profileForm.validateFields();
 
@@ -428,11 +432,31 @@ const UsersPage: React.FC = () => {
       }
 
       setProfileModalOpen(false);
+      setCopiedFromProfile(null);
       loadData();
     } catch (error: any) {
       if (error.response?.data?.message) {
         message.error(error.response.data.message);
       }
+    }
+  };
+
+  const handleSaveProfile = () => {
+    if (copiedFromProfile) {
+      const targetName = editingProfile?.name || profileForm.getFieldValue('name') || 'nuevo perfil';
+      Modal.confirm({
+        title: 'Confirmar copia de permisos',
+        content: `¿Seguro que desea guardar "${targetName}" con los permisos copiados de "${copiedFromProfile}"?`,
+        okText: 'Sí, guardar',
+        cancelText: 'Cancelar',
+        onOk: () => doSaveProfile(),
+        onCancel: () => {
+          profileForm.setFieldsValue({ permissions: editingProfile?.permissions || [] });
+          setCopiedFromProfile(null);
+        },
+      });
+    } else {
+      doSaveProfile();
     }
   };
 
@@ -1112,7 +1136,7 @@ const UsersPage: React.FC = () => {
         title={editingProfile ? 'Editar Perfil' : 'Crear Perfil'}
         open={profileModalOpen}
         onOk={handleSaveProfile}
-        onCancel={() => setProfileModalOpen(false)}
+        onCancel={() => { setProfileModalOpen(false); setCopiedFromProfile(null); }}
         okText="Guardar"
         cancelText="Cancelar"
         width={600}
@@ -1138,6 +1162,33 @@ const UsersPage: React.FC = () => {
               <Switch />
             </Form.Item>
           )}
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 13, fontWeight: 500 }}>
+              <CopyOutlined style={{ marginRight: 6 }} />
+              Copiar permisos de otro perfil
+            </label>
+            <Select
+              key={(editingProfile?.id || 'new') + '-' + String(copiedFromProfile)}
+              style={{ width: '100%', marginTop: 4 }}
+              placeholder="Seleccione un perfil para copiar sus permisos"
+              allowClear
+              onChange={(profileId: string | undefined) => {
+                if (!profileId) {
+                  setCopiedFromProfile(null);
+                  return;
+                }
+                const source = profiles.find(p => p.id === profileId);
+                if (source) {
+                  profileForm.setFieldsValue({ permissions: [...source.permissions] });
+                  setCopiedFromProfile(source.name);
+                }
+              }}
+              options={profiles
+                .filter(p => !editingProfile || p.id !== editingProfile.id)
+                .map(p => ({ label: `${p.name} (${p.permissions.length} permisos)`, value: p.id }))}
+            />
+          </div>
 
           <Form.Item
             label="Permisos"
