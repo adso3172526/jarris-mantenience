@@ -26,7 +26,6 @@ import {
   MailOutlined,
   PhoneOutlined,
   EnvironmentOutlined,
-  IdcardOutlined,
   CopyOutlined,
 } from '@ant-design/icons';
 import { usersApi, locationsApi, profilesApi } from '../../services/api';
