@@ -14,8 +14,8 @@ const DEFAULT_PROFILES: Record<string, string[]> = {
     Permission.ASIGNAR_TECNICO, Permission.REASIGNAR_TECNICO,
     Permission.CAMBIAR_ACTIVO_OT, Permission.CAMBIAR_UBICACION_OT,
     Permission.ANULAR_OT, Permission.CERRAR_OT,
-    Permission.VER_ACTIVOS, Permission.EDITAR_ACTIVOS,
-    Permission.VER_EVENTOS, Permission.VER_BAJAS,
+    Permission.VER_ACTIVOS, Permission.VER_HISTORIAL_ACTIVO,
+    Permission.EDITAR_ACTIVOS, Permission.VER_EVENTOS, Permission.VER_BAJAS,
     Permission.VER_TRASLADOS, Permission.CREAR_TRASLADOS, Permission.EDITAR_TRASLADOS,
     Permission.VER_CATEGORIAS_ACTIVOS, Permission.EDITAR_CATEGORIAS_ACTIVOS,
     Permission.VER_CATEGORIAS_LOCATIVOS, Permission.EDITAR_CATEGORIAS_LOCATIVOS,
@@ -28,6 +28,9 @@ const DEFAULT_PROFILES: Record<string, string[]> = {
     Permission.VER_SOLICITUDES, Permission.VER_ORDENES_CERRADAS,
     Permission.EDITAR_SOLICITUD, Permission.CERRAR_SOLICITUD, Permission.RECHAZAR_SOLICITUD,
     Permission.EDITAR_OT_CERRADA,
+    Permission.CONSUMIR_ALMACEN_OT, Permission.EDITAR_CONSUMO_ALMACEN_OT,
+    Permission.CREAR_USUARIOS,
+    Permission.VER_PERFILES, Permission.CREAR_PERFILES, Permission.EDITAR_PERFILES,
   ],
   'TECNICO INTERNO': [
     Permission.VER_OT, Permission.EDITAR_OT, Permission.INICIAR_OT,
@@ -77,11 +80,34 @@ export class ProfilesService implements OnModuleInit {
     for (const [name, permissions] of Object.entries(DEFAULT_PROFILES)) {
       const exists = await this.repo.findOne({ where: { name } });
       if (!exists) {
-        const profile = this.repo.create({ name, permissions, locationIds: [], active: true });
+        const code = await this.generateNextCode();
+        const profile = this.repo.create({ code, name, permissions, locationIds: [], active: true });
         await this.repo.save(profile);
-        this.logger.log(`[seed] Perfil creado: ${name}`);
+        this.logger.log(`[seed] Perfil creado: ${code} - ${name}`);
       }
     }
+
+    // Assign codes to all existing profiles without one
+    const withoutCode = await this.repo
+      .createQueryBuilder('p')
+      .where('p.code IS NULL OR p.code = :empty', { empty: '' })
+      .orderBy('p.createdAt', 'ASC')
+      .getMany();
+
+    for (const profile of withoutCode) {
+      profile.code = await this.generateNextCode();
+      await this.repo.save(profile);
+      this.logger.log(`[seed] Código asignado: ${profile.code} - ${profile.name}`);
+    }
+  }
+
+  private async generateNextCode(): Promise<string> {
+    const profiles = await this.repo.find({ select: ['code'] });
+    const numbers = profiles
+      .map(p => parseInt(p.code, 10))
+      .filter(n => !isNaN(n));
+    const next = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
+    return next.toString().padStart(2, '0');
   }
 
   async findByName(name: string): Promise<ProfileEntity | null> {
@@ -101,7 +127,9 @@ export class ProfilesService implements OnModuleInit {
       throw new BadRequestException(`Permisos inválidos: ${invalid.join(', ')}`);
     }
 
+    const code = await this.generateNextCode();
     const profile = this.repo.create({
+      code,
       name,
       permissions: dto.permissions,
       locationIds: dto.locationIds || [],

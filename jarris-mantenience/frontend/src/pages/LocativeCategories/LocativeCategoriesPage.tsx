@@ -130,7 +130,7 @@ const LocativeCategoriesPage: React.FC = () => {
 
   const columns: ColumnsType<LocativeCategory> = [
     {
-      title: 'Código',
+      title: 'Id',
       dataIndex: 'code',
       key: 'code',
       width: 90,

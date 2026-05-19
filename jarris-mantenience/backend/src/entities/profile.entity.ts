@@ -11,6 +11,9 @@ export class ProfileEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ unique: true, nullable: true })
+  code: string;
+
   @Column({ unique: true })
   name: string;
 

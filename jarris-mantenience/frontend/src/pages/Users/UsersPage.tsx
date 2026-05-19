@@ -54,6 +54,7 @@ interface User {
 
 interface Profile {
   id: string;
+  code: string;
   name: string;
   permissions: string[];
   locationIds: string[];
@@ -79,6 +80,7 @@ const roleLabels: Record<string, string> = {
 };
 
 const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
+  VER_HISTORIAL_ACTIVO: ['VER_ACTIVOS'],
   EDITAR_ACTIVOS: ['VER_ACTIVOS'],
   VER_TRASLADOS: ['VER_ACTIVOS'],
   CREAR_TRASLADOS: ['VER_ACTIVOS', 'VER_TRASLADOS'],
@@ -102,6 +104,9 @@ const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
   CERRAR_SOLICITUD: ['VER_SOLICITUDES'],
   RECHAZAR_SOLICITUD: ['VER_SOLICITUDES'],
   EDITAR_OT_CERRADA: ['VER_ORDENES_CERRADAS'],
+  EDITAR_CONSUMO_ALMACEN_OT: ['CONSUMIR_ALMACEN_OT'],
+  CREAR_PERFILES: ['VER_PERFILES'],
+  EDITAR_PERFILES: ['VER_PERFILES'],
   VER_MOVIMIENTOS_ALMACEN: ['VER_TODOS_ALMACENES'],
   VER_ALERTAS_ALMACEN: ['VER_TODOS_ALMACENES'],
   EDITAR_ALMACEN: ['VER_TODOS_ALMACENES'],
@@ -146,6 +151,7 @@ const PERMISSION_CATEGORIES = [
     title: 'Activos',
     permissions: [
       { key: 'VER_ACTIVOS', label: 'Ver activos' },
+      { key: 'VER_HISTORIAL_ACTIVO', label: 'Ver historial del activo' },
       { key: 'EDITAR_ACTIVOS', label: 'Editar activos' },
       { key: 'VER_EVENTOS', label: 'Ver eventos' },
       { key: 'VER_BAJAS', label: 'Ver bajas' },
@@ -186,6 +192,8 @@ const PERMISSION_CATEGORIES = [
       { key: 'INGRESAR_STOCK', label: 'Ingresar stock' },
       { key: 'VER_TRASLADOS_ALMACEN', label: 'Ver traslados de almacén' },
       { key: 'CREAR_TRASLADOS_ALMACEN', label: 'Crear traslados de almacén' },
+      { key: 'CONSUMIR_ALMACEN_OT', label: 'Registrar consumo de almacén en OT' },
+      { key: 'EDITAR_CONSUMO_ALMACEN_OT', label: 'Editar consumo de almacén en OT cerrada' },
     ],
   },
   {
@@ -200,12 +208,15 @@ const PERMISSION_CATEGORIES = [
     permissions: [
       { key: 'CREAR_USUARIOS', label: 'Crear usuarios' },
       { key: 'CAMBIAR_PASSWORD_USUARIO', label: 'Cambiar contraseña de usuario' },
+      { key: 'VER_PERFILES', label: 'Ver perfiles' },
+      { key: 'CREAR_PERFILES', label: 'Crear perfiles' },
+      { key: 'EDITAR_PERFILES', label: 'Editar perfiles' },
     ],
   },
 ];
 
 const UsersPage: React.FC = () => {
-  const { hasAccess } = useAuth();
+  const { hasAccess, hasPermission } = useAuth();
   const isAdmin = hasAccess(['ADMIN']);
 
   // --- Users state ---
@@ -583,6 +594,13 @@ const UsersPage: React.FC = () => {
 
   const profileColumns = [
     {
+      title: 'Id',
+      dataIndex: 'code',
+      key: 'code',
+      width: 80,
+      render: (code: string) => <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{code}</span>,
+    },
+    {
       title: 'Nombre',
       dataIndex: 'name',
       key: 'name',
@@ -607,7 +625,7 @@ const UsersPage: React.FC = () => {
         <Badge status={active ? 'success' : 'error'} text={active ? 'Activo' : 'Inactivo'} />
       ),
     },
-    {
+    ...((isAdmin || hasPermission('EDITAR_PERFILES')) ? [{
       title: 'Acciones',
       key: 'actions',
       render: (_: any, record: Profile) => (
@@ -617,7 +635,7 @@ const UsersPage: React.FC = () => {
           onClick={() => openEditProfile(record)}
         />
       ),
-    },
+    }] : []),
   ];
 
   const profilePageSize = 5;
@@ -637,7 +655,7 @@ const UsersPage: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
-            <IdcardOutlined style={{ marginRight: 6 }} />
+            <span style={{ fontFamily: 'monospace', fontWeight: 600, marginRight: 6 }}>{profile.code}</span>
             {profile.name}
           </div>
           <Space size={4} wrap>
@@ -649,11 +667,13 @@ const UsersPage: React.FC = () => {
             />
           </Space>
         </div>
-        <Button
-          type="link"
-          icon={<EditOutlined />}
-          onClick={() => openEditProfile(profile)}
-        />
+        {(isAdmin || hasPermission('EDITAR_PERFILES')) && (
+          <Button
+            type="link"
+            icon={<EditOutlined />}
+            onClick={() => openEditProfile(profile)}
+          />
+        )}
       </div>
     </Card>
   );
@@ -742,14 +762,16 @@ const UsersPage: React.FC = () => {
           <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>
             Gestión de Perfiles
           </span>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={openCreateProfile}
-            size="middle"
-          >
-            {isMobile ? 'Nuevo' : 'Nuevo Perfil'}
-          </Button>
+          {(isAdmin || hasPermission('CREAR_PERFILES')) && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={openCreateProfile}
+              size="middle"
+            >
+              {isMobile ? 'Nuevo' : 'Nuevo Perfil'}
+            </Button>
+          )}
         </div>
       }
       styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
@@ -796,7 +818,7 @@ const UsersPage: React.FC = () => {
       label: 'Usuarios',
       children: usersTabContent,
     },
-    ...(isAdmin ? [{
+    ...((isAdmin || hasPermission('VER_PERFILES')) ? [{
       key: 'profiles',
       label: 'Perfiles',
       children: profilesTabContent,

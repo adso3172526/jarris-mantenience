@@ -19,7 +19,7 @@ const CloseWorkOrderModal: React.FC<CloseWorkOrderModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
 
   // Consumption state
   const [warehouses, setWarehouses] = useState<any[]>([]);
@@ -29,9 +29,11 @@ const CloseWorkOrderModal: React.FC<CloseWorkOrderModalProps> = ({
   const [hasExistingConsumption, setHasExistingConsumption] = useState(false);
   const [consumptionEdited, setConsumptionEdited] = useState(false);
 
+  const canConsumeWarehouse = hasPermission('CONSUMIR_ALMACEN_OT');
+
   // Load consumption data and warehouses when modal opens
   useEffect(() => {
-    if (open && workOrder?.id) {
+    if (open && workOrder?.id && canConsumeWarehouse) {
       warehouseApi.getAll()
         .then((res) => setWarehouses(res.data))
         .catch(() => setWarehouses([]));
@@ -155,7 +157,7 @@ const CloseWorkOrderModal: React.FC<CloseWorkOrderModalProps> = ({
       />
 
       {/* Consumption section */}
-      {(hasExistingConsumption || warehouses.length > 0) && (
+      {canConsumeWarehouse && (hasExistingConsumption || warehouses.length > 0) && (
         <>
           <Divider style={{ margin: '12px 0' }}>Materiales Consumidos</Divider>
           <div style={{ marginBottom: 16 }}>

@@ -14,6 +14,7 @@ export enum Permission {
   ANULAR_OT = 'ANULAR_OT',
   CERRAR_OT = 'CERRAR_OT',
   VER_ACTIVOS = 'VER_ACTIVOS',
+  VER_HISTORIAL_ACTIVO = 'VER_HISTORIAL_ACTIVO',
   EDITAR_ACTIVOS = 'EDITAR_ACTIVOS',
   VER_EVENTOS = 'VER_EVENTOS',
   VER_BAJAS = 'VER_BAJAS',
@@ -46,6 +47,11 @@ export enum Permission {
   CERRAR_SOLICITUD = 'CERRAR_SOLICITUD',
   RECHAZAR_SOLICITUD = 'RECHAZAR_SOLICITUD',
   EDITAR_OT_CERRADA = 'EDITAR_OT_CERRADA',
+  VER_PERFILES = 'VER_PERFILES',
+  CREAR_PERFILES = 'CREAR_PERFILES',
+  EDITAR_PERFILES = 'EDITAR_PERFILES',
+  CONSUMIR_ALMACEN_OT = 'CONSUMIR_ALMACEN_OT',
+  EDITAR_CONSUMO_ALMACEN_OT = 'EDITAR_CONSUMO_ALMACEN_OT',
 }
 
 export const ALL_PERMISSIONS = Object.values(Permission);
@@ -66,6 +72,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   [Permission.ANULAR_OT]: 'Anular órdenes de trabajo',
   [Permission.CERRAR_OT]: 'Cerrar órdenes de trabajo',
   [Permission.VER_ACTIVOS]: 'Ver activos',
+  [Permission.VER_HISTORIAL_ACTIVO]: 'Ver historial del activo',
   [Permission.EDITAR_ACTIVOS]: 'Editar activos',
   [Permission.VER_EVENTOS]: 'Ver eventos',
   [Permission.VER_BAJAS]: 'Ver bajas',
@@ -98,4 +105,9 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   [Permission.CERRAR_SOLICITUD]: 'Cerrar solicitudes',
   [Permission.RECHAZAR_SOLICITUD]: 'Rechazar solicitudes',
   [Permission.EDITAR_OT_CERRADA]: 'Editar OT cerrada',
+  [Permission.VER_PERFILES]: 'Ver perfiles',
+  [Permission.CREAR_PERFILES]: 'Crear perfiles',
+  [Permission.EDITAR_PERFILES]: 'Editar perfiles',
+  [Permission.CONSUMIR_ALMACEN_OT]: 'Registrar consumo de almacén en OT',
+  [Permission.EDITAR_CONSUMO_ALMACEN_OT]: 'Editar consumo de almacén en OT cerrada',
 };

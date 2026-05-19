@@ -403,7 +403,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
               <div style={{ fontSize: 13 }}>{workOrder.workDoneDescription}</div>
             </div>
             <div style={{ marginBottom: 8 }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>Costo:</Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>Costo trabajo:</Text>
               <div style={{ fontSize: 16, fontWeight: 600, color: '#E60012' }}>
                 {formatCOP(workOrder.cost)}
               </div>
@@ -630,7 +630,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
             <Descriptions.Item label="Descripción">
               {workOrder.workDoneDescription}
             </Descriptions.Item>
-            <Descriptions.Item label="Costo">
+            <Descriptions.Item label="Costo trabajo">
               {formatCOP(workOrder.cost)}
             </Descriptions.Item>
           </Descriptions>

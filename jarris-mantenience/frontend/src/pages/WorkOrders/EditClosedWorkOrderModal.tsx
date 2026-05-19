@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, InputNumber, message, Upload, Button, Tabs, Image, Divider } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { Modal, Form, Input, InputNumber, message, Upload, Button, Tabs, Image, Divider, Select } from 'antd';
+import { UploadOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd';
-import { workOrdersApi } from '../../services/api';
+import { workOrdersApi, warehouseApi } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface EditClosedWorkOrderModalProps {
@@ -24,7 +24,15 @@ const EditClosedWorkOrderModal: React.FC<EditClosedWorkOrderModalProps> = ({
   const [pdvPhotos, setPdvPhotos] = useState<UploadFile[]>([]);
   const [techPhotos, setTechPhotos] = useState<UploadFile[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
+
+  // Consumption state
+  const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>('');
+  const [warehouseItems, setWarehouseItems] = useState<any[]>([]);
+  const [consumptionLines, setConsumptionLines] = useState<{ itemId: string; quantity: number; itemName?: string; unitCost?: number }[]>([]);
+  const [consumptionEdited, setConsumptionEdited] = useState(false);
+  const canEditConsumption = hasPermission('EDITAR_CONSUMO_ALMACEN_OT');
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -43,8 +51,53 @@ const EditClosedWorkOrderModal: React.FC<EditClosedWorkOrderModalProps> = ({
       setInvoiceFile(null);
       setPdvPhotos([]);
       setTechPhotos([]);
+
+      // Load consumption data if user has permission
+      if (canEditConsumption) {
+        warehouseApi.getAll()
+          .then((res) => setWarehouses(res.data))
+          .catch(() => setWarehouses([]));
+
+        warehouseApi.getConsumption(workOrder.id)
+          .then((res) => {
+            if (res.data && res.data.length > 0) {
+              setConsumptionLines(res.data.map((m: any) => ({
+                itemId: m.itemId,
+                quantity: Number(m.quantity),
+                itemName: m.item?.name,
+                unitCost: Number(m.unitCostAtTime),
+              })));
+              const whId = res.data[0].warehouseId;
+              setSelectedWarehouseId(whId);
+              warehouseApi.getItems(whId).then(r => setWarehouseItems(r.data)).catch(() => {});
+            }
+          })
+          .catch(() => {});
+      }
+    }
+    if (!open) {
+      setWarehouses([]);
+      setSelectedWarehouseId('');
+      setWarehouseItems([]);
+      setConsumptionLines([]);
+      setConsumptionEdited(false);
     }
   }, [open, workOrder, form]);
+
+  // Load items when warehouse changes
+  useEffect(() => {
+    if (selectedWarehouseId) {
+      warehouseApi.getItems(selectedWarehouseId)
+        .then((res) => setWarehouseItems(res.data))
+        .catch(() => setWarehouseItems([]));
+    }
+  }, [selectedWarehouseId]);
+
+  const materialCostTotal = consumptionLines.reduce((sum, line) => {
+    const item = warehouseItems.find((i: any) => i.id === line.itemId);
+    const cost = line.unitCost || (item ? Number(item.unitCost) : 0);
+    return sum + cost * (line.quantity || 0);
+  }, 0);
 
   const handleSubmit = async (values: any) => {
     try {
@@ -53,7 +106,22 @@ const EditClosedWorkOrderModal: React.FC<EditClosedWorkOrderModalProps> = ({
       // 1. Actualizar datos básicos
       await workOrdersApi.editClosed(workOrder.id, values);
 
-      // 2. Reemplazar factura si hay una nueva
+      // 2. Update consumption if edited
+      if (consumptionEdited && selectedWarehouseId && canEditConsumption) {
+        const validLines = consumptionLines.filter(l => l.itemId && l.quantity > 0);
+        try {
+          await warehouseApi.updateConsumption(workOrder.id, {
+            warehouseId: selectedWarehouseId,
+            workOrderId: workOrder.id,
+            lines: validLines,
+            createdBy: user?.email || '',
+          });
+        } catch (err: any) {
+          message.warning(err.response?.data?.message || 'Error al actualizar consumo de materiales');
+        }
+      }
+
+      // 3. Reemplazar factura si hay una nueva
       if (invoiceFile?.originFileObj) {
         const formData = new FormData();
         formData.append('file', invoiceFile.originFileObj);
@@ -258,6 +326,100 @@ const EditClosedWorkOrderModal: React.FC<EditClosedWorkOrderModalProps> = ({
         </Form>
       ),
     },
+    ...(canEditConsumption ? [{
+      key: 'consumption',
+      label: 'Consumo',
+      children: (
+        <div>
+          <Select
+            style={{ width: '100%', marginBottom: 12 }}
+            placeholder="Seleccione almacén"
+            value={selectedWarehouseId || undefined}
+            onChange={(val: string) => {
+              setSelectedWarehouseId(val || '');
+              setConsumptionLines([]);
+              setWarehouseItems([]);
+              setConsumptionEdited(true);
+            }}
+            options={warehouses.map((w: any) => ({ label: w.name, value: w.id }))}
+            allowClear
+          />
+          {selectedWarehouseId && consumptionLines.map((line, idx) => {
+            const item = warehouseItems.find((i: any) => i.id === line.itemId);
+            const cost = line.unitCost || (item ? Number(item.unitCost) : 0);
+            return (
+              <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Select
+                  style={{ flex: 1, minWidth: 150 }}
+                  placeholder="Buscar item..."
+                  value={line.itemId || undefined}
+                  onChange={(val: string) => {
+                    const newLines = [...consumptionLines];
+                    newLines[idx] = { ...newLines[idx], itemId: val, unitCost: undefined };
+                    setConsumptionLines(newLines);
+                    setConsumptionEdited(true);
+                  }}
+                  options={warehouseItems.map((i: any) => ({
+                    label: `${i.name}${i.brand ? ` - ${i.brand}` : ''} (Stock: ${Number(i.stock).toLocaleString('es-CO')})`,
+                    value: i.id,
+                  }))}
+                  showSearch
+                  filterOption={(input: string, option: any) =>
+                    (option?.label as string ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                />
+                <InputNumber
+                  style={{ width: 100 }}
+                  placeholder="Cant."
+                  min={0.0001}
+                  max={item ? Number(item.stock) + (line.quantity || 0) : undefined}
+                  value={line.quantity}
+                  onChange={(val: number | null) => {
+                    const newLines = [...consumptionLines];
+                    newLines[idx] = { ...newLines[idx], quantity: val || 0 };
+                    setConsumptionLines(newLines);
+                    setConsumptionEdited(true);
+                  }}
+                />
+                <span style={{ fontSize: 12, color: '#888', whiteSpace: 'nowrap' }}>
+                  ${cost.toLocaleString('es-CO')} c/u = ${(cost * (line.quantity || 0)).toLocaleString('es-CO')}
+                </span>
+                <Button
+                  danger
+                  size="small"
+                  icon={<DeleteOutlined />}
+                  onClick={() => {
+                    setConsumptionLines(consumptionLines.filter((_, i) => i !== idx));
+                    setConsumptionEdited(true);
+                  }}
+                />
+              </div>
+            );
+          })}
+          {selectedWarehouseId && (
+            <Button
+              type="dashed"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setConsumptionLines([...consumptionLines, { itemId: '', quantity: 0 }]);
+                setConsumptionEdited(true);
+              }}
+              size="small"
+              block
+            >
+              Agregar item
+            </Button>
+          )}
+          {consumptionLines.length > 0 && (
+            <div style={{ marginTop: 12, padding: 8, background: '#f6ffed', borderRadius: 4, display: 'flex', justifyContent: 'space-between' }}>
+              <span>Costo trabajo: ${Number(workOrder?.cost || 0).toLocaleString('es-CO')}</span>
+              <span>Costo materiales: ${materialCostTotal.toLocaleString('es-CO')}</span>
+              <strong>Total: ${(Number(workOrder?.cost || 0) + materialCostTotal).toLocaleString('es-CO')}</strong>
+            </div>
+          )}
+        </div>
+      ),
+    }] : []),
     {
       key: 'invoice',
       label: 'Factura',

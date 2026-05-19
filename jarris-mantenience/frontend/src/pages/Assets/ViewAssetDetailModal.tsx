@@ -3,6 +3,7 @@ import { Modal, Tabs, Descriptions, Table, Tag, Image, Spin, message, Card, Divi
 import dayjs from 'dayjs';
 import { assetsApi, workOrdersApi, assetEventsApi, usersApi } from '../../services/api';
 import { assetStatusColors, eventTypeStyles, eventTypeLabels } from '../../config/theme';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ViewAssetDetailModalProps {
   open: boolean;
@@ -27,6 +28,8 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
   const [transfersPage, setTransfersPage] = useState(1);
   const [bajasPage, setBajasPage] = useState(1);
   const [activeTab, setActiveTab] = useState('info');
+  const { hasPermission } = useAuth();
+  const canViewHistory = hasPermission('VER_HISTORIAL_ACTIVO');
 
   const formatCOP = (value: number) => {
     return `$${Math.round(value).toLocaleString('es-CO')}`;
@@ -753,7 +756,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
         </div>
       ),
     },
-    {
+    ...(canViewHistory ? [{
       key: 'history',
       label: isMobile ? 'Mantto' : 'Mantenimientos',
       children: (
@@ -920,7 +923,7 @@ const ViewAssetDetailModal: React.FC<ViewAssetDetailModalProps> = ({
           )}
         </div>
       ),
-    },
+    }] : []),
   ];
 
   return (

@@ -22,7 +22,7 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [invoiceFile, setInvoiceFile] = useState<UploadFile | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
 
   // Warehouse consumption
   const [warehouses, setWarehouses] = useState<any[]>([]);
@@ -38,9 +38,11 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const canConsumeWarehouse = hasPermission('CONSUMIR_ALMACEN_OT');
+
   // Load all warehouses when modal opens
   useEffect(() => {
-    if (open) {
+    if (open && canConsumeWarehouse) {
       warehouseApi.getAll()
         .then((res) => setWarehouses(res.data))
         .catch(() => setWarehouses([]));
@@ -213,9 +215,8 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
         </Form.Item>
 
         <Form.Item
-          label="Costo del trabajo"
+          label="Costo del trabajo (opcional)"
           name="cost"
-          rules={[{ required: true, message: 'El costo es requerido' }]}
           style={{ marginBottom: isMobile ? 16 : 24 }}
         >
           <InputNumber
@@ -267,7 +268,7 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
       </Form>
 
       {/* Material Consumption Section */}
-      {warehouses.length > 0 && (
+      {canConsumeWarehouse && warehouses.length > 0 && (
         <Collapse
           ghost
           style={{ marginTop: 8 }}
@@ -332,7 +333,14 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
                             danger
                             size="small"
                             icon={<DeleteOutlined />}
-                            onClick={() => setConsumptionLines(consumptionLines.filter((_, i) => i !== idx))}
+                            onClick={() => {
+                              const remaining = consumptionLines.filter((_, i) => i !== idx);
+                              setConsumptionLines(remaining);
+                              if (remaining.length === 0) {
+                                setSelectedWarehouseId('');
+                                setWarehouseItems([]);
+                              }
+                            }}
                           />
                         </div>
                       );

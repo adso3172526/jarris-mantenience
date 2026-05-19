@@ -147,7 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user.roles.includes('ADMIN')) return true;
     // For non-ADMIN: only check permissions (ignore roles param)
     if (permissions && permissions.length > 0 && user.permissions.length > 0) {
-      return permissions.some(p => user.permissions.includes(p));
+      return permissions.every(p => user.permissions.includes(p));
     }
     return false;
   };

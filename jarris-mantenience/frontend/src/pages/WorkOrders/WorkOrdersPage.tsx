@@ -56,6 +56,7 @@ interface WorkOrder {
     name: string;
   };
   cost: number;
+  materialsCost: number;
   createdAt: string;
   finishedAt?: string;
   closedAt?: string;
@@ -317,7 +318,12 @@ const WorkOrdersPage: React.FC = () => {
         )}
 
         <div style={{ fontSize: 13, fontWeight: 600, color: '#E60012', marginBottom: 4 }}>
-          {formatCOP(record.cost)}
+          {formatCOP(Number(record.cost || 0) + Number(record.materialsCost || 0))}
+          {(Number(record.cost || 0) > 0 || Number(record.materialsCost || 0) > 0) && (
+            <span style={{ fontSize: 11, color: '#888', fontWeight: 400, marginLeft: 6 }}>
+              ({Number(record.cost || 0) > 0 ? `Trab: ${formatCOP(record.cost)}` : ''}{Number(record.cost || 0) > 0 && Number(record.materialsCost || 0) > 0 ? ' + ' : ''}{Number(record.materialsCost || 0) > 0 ? `Mat: ${formatCOP(record.materialsCost)}` : ''})
+            </span>
+          )}
         </div>
 
         <div style={{ fontSize: 11, color: '#8c8c8c' }}>
@@ -447,13 +453,30 @@ const WorkOrdersPage: React.FC = () => {
       sorter: (a, b) => (a.title || '').localeCompare(b.title || ''),
     },
     {
-      title: 'Costo',
+      title: 'Trabajo',
       dataIndex: 'cost',
       key: 'cost',
-      width: 100,
+      width: 90,
       ellipsis: true,
       sorter: (a, b) => Number(a.cost || 0) - Number(b.cost || 0),
-      render: (cost) => formatCOP(cost),
+      render: (cost) => Number(cost) > 0 ? formatCOP(cost) : <span style={{ color: '#8c8c8c' }}>—</span>,
+    },
+    {
+      title: 'Materiales',
+      dataIndex: 'materialsCost',
+      key: 'materialsCost',
+      width: 90,
+      ellipsis: true,
+      sorter: (a, b) => Number(a.materialsCost || 0) - Number(b.materialsCost || 0),
+      render: (val) => val && Number(val) > 0 ? formatCOP(val) : <span style={{ color: '#8c8c8c' }}>—</span>,
+    },
+    {
+      title: 'Total',
+      key: 'total',
+      width: 90,
+      ellipsis: true,
+      sorter: (a, b) => (Number(a.cost || 0) + Number(a.materialsCost || 0)) - (Number(b.cost || 0) + Number(b.materialsCost || 0)),
+      render: (_, record) => formatCOP(Number(record.cost || 0) + Number(record.materialsCost || 0)),
     },
     {
       title: 'Acciones',

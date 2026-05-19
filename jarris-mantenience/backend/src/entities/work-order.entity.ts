@@ -117,6 +117,9 @@ export class WorkOrderEntity {
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   cost: number;
 
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0, name: 'materials_cost' })
+  materialsCost: number;
+
   @Column({ nullable: true })
   startedBy?: string;
 

@@ -763,7 +763,7 @@ Fecha: ${new Date().toLocaleString('es-CO')}
     wo.closedBy = dto.closedBy;
     wo.closedAt = new Date();
     wo.status = WorkOrderStatus.CERRADA;
-    wo.cost = Number(wo.cost) + materialCost;
+    wo.materialsCost = materialCost;
 
     await manager.save(wo);
 

@@ -20,6 +20,7 @@ import { UpdateItemDto } from './dto/update-item.dto';
 import { StockEntryDto } from './dto/stock-entry.dto';
 import { CreateTransferDto } from './dto/create-transfer.dto';
 import { ConsumeItemsDto } from './dto/consume-items.dto';
+import { WorkOrderEntity } from '../entities/work-order.entity';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -389,6 +390,15 @@ export class WarehouseService {
     dto: ConsumeItemsDto,
   ): Promise<StockMovementEntity[]> {
     return this.dataSource.transaction(async (manager) => {
+      // 0. Get previous material cost to recalculate work order cost
+      const prevCostResult = await manager
+        .createQueryBuilder(StockMovementEntity, 'm')
+        .select('COALESCE(SUM(m.totalCost), 0)', 'total')
+        .where('m.workOrderId = :workOrderId', { workOrderId })
+        .andWhere('m.type = :type', { type: StockMovementType.CONSUMO })
+        .getRawOne();
+      const prevMaterialsCost = parseFloat(prevCostResult?.total || '0');
+
       // 1. Revert previous consumption movements
       const previousMovements = await manager.find(StockMovementEntity, {
         where: {
@@ -410,41 +420,52 @@ export class WarehouseService {
       }
 
       // 2. Create new consumption movements
-      if (!dto.lines || dto.lines.length === 0) return [];
-
+      let newMaterialsCost = 0;
       const movements: StockMovementEntity[] = [];
-      for (const line of dto.lines) {
-        const item = await manager.findOne(WarehouseItemEntity, {
-          where: { id: line.itemId, warehouseId: dto.warehouseId },
-        });
-        if (!item) {
-          throw new NotFoundException(`Item ${line.itemId} no encontrado`);
+
+      if (dto.lines && dto.lines.length > 0) {
+        for (const line of dto.lines) {
+          const item = await manager.findOne(WarehouseItemEntity, {
+            where: { id: line.itemId, warehouseId: dto.warehouseId },
+          });
+          if (!item) {
+            throw new NotFoundException(`Item ${line.itemId} no encontrado`);
+          }
+          if (Number(item.stock) < line.quantity) {
+            throw new BadRequestException(
+              `Stock insuficiente para "${item.name}". Disponible: ${item.stock}`,
+            );
+          }
+
+          const unitCost = Number(item.unitCost);
+          const lineCost = line.quantity * unitCost;
+          newMaterialsCost += lineCost;
+
+          await manager.update(WarehouseItemEntity, item.id, {
+            stock: Number(item.stock) - line.quantity,
+          });
+
+          const movement = new StockMovementEntity();
+          movement.type = StockMovementType.CONSUMO;
+          movement.warehouseId = dto.warehouseId;
+          movement.itemId = item.id;
+          movement.quantity = line.quantity;
+          movement.unitCostAtTime = unitCost;
+          movement.totalCost = lineCost;
+          movement.workOrderId = workOrderId;
+          movement.observation = dto.observation?.trim() || undefined;
+          movement.createdBy = dto.createdBy;
+
+          const saved = await manager.save(movement);
+          movements.push(saved);
         }
-        if (Number(item.stock) < line.quantity) {
-          throw new BadRequestException(
-            `Stock insuficiente para "${item.name}". Disponible: ${item.stock}`,
-          );
-        }
+      }
 
-        const unitCost = Number(item.unitCost);
-
-        await manager.update(WarehouseItemEntity, item.id, {
-          stock: Number(item.stock) - line.quantity,
-        });
-
-        const movement = new StockMovementEntity();
-        movement.type = StockMovementType.CONSUMO;
-        movement.warehouseId = dto.warehouseId;
-        movement.itemId = item.id;
-        movement.quantity = line.quantity;
-        movement.unitCostAtTime = unitCost;
-        movement.totalCost = line.quantity * unitCost;
-        movement.workOrderId = workOrderId;
-        movement.observation = dto.observation?.trim() || undefined;
-        movement.createdBy = dto.createdBy;
-
-        const saved = await manager.save(movement);
-        movements.push(saved);
+      // 3. Update work order materialsCost
+      const wo = await manager.findOne(WorkOrderEntity, { where: { id: workOrderId } });
+      if (wo) {
+        wo.materialsCost = newMaterialsCost;
+        await manager.save(wo);
       }
 
       return movements;
