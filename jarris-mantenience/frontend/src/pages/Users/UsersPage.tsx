@@ -941,7 +941,7 @@ const UsersPage: React.FC = () => {
                   borderRadius: 4,
                   padding: 8,
                 }}>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
                     {locations
                       .filter((loc) => loc.active !== false)
                       .sort((a: any, b: any) => a.name.localeCompare(b.name))
@@ -956,7 +956,6 @@ const UsersPage: React.FC = () => {
                             setUserSelectedLocationIds(prev => prev.filter(id => id !== loc.id));
                           }
                         }}
-                        style={{ minWidth: '45%' }}
                       >
                         {loc.name} <span style={{ color: '#8c8c8c', fontSize: 11 }}>({loc.type})</span>
                       </Checkbox>
