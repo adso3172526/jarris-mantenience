@@ -30,6 +30,10 @@ export class UpdateUserDto {
   active?: boolean;
 
   @IsOptional()
+  @IsArray()
+  locationIds?: string[];
+
+  @IsOptional()
   @IsString()
   profileId?: string;
 }

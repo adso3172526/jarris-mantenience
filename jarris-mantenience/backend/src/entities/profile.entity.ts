@@ -4,7 +4,9 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { ProfilePermissionEntity } from './profile-permission.entity';
 
 @Entity('profiles')
 export class ProfileEntity {
@@ -17,11 +19,8 @@ export class ProfileEntity {
   @Column({ unique: true })
   name: string;
 
-  @Column({ type: 'jsonb', default: () => "'[]'::jsonb" })
-  permissions: string[];
-
-  @Column({ type: 'jsonb', default: () => "'[]'::jsonb" })
-  locationIds: string[];
+  @OneToMany(() => ProfilePermissionEntity, (pp) => pp.profile, { cascade: true })
+  profilePermissions: ProfilePermissionEntity[];
 
   @Column({ default: true })
   active: boolean;

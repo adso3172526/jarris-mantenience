@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException, OnModuleInit, Logge
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProfileEntity } from '../entities/profile.entity';
+import { ProfilePermissionEntity } from '../entities/profile-permission.entity';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ALL_PERMISSIONS, Permission } from '../common/enums/permission.enum';
@@ -70,6 +71,8 @@ export class ProfilesService implements OnModuleInit {
   constructor(
     @InjectRepository(ProfileEntity)
     private readonly repo: Repository<ProfileEntity>,
+    @InjectRepository(ProfilePermissionEntity)
+    private readonly permRepo: Repository<ProfilePermissionEntity>,
   ) {}
 
   async onModuleInit() {
@@ -78,11 +81,13 @@ export class ProfilesService implements OnModuleInit {
 
   async seedDefaultProfiles() {
     for (const [name, permissions] of Object.entries(DEFAULT_PROFILES)) {
-      const exists = await this.repo.findOne({ where: { name } });
-      if (!exists) {
+      let profile = await this.repo.findOne({ where: { name } });
+      if (!profile) {
         const code = await this.generateNextCode();
-        const profile = this.repo.create({ code, name, permissions, locationIds: [], active: true });
-        await this.repo.save(profile);
+        profile = this.repo.create({ code, name, active: true });
+        profile = await this.repo.save(profile);
+        // Insert permissions
+        await this.syncPermissions(profile.id, permissions);
         this.logger.log(`[seed] Perfil creado: ${code} - ${name}`);
       }
     }
@@ -110,8 +115,34 @@ export class ProfilesService implements OnModuleInit {
     return next.toString().padStart(2, '0');
   }
 
+  private async syncPermissions(profileId: string, permissions: string[]) {
+    await this.permRepo.delete({ profileId });
+    if (permissions.length > 0) {
+      const entities = permissions.map(permission =>
+        this.permRepo.create({ profileId, permission }),
+      );
+      await this.permRepo.save(entities);
+    }
+  }
+
+  /** Insert a single permission (used by migration, ignores duplicates) */
+  async addPermissionRaw(profileId: string, permission: string) {
+    const exists = await this.permRepo.findOne({ where: { profileId, permission } });
+    if (!exists) {
+      await this.permRepo.save(this.permRepo.create({ profileId, permission }));
+    }
+  }
+
+  // Helper to get permissions as string array
+  getPermissions(profile: ProfileEntity): string[] {
+    return (profile.profilePermissions || []).map(pp => pp.permission);
+  }
+
   async findByName(name: string): Promise<ProfileEntity | null> {
-    return this.repo.findOne({ where: { name } });
+    return this.repo.findOne({
+      where: { name },
+      relations: ['profilePermissions'],
+    });
   }
 
   async create(dto: CreateProfileDto) {
@@ -128,23 +159,26 @@ export class ProfilesService implements OnModuleInit {
     }
 
     const code = await this.generateNextCode();
-    const profile = this.repo.create({
-      code,
-      name,
-      permissions: dto.permissions,
-      locationIds: dto.locationIds || [],
-      active: true,
-    });
+    const profile = this.repo.create({ code, name, active: true });
+    const saved = await this.repo.save(profile);
 
-    return this.repo.save(profile);
+    await this.syncPermissions(saved.id, dto.permissions);
+
+    return this.findOne(saved.id);
   }
 
   findAll() {
-    return this.repo.find({ order: { name: 'ASC' } });
+    return this.repo.find({
+      relations: ['profilePermissions'],
+      order: { name: 'ASC' },
+    });
   }
 
   async findOne(id: string) {
-    const profile = await this.repo.findOne({ where: { id } });
+    const profile = await this.repo.findOne({
+      where: { id },
+      relations: ['profilePermissions'],
+    });
     if (!profile) throw new NotFoundException('Perfil no encontrado');
     return profile;
   }
@@ -167,18 +201,15 @@ export class ProfilesService implements OnModuleInit {
       if (invalid.length > 0) {
         throw new BadRequestException(`Permisos inválidos: ${invalid.join(', ')}`);
       }
-      profile.permissions = dto.permissions;
-    }
-
-    if (dto.locationIds !== undefined) {
-      profile.locationIds = dto.locationIds;
+      await this.syncPermissions(id, dto.permissions);
     }
 
     if (dto.active !== undefined) {
       profile.active = dto.active;
     }
 
-    return this.repo.save(profile);
+    await this.repo.save(profile);
+    return this.findOne(id);
   }
 
   async delete(id: string) {

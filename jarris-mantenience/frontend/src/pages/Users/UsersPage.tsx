@@ -36,19 +36,16 @@ interface User {
   userId: string;
   name?: string;
   email: string;
-  roles: string[];
+  userRoles?: { role: string }[];
   phone?: string;
-  locationId?: string;
   profileId?: string;
   profile?: {
     id: string;
     name: string;
-    permissions: string[];
+    profilePermissions?: { permission: string }[];
     active: boolean;
   };
-  location?: {
-    name: string;
-  };
+  userLocations?: { locationId: string; location?: { name: string } }[];
   active: boolean;
 }
 
@@ -56,18 +53,10 @@ interface Profile {
   id: string;
   code: string;
   name: string;
-  permissions: string[];
-  locationIds: string[];
+  profilePermissions?: { permission: string }[];
   active: boolean;
   createdAt?: string;
   updatedAt?: string;
-}
-
-interface Location {
-  id: string;
-  name: string;
-  type: string;
-  active: boolean;
 }
 
 const roleLabels: Record<string, string> = {
@@ -78,6 +67,10 @@ const roleLabels: Record<string, string> = {
   PDV: 'Punto de Venta',
   ADMINISTRACION: 'Administración',
 };
+
+// Helper to extract permissions from normalized profile
+const getProfilePerms = (profile: Profile): string[] =>
+  (profile.profilePermissions || []).map(pp => pp.permission);
 
 const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
   VER_HISTORIAL_ACTIVO: ['VER_ACTIVOS'],
@@ -228,18 +221,20 @@ const UsersPage: React.FC = () => {
   const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [userType, setUserType] = useState<string>('TECNICO_INTERNO');
+  const [isAdminUser, setIsAdminUser] = useState(false);
   const [form] = Form.useForm();
   const [resetPasswordForm] = Form.useForm();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [mobilePage, setMobilePage] = useState(1);
 
+  // --- User locations state ---
+  const [userAllLocations, setUserAllLocations] = useState(true);
+  const [userSelectedLocationIds, setUserSelectedLocationIds] = useState<string[]>([]);
+
   // --- Profiles state ---
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
   const [copiedFromProfile, setCopiedFromProfile] = useState<string | null>(null);
-  const [allLocations, setAllLocations] = useState(true);
-  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
   const [profileForm] = Form.useForm();
   const [profileMobilePage, setProfileMobilePage] = useState(1);
 
@@ -275,47 +270,34 @@ const UsersPage: React.FC = () => {
 
   // ===================== USERS HANDLERS =====================
 
-  // Map user types to their default profile names
-  const userTypeToProfileName: Record<string, string> = {
-    JEFE_MANTENIMIENTO: 'JEFE DE MANTENIMIENTO',
-    TECNICO_INTERNO: 'TECNICO INTERNO',
-    CONTRATISTA: 'CONTRATISTA',
-    PDV: 'PUNTO DE VENTA',
-    ADMINISTRACION: 'ADMINISTRACION',
-  };
-
   const handleCreate = () => {
     setEditingUser(null);
-    setUserType('TECNICO_INTERNO');
+    setIsAdminUser(false);
+    setUserAllLocations(false);
+    setUserSelectedLocationIds([]);
     form.resetFields();
-    form.setFieldsValue({ active: true, userType: 'TECNICO_INTERNO' });
-    // Pre-select default profile for TECNICO_INTERNO
-    const defaultProfile = profiles.find(p => p.name === 'TECNICO INTERNO' && p.active);
-    if (defaultProfile) {
-      form.setFieldsValue({ profileId: defaultProfile.id });
-    }
+    form.setFieldsValue({ active: true });
     setModalOpen(true);
   };
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
-    // Determine user type from roles or profile
-    let type = 'TECNICO_INTERNO';
-    if (user.roles?.includes('ADMIN')) {
-      type = 'ADMIN';
-    } else if (user.profile) {
-      // Find which user type maps to this profile name
-      const entry = Object.entries(userTypeToProfileName).find(([, pName]) => pName === user.profile?.name);
-      type = entry ? entry[0] : 'TECNICO_INTERNO';
+    const roles = (user.userRoles || []).map(ur => ur.role);
+    setIsAdminUser(roles.includes('ADMIN'));
+    // Load user locations
+    const userLocIds = (user.userLocations || []).map(ul => ul.locationId);
+    if (userLocIds.length === 0) {
+      setUserAllLocations(true);
+      setUserSelectedLocationIds([]);
+    } else {
+      setUserAllLocations(false);
+      setUserSelectedLocationIds(userLocIds);
     }
-    setUserType(type);
     form.setFieldsValue({
       name: user.name,
       email: user.email,
       phone: user.phone,
-      userType: type,
       profileId: user.profileId || undefined,
-      locationId: user.locationId,
       active: user.active,
     });
     setModalOpen(true);
@@ -323,16 +305,23 @@ const UsersPage: React.FC = () => {
 
   const handleSubmit = async (values: any) => {
     try {
-      const isAdmin = values.userType === 'ADMIN';
+      if (!isAdminUser && !values.profileId) {
+        message.error('Selecciona un perfil para el usuario');
+        return;
+      }
+      if (!isAdminUser && !userAllLocations && userSelectedLocationIds.length === 0) {
+        message.error('Selecciona al menos una ubicación o marca "Todas las ubicaciones"');
+        return;
+      }
 
       const payload: any = {
         name: values.name,
         email: values.email,
         phone: values.phone,
         password: values.password,
-        roles: isAdmin ? ['ADMIN'] : [],
-        profileId: isAdmin ? null : (values.profileId || null),
-        locationId: values.locationId || null,
+        roles: isAdminUser ? ['ADMIN'] : [],
+        profileId: isAdminUser ? null : (values.profileId || null),
+        locationIds: isAdminUser ? [] : (userAllLocations ? [] : userSelectedLocationIds),
         active: values.active,
       };
 
@@ -375,13 +364,9 @@ const UsersPage: React.FC = () => {
 
   // ===================== PROFILES HANDLERS =====================
 
-  const activeLocations = locations.filter((l: Location) => l.active !== false);
-
   const openCreateProfile = () => {
     setEditingProfile(null);
     setCopiedFromProfile(null);
-    setAllLocations(true);
-    setSelectedLocationIds([]);
     profileForm.resetFields();
     profileForm.setFieldsValue({ permissions: [], active: true });
     setProfileModalOpen(true);
@@ -390,12 +375,9 @@ const UsersPage: React.FC = () => {
   const openEditProfile = (profile: Profile) => {
     setCopiedFromProfile(null);
     setEditingProfile(profile);
-    const hasSpecificLocations = profile.locationIds && profile.locationIds.length > 0;
-    setAllLocations(!hasSpecificLocations);
-    setSelectedLocationIds(profile.locationIds || []);
     profileForm.setFieldsValue({
       name: profile.name,
-      permissions: profile.permissions,
+      permissions: getProfilePerms(profile),
       active: profile.active,
     });
     setProfileModalOpen(true);
@@ -410,15 +392,9 @@ const UsersPage: React.FC = () => {
         return;
       }
 
-      if (!allLocations && selectedLocationIds.length === 0) {
-        message.error('Debe seleccionar al menos una ubicación o marcar "Todas las ubicaciones"');
-        return;
-      }
-
       const payload = {
         name: values.name,
         permissions: values.permissions,
-        locationIds: allLocations ? [] : selectedLocationIds,
         ...(editingProfile ? { active: values.active } : {}),
       };
 
@@ -450,7 +426,7 @@ const UsersPage: React.FC = () => {
         cancelText: 'Cancelar',
         onOk: () => doSaveProfile(),
         onCancel: () => {
-          profileForm.setFieldsValue({ permissions: editingProfile?.permissions || [] });
+          profileForm.setFieldsValue({ permissions: editingProfile ? getProfilePerms(editingProfile) : [] });
           setCopiedFromProfile(null);
         },
       });
@@ -459,32 +435,9 @@ const UsersPage: React.FC = () => {
     }
   };
 
-  const handleToggleAllLocations = (checked: boolean) => {
-    setAllLocations(checked);
-    if (checked) {
-      setSelectedLocationIds([]);
-    }
-  };
-
-  const handleLocationChange = (locationId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedLocationIds(prev => [...prev, locationId]);
-    } else {
-      setSelectedLocationIds(prev => prev.filter(id => id !== locationId));
-    }
-  };
-
-  const getLocationsSummary = (profile: Profile) => {
-    if (!profile.locationIds || profile.locationIds.length === 0) {
-      return <Tag style={{ background: '#fff' }}>Todas</Tag>;
-    }
-    return <Tag style={{ background: '#fff' }}>{profile.locationIds.length} ubicaciones</Tag>;
-  };
-
   // ===================== USERS UI =====================
 
-  const watchedUserType = Form.useWatch('userType', form);
-  const needsLocation = watchedUserType === 'PDV' || watchedUserType === 'ADMINISTRACION';
+  const showLocationSection = !isAdminUser;
 
 
   const getRoleOrProfileLabel = (user: User) => {
@@ -493,7 +446,7 @@ const UsersPage: React.FC = () => {
     }
     return (
       <Space wrap size={4}>
-        {user.roles.map((role) => (
+        {(user.userRoles || []).map((ur) => ur.role).map((role) => (
           <Tag key={role} style={{ margin: 0, background: '#fff' }}>
             {roleLabels[role] || role}
           </Tag>
@@ -522,9 +475,9 @@ const UsersPage: React.FC = () => {
         <div style={{ marginBottom: 4 }}>
           {getRoleOrProfileLabel(record)}
         </div>
-        {record.location && (
+        {(record.userLocations && record.userLocations.length > 0) && (
           <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 4 }}>
-            <EnvironmentOutlined /> {record.location.name}
+            <EnvironmentOutlined /> {record.userLocations.map(ul => ul.location?.name).filter(Boolean).join(', ')}
           </div>
         )}
       </div>
@@ -559,7 +512,7 @@ const UsersPage: React.FC = () => {
           <div style={{ fontSize: 12, color: '#8c8c8c' }}>
             {record.email}
             {record.phone ? ` · ${record.phone}` : ''}
-            {record.location ? ` · ${record.location.name}` : ''}
+            {record.userLocations && record.userLocations.length > 0 ? ` · ${record.userLocations.map(ul => ul.location?.name).filter(Boolean).join(', ')}` : ''}
           </div>
         </div>
       ),
@@ -569,8 +522,8 @@ const UsersPage: React.FC = () => {
       key: 'roleProfile',
       width: 280,
       sorter: (a, b) => {
-        const aLabel = a.profile?.name || a.roles?.[0] || '';
-        const bLabel = b.profile?.name || b.roles?.[0] || '';
+        const aLabel = a.profile?.name || (a.userRoles || [])[0]?.role || '';
+        const bLabel = b.profile?.name || (b.userRoles || [])[0]?.role || '';
         return aLabel.localeCompare(bLabel);
       },
       render: (_, record) => getRoleOrProfileLabel(record),
@@ -631,14 +584,8 @@ const UsersPage: React.FC = () => {
     },
     {
       title: 'Permisos',
-      dataIndex: 'permissions',
       key: 'permissions',
-      render: (perms: string[]) => <Tag style={{ background: '#fff' }}>{perms.length} permisos</Tag>,
-    },
-    {
-      title: 'Ubicaciones',
-      key: 'locations',
-      render: (_: any, record: Profile) => getLocationsSummary(record),
+      render: (_: any, record: Profile) => <Tag style={{ background: '#fff' }}>{getProfilePerms(record).length} permisos</Tag>,
     },
     {
       title: 'Estado',
@@ -682,8 +629,7 @@ const UsersPage: React.FC = () => {
             {profile.name}
           </div>
           <Space size={4} wrap>
-            <Tag style={{ background: '#fff' }}>{profile.permissions.length} permisos</Tag>
-            {getLocationsSummary(profile)}
+            <Tag style={{ background: '#fff' }}>{getProfilePerms(profile).length} permisos</Tag>
             <Badge
               status={profile.active ? 'success' : 'error'}
               text={profile.active ? 'Activo' : 'Inactivo'}
@@ -948,84 +894,89 @@ const UsersPage: React.FC = () => {
             />
           </Form.Item>
 
-          {/* Tipo de usuario */}
-          <Form.Item
-            label="Tipo de usuario"
-            name="userType"
-            rules={[{ required: true, message: 'Selecciona un tipo' }]}
-          >
-            <Select
-              placeholder="Selecciona tipo de usuario"
-              size={isMobile ? "large" : "middle"}
-              onChange={(value: string) => {
-                setUserType(value);
-                if (value === 'ADMIN') {
-                  form.setFieldsValue({ profileId: undefined, locationId: undefined });
-                } else {
-                  // Pre-select default profile for this user type
-                  const profileName = userTypeToProfileName[value];
-                  const defaultProfile = profiles.find(p => p.name === profileName && p.active);
-                  form.setFieldsValue({
-                    profileId: defaultProfile?.id || undefined,
-                    locationId: undefined,
-                  });
+          <Form.Item label="Administrador" style={{ marginBottom: 16 }}>
+            <Switch
+              checked={isAdminUser}
+              onChange={(checked) => {
+                setIsAdminUser(checked);
+                if (checked) {
+                  form.setFieldsValue({ profileId: undefined });
+                  setUserAllLocations(true);
+                  setUserSelectedLocationIds([]);
                 }
               }}
-            >
-              <Select.Option value="ADMIN">Administrador</Select.Option>
-              <Select.Option value="JEFE_MANTENIMIENTO">Jefe de Mantenimiento</Select.Option>
-              <Select.Option value="TECNICO_INTERNO">Técnico Interno</Select.Option>
-              <Select.Option value="CONTRATISTA">Contratista</Select.Option>
-              <Select.Option value="PDV">Punto de Venta</Select.Option>
-              <Select.Option value="ADMINISTRACION">Administración</Select.Option>
-            </Select>
+              checkedChildren="Sí"
+              unCheckedChildren="No"
+            />
+            <span style={{ marginLeft: 8, fontSize: 12, color: '#8c8c8c' }}>
+              {isAdminUser ? 'Acceso total al sistema' : 'Los permisos se definen por el perfil'}
+            </span>
           </Form.Item>
 
-          {/* Profile selector (not shown for ADMIN) */}
-          {userType !== 'ADMIN' && (
+          {!isAdminUser && (
             <Form.Item
               label="Perfil"
               name="profileId"
-              rules={[{ required: userType !== 'ADMIN', message: 'Selecciona un perfil' }]}
+              rules={[{ required: !isAdminUser, message: 'Selecciona un perfil' }]}
             >
               <Select
                 placeholder="Selecciona un perfil"
                 size={isMobile ? "large" : "middle"}
-                onChange={() => form.setFieldsValue({ locationId: undefined })}
               >
                 {profiles
                   .filter(p => p.active)
                   .map(p => (
                     <Select.Option key={p.id} value={p.id}>
-                      {p.name} ({p.permissions.length} permisos)
+                      {p.name} ({getProfilePerms(p).length} permisos)
                     </Select.Option>
                   ))}
               </Select>
             </Form.Item>
           )}
 
-          {needsLocation && (
-            <Form.Item
-              label="Ubicación"
-              name="locationId"
-              rules={[{ required: needsLocation, message: 'Ubicación requerida' }]}
-            >
-              <Select
-                placeholder="Selecciona la ubicación"
-                size={isMobile ? "large" : "middle"}
+          {showLocationSection && (
+            <Form.Item label="Ubicaciones" style={{ marginBottom: 16 }}>
+              <Checkbox
+                checked={userAllLocations}
+                onChange={(e) => {
+                  setUserAllLocations(e.target.checked);
+                  if (e.target.checked) setUserSelectedLocationIds([]);
+                }}
+                style={{ marginBottom: 8 }}
               >
-                {locations
-                  .filter((loc) => loc.active !== false && (
-                    watchedUserType === 'PDV' ? loc.type === 'PDV'
-                      : watchedUserType === 'ADMINISTRACION' ? loc.type === 'DEPARTAMENTO'
-                      : true
-                  ))
-                  .map((loc) => (
-                    <Select.Option key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </Select.Option>
-                  ))}
-              </Select>
+                <strong>Todas las ubicaciones</strong>
+              </Checkbox>
+              {!userAllLocations && (
+                <div style={{
+                  maxHeight: 200,
+                  overflowY: 'auto',
+                  border: '1px solid #d9d9d9',
+                  borderRadius: 4,
+                  padding: 8,
+                }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px' }}>
+                    {locations
+                      .filter((loc) => loc.active !== false)
+                      .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                      .map((loc) => (
+                      <Checkbox
+                        key={loc.id}
+                        checked={userSelectedLocationIds.includes(loc.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setUserSelectedLocationIds(prev => [...prev, loc.id]);
+                          } else {
+                            setUserSelectedLocationIds(prev => prev.filter(id => id !== loc.id));
+                          }
+                        }}
+                        style={{ minWidth: '45%' }}
+                      >
+                        {loc.name} <span style={{ color: '#8c8c8c', fontSize: 11 }}>({loc.type})</span>
+                      </Checkbox>
+                    ))}
+                  </div>
+                </div>
+              )}
             </Form.Item>
           )}
 
@@ -1036,19 +987,6 @@ const UsersPage: React.FC = () => {
           )}
         </Form>
 
-        {!editingUser && (
-          <div style={{
-            marginTop: 16,
-            padding: isMobile ? 10 : 12,
-            background: '#fff7e6',
-            borderRadius: 4,
-            fontSize: isMobile ? 11 : 12
-          }}>
-            <p style={{ margin: 0 }}>
-              Administrador tiene acceso total. Los demás tipos requieren un perfil con permisos asignados.
-            </p>
-          </div>
-        )}
       </Modal>
 
       {/* Modal Resetear Contraseña */}
@@ -1179,13 +1117,13 @@ const UsersPage: React.FC = () => {
                 }
                 const source = profiles.find(p => p.id === profileId);
                 if (source) {
-                  profileForm.setFieldsValue({ permissions: [...source.permissions] });
+                  profileForm.setFieldsValue({ permissions: [...getProfilePerms(source)] });
                   setCopiedFromProfile(source.name);
                 }
               }}
               options={profiles
                 .filter(p => !editingProfile || p.id !== editingProfile.id)
-                .map(p => ({ label: `${p.name} (${p.permissions.length} permisos)`, value: p.id }))}
+                .map(p => ({ label: `${p.name} (${getProfilePerms(p).length} permisos)`, value: p.id }))}
             />
           </div>
 
@@ -1238,56 +1176,6 @@ const UsersPage: React.FC = () => {
             </Checkbox.Group>
           </Form.Item>
 
-          {/* Alcance de ubicaciones */}
-          <div style={{ marginBottom: 16 }}>
-            <div style={{
-              fontWeight: 600,
-              fontSize: 13,
-              marginBottom: 8,
-              color: '#1a2733',
-              borderBottom: '1px solid #f0f0f0',
-              paddingBottom: 4,
-            }}>
-              <EnvironmentOutlined style={{ marginRight: 6 }} />
-              Alcance de Ubicaciones
-            </div>
-
-            <Checkbox
-              checked={allLocations}
-              onChange={(e) => handleToggleAllLocations(e.target.checked)}
-              style={{ marginBottom: 8, paddingLeft: 8 }}
-            >
-              <strong>Todas las ubicaciones</strong>
-            </Checkbox>
-
-            {!allLocations && (
-              <div style={{
-                paddingLeft: 8,
-                maxHeight: 200,
-                overflowY: 'auto',
-                border: '1px solid #f0f0f0',
-                borderRadius: 6,
-                padding: '8px 12px',
-              }}>
-                {activeLocations.length === 0 ? (
-                  <div style={{ color: '#8c8c8c', fontSize: 12 }}>No hay ubicaciones disponibles</div>
-                ) : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px' }}>
-                    {activeLocations.map((loc) => (
-                      <Checkbox
-                        key={loc.id}
-                        checked={selectedLocationIds.includes(loc.id)}
-                        onChange={(e) => handleLocationChange(loc.id, e.target.checked)}
-                        style={{ minWidth: '45%' }}
-                      >
-                        {loc.name} <span style={{ color: '#8c8c8c', fontSize: 11 }}>({loc.type})</span>
-                      </Checkbox>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
         </Form>
       </Modal>
     </div>

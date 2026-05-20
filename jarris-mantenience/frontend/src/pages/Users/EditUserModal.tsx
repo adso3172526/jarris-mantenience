@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Select, Switch, Input, message, Alert } from 'antd';
+import { Modal, Form, Select, Switch, Input, message, Alert, Checkbox } from 'antd';
 import { PhoneOutlined } from '@ant-design/icons';
 import { usersApi, locationsApi } from '../../services/api';
 
@@ -20,17 +20,29 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [allLocations, setAllLocations] = useState(true);
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (open && user) {
       loadLocations();
+      const roles = (user.userRoles || []).map((ur: any) => ur.role);
       form.setFieldsValue({
         phone: user.phone,
-        roles: user.roles,
-        locationId: user.locationId,
+        roles,
         active: user.active,
       });
-      setSelectedRoles(user.roles);
+      setSelectedRoles(roles);
+
+      // Load user locations
+      const userLocIds = (user.userLocations || []).map((ul: any) => ul.locationId);
+      if (userLocIds.length === 0) {
+        setAllLocations(true);
+        setSelectedLocationIds([]);
+      } else {
+        setAllLocations(false);
+        setSelectedLocationIds(userLocIds);
+      }
     }
   }, [open, user, form]);
 
@@ -44,9 +56,18 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
   };
 
   const handleSubmit = async (values: any) => {
+    const isAdmin = values.roles?.includes('ADMIN');
+    if (!isAdmin && !allLocations && selectedLocationIds.length === 0) {
+      message.error('Debe seleccionar al menos una ubicación o marcar "Todas las ubicaciones"');
+      return;
+    }
     try {
       setLoading(true);
-      await usersApi.update(user.id, values);
+      const payload = {
+        ...values,
+        locationIds: isAdmin ? [] : (allLocations ? [] : selectedLocationIds),
+      };
+      await usersApi.update(user.id, payload);
       message.success('Usuario actualizado exitosamente');
       form.resetFields();
       onSuccess();
@@ -60,7 +81,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
     }
   };
 
-  const needsLocation = selectedRoles.includes('PDV') || selectedRoles.includes('ADMINISTRACION');
+  const isAdmin = selectedRoles.includes('ADMIN');
 
   return (
     <Modal
@@ -121,24 +142,49 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
           </Select>
         </Form.Item>
 
-        {needsLocation && (
-          <Form.Item
-            label="Ubicación"
-            name="locationId"
-            rules={[
-              {
-                required: true,
-                message: 'Ubicación requerida para usuarios PDV/Administración',
-              },
-            ]}
-          >
-            <Select placeholder="Selecciona la ubicación">
-              {locations.map((loc) => (
-                <Select.Option key={loc.id} value={loc.id}>
-                  {loc.name} - {loc.type}
-                </Select.Option>
-              ))}
-            </Select>
+        {/* Ubicaciones - para todos excepto ADMIN */}
+        {!isAdmin && (
+          <Form.Item label="Ubicaciones" style={{ marginBottom: 16 }}>
+            <Checkbox
+              checked={allLocations}
+              onChange={(e) => {
+                setAllLocations(e.target.checked);
+                if (e.target.checked) setSelectedLocationIds([]);
+              }}
+              style={{ marginBottom: 8 }}
+            >
+              <strong>Todas las ubicaciones</strong>
+            </Checkbox>
+            {!allLocations && (
+              <div style={{
+                maxHeight: 200,
+                overflowY: 'auto',
+                border: '1px solid #d9d9d9',
+                borderRadius: 4,
+                padding: 8,
+              }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px' }}>
+                  {locations
+                    .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                    .map((loc) => (
+                    <Checkbox
+                      key={loc.id}
+                      checked={selectedLocationIds.includes(loc.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLocationIds(prev => [...prev, loc.id]);
+                        } else {
+                          setSelectedLocationIds(prev => prev.filter(id => id !== loc.id));
+                        }
+                      }}
+                      style={{ minWidth: '45%' }}
+                    >
+                      {loc.name} <span style={{ color: '#8c8c8c', fontSize: 11 }}>({loc.type})</span>
+                    </Checkbox>
+                  ))}
+                </div>
+              </div>
+            )}
           </Form.Item>
         )}
 

@@ -8,9 +8,4 @@ export class CreateProfileDto {
   @ArrayNotEmpty()
   @IsString({ each: true })
   permissions: string[];
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  locationIds?: string[];
 }

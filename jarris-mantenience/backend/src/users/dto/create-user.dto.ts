@@ -24,6 +24,10 @@ export class CreateUserDto {
   locationId?: string;
 
   @IsOptional()
+  @IsArray()
+  locationIds?: string[];
+
+  @IsOptional()
   @IsString()
   profileId?: string;
 }

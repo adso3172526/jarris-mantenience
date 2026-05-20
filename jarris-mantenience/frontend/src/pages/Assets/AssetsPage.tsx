@@ -95,8 +95,8 @@ const AssetsPage: React.FC = () => {
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
 
   const { hasAccess, hasPermission, user } = useAuth();
-  // PDV-like: has VER_ACTIVOS but NOT EDITAR_ACTIVOS, and has a location
-  const isPDV = hasPermission('VER_ACTIVOS') && !hasPermission('EDITAR_ACTIVOS') && !!user?.locationId;
+  // PDV-like: has VER_ACTIVOS but NOT EDITAR_ACTIVOS, and has specific locations
+  const isPDV = hasPermission('VER_ACTIVOS') && !hasPermission('EDITAR_ACTIVOS') && (user?.profileLocationIds?.length ?? 0) > 0;
   const canEdit = hasAccess(['ADMIN'], ['EDITAR_ACTIVOS']);
   const canDeactivate = hasAccess(['ADMIN'], ['EDITAR_ACTIVOS']);
 
@@ -115,7 +115,7 @@ const AssetsPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [isPDV, user?.locationId]);
+  }, [isPDV, user?.profileLocationIds]);
 
   useEffect(() => {
     applyFilters();
@@ -124,17 +124,23 @@ const AssetsPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const assetsRequest = isPDV && user?.locationId
-        ? assetsApi.getByLocation(user.locationId)
-        : assetsApi.getAll();
+      const assetsRequest = assetsApi.getAll();
       const [assetsRes, locationsRes, categoriesRes] = await Promise.all([
         assetsRequest,
         locationsApi.getAll(),
         categoriesApi.getAll(),
       ]);
 
-      setAssets(assetsRes.data);
-      setFilteredAssets(assetsRes.data);
+      // Filter immediately for PDV users so there's no flash of all assets
+      let assetsData = assetsRes.data;
+      if (isPDV) {
+        const locIds = user?.profileLocationIds || [];
+        if (locIds.length > 0) {
+          assetsData = assetsData.filter((a: any) => a.location?.id && locIds.includes(a.location.id));
+        }
+      }
+      setAssets(assetsData);
+      setFilteredAssets(assetsData);
       setLocations(locationsRes.data);
       setCategories(categoriesRes.data);
     } catch (error: any) {

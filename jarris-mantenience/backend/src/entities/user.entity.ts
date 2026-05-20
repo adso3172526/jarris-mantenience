@@ -5,10 +5,13 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
-  JoinColumn
+  OneToMany,
+  JoinColumn,
 } from 'typeorm';
 import { LocationEntity } from './location.entity';
 import { ProfileEntity } from './profile.entity';
+import { UserRoleEntity } from './user-role.entity';
+import { UserLocationEntity } from './user-location.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -24,8 +27,8 @@ export class UserEntity {
   @Column()
   passwordHash: string;
 
-  @Column({ type: 'jsonb', default: () => "'[]'::jsonb" })
-  roles: string[];
+  @OneToMany(() => UserRoleEntity, (ur) => ur.user, { cascade: true })
+  userRoles: UserRoleEntity[];
 
   @Column({ nullable: true })
   phone?: string;
@@ -46,6 +49,9 @@ export class UserEntity {
   @ManyToOne(() => LocationEntity, { nullable: true })
   @JoinColumn({ name: 'locationId' })
   location?: LocationEntity;
+
+  @OneToMany(() => UserLocationEntity, (ul) => ul.user, { cascade: true })
+  userLocations: UserLocationEntity[];
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

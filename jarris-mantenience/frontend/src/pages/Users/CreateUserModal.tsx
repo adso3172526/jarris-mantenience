@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, message, Alert } from 'antd';
+import { Modal, Form, Input, Select, message, Alert, Checkbox } from 'antd';
 import { usersApi, locationsApi } from '../../services/api';
 
 interface CreateUserModalProps {
@@ -17,10 +17,14 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [allLocations, setAllLocations] = useState(true);
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) {
       loadLocations();
+      setAllLocations(true);
+      setSelectedLocationIds([]);
     }
   }, [open]);
 
@@ -34,11 +38,23 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   };
 
   const handleSubmit = async (values: any) => {
+    const isAdmin = values.roles?.includes('ADMIN');
+    if (!isAdmin && !allLocations && selectedLocationIds.length === 0) {
+      message.error('Debe seleccionar al menos una ubicación o marcar "Todas las ubicaciones"');
+      return;
+    }
     try {
       setLoading(true);
-      await usersApi.create(values);
+      const payload = {
+        ...values,
+        locationIds: isAdmin ? [] : (allLocations ? [] : selectedLocationIds),
+      };
+      await usersApi.create(payload);
       message.success('Usuario creado exitosamente');
       form.resetFields();
+      setSelectedRoles([]);
+      setAllLocations(true);
+      setSelectedLocationIds([]);
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -50,7 +66,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
     }
   };
 
-  const needsLocation = selectedRoles.includes('PDV') || selectedRoles.includes('ADMINISTRACION');
+  const isAdmin = selectedRoles.includes('ADMIN');
 
   return (
     <Modal
@@ -125,24 +141,49 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
           </Select>
         </Form.Item>
 
-        {needsLocation && (
-          <Form.Item
-            label="Ubicación"
-            name="locationId"
-            rules={[
-              {
-                required: true,
-                message: 'Ubicación requerida para usuarios PDV/Administración',
-              },
-            ]}
-          >
-            <Select placeholder="Selecciona la ubicación">
-              {locations.map((loc) => (
-                <Select.Option key={loc.id} value={loc.id}>
-                  {loc.name} - {loc.type}
-                </Select.Option>
-              ))}
-            </Select>
+        {/* Ubicaciones - para todos excepto ADMIN */}
+        {!isAdmin && (
+          <Form.Item label="Ubicaciones" style={{ marginBottom: 16 }}>
+            <Checkbox
+              checked={allLocations}
+              onChange={(e) => {
+                setAllLocations(e.target.checked);
+                if (e.target.checked) setSelectedLocationIds([]);
+              }}
+              style={{ marginBottom: 8 }}
+            >
+              <strong>Todas las ubicaciones</strong>
+            </Checkbox>
+            {!allLocations && (
+              <div style={{
+                maxHeight: 200,
+                overflowY: 'auto',
+                border: '1px solid #d9d9d9',
+                borderRadius: 4,
+                padding: 8,
+              }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px' }}>
+                  {locations
+                    .sort((a: any, b: any) => a.name.localeCompare(b.name))
+                    .map((loc) => (
+                    <Checkbox
+                      key={loc.id}
+                      checked={selectedLocationIds.includes(loc.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLocationIds(prev => [...prev, loc.id]);
+                        } else {
+                          setSelectedLocationIds(prev => prev.filter(id => id !== loc.id));
+                        }
+                      }}
+                      style={{ minWidth: '45%' }}
+                    >
+                      {loc.name} <span style={{ color: '#8c8c8c', fontSize: 11 }}>({loc.type})</span>
+                    </Checkbox>
+                  ))}
+                </div>
+              </div>
+            )}
           </Form.Item>
         )}
       </Form>
@@ -173,10 +214,10 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             <strong>CONTRATISTA:</strong> Finalizar OT y subir facturas
           </li>
           <li>
-            <strong>PDV:</strong> Crear solicitudes de OT (requiere ubicación)
+            <strong>PDV:</strong> Crear solicitudes de OT
           </li>
           <li>
-            <strong>ADMINISTRACION:</strong> Igual que PDV, gestiona solicitudes de su ubicación
+            <strong>ADMINISTRACION:</strong> Igual que PDV, gestiona solicitudes
           </li>
         </ul>
       </div>

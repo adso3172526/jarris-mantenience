@@ -115,7 +115,7 @@ const SolicitudesPage: React.FC = () => {
   const isJefe = hasAccess(['ADMIN'], ['EDITAR_OT', 'CERRAR_OT', 'ANULAR_OT']);
   const canSeeAllOT = hasPermission('VER_TODAS_OT');
   const canSeeAllLocativo = hasPermission('VER_TODAS_OT_LOCATIVO');
-  const isPDV = !isJefe && !canSeeAllOT && !canSeeAllLocativo && (hasPermission('CREAR_OT_EQUIPO') || hasPermission('CREAR_OT_LOCATIVO')) && !hasPermission('INICIAR_OT') && !!user?.locationId;
+  const isPDV = !isJefe && !canSeeAllOT && !canSeeAllLocativo && (hasPermission('CREAR_OT_EQUIPO') || hasPermission('CREAR_OT_LOCATIVO')) && !hasPermission('INICIAR_OT') && (user?.profileLocationIds?.length ?? 0) > 0;
   const canStart = hasPermission('INICIAR_OT');
   const canFinish = hasPermission('FINALIZAR_OT');
   const isAssigneeView = !isJefe && !canSeeAllOT && !canSeeAllLocativo && !isPDV && hasPermission('VER_OT');
@@ -140,7 +140,7 @@ const SolicitudesPage: React.FC = () => {
     loadWorkOrders();
     usersApi.getTechniciansAndContractors().then((res) => setTechnicians(res.data)).catch(() => {});
     locationsApi.getAll().then((res) => setLocations(res.data)).catch(() => {});
-  }, [isJefe, canSeeAllOT, canSeeAllLocativo, isPDV, isAssigneeView, user?.email, user?.locationId]);
+  }, [isJefe, canSeeAllOT, canSeeAllLocativo, isPDV, isAssigneeView, user?.email, user?.profileLocationIds]);
 
   useEffect(() => {
     applyFilters();

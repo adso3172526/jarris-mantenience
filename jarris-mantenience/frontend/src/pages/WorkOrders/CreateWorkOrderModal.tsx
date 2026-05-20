@@ -28,8 +28,10 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
-  const { user, hasAccess, hasPermission } = useAuth();
-  const isAdminOrJefe = hasAccess(['ADMIN', 'JEFE_MANTENIMIENTO'], ['CREAR_OT_EQUIPO', 'CREAR_OT_LOCATIVO']);
+  const { user, hasPermission } = useAuth();
+  const userLocationIds = user?.profileLocationIds || [];
+  const hasAllLocationAccess = user?.roles?.includes('ADMIN') || userLocationIds.length === 0;
+  const showLocationSelector = hasAllLocationAccess || userLocationIds.length > 1;
   const isFixedRole = (user?.roles?.length ?? 0) > 0 && !user?.profileId;
   const canCreateEquipo = isFixedRole || hasPermission('CREAR_OT_EQUIPO');
   const canCreateLocativo = isFixedRole || hasPermission('CREAR_OT_LOCATIVO');
@@ -44,15 +46,22 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
 
   useEffect(() => {
     if (open) {
-      if (!isAdminOrJefe) {
-        loadAssets();
-      }
       loadLocativeCategories();
       const defaultType = canCreateEquipo ? 'EQUIPO' : 'LOCATIVO';
       form.setFieldsValue({ maintenanceType: defaultType });
-      if (isAdminOrJefe) {
+
+      if (userLocationIds.length === 1) {
+        // Single assigned location: auto-select and load assets
+        loadLocations();
+        setSelectedLocationId(userLocationIds[0]);
+        loadAssetsByLocation(userLocationIds[0]);
+      } else if (showLocationSelector) {
+        // Admin/Jefe or multiple locations: show selector
         loadLocations();
         setSelectedLocationId(undefined);
+      } else {
+        // Legacy fallback: load assets by user.locationId
+        loadAssets();
       }
     }
   }, [open]);
@@ -92,9 +101,10 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
     try {
       setLoadingAssets(true);
       const response = await assetsApi.getAll();
+      const userLocIds = user?.profileLocationIds || [];
       const myLocationAssets = response.data.filter((a: any) => {
         const isActive = a.status === 'ACTIVO';
-        const isMyLocation = user?.locationId && a.location?.id === user.locationId;
+        const isMyLocation = userLocIds.length > 0 && a.location?.id && userLocIds.includes(a.location.id);
         return isActive && isMyLocation;
       });
       setAssets(myLocationAssets);
@@ -144,7 +154,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
         message.error(`El equipo ${asset.code} no está activo`);
         return;
       }
-      if (user?.locationId && asset.location?.id !== user.locationId) {
+      if (!hasAllLocationAccess && userLocationIds.length > 0 && !userLocationIds.includes(asset.location?.id)) {
         message.error(`El equipo ${asset.code} no pertenece a tu ubicación`);
         return;
       }
@@ -166,7 +176,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
   };
 
   const handleSubmit = async (values: any) => {
-    if (isAdminOrJefe && !selectedLocationId) {
+    if (showLocationSelector && !selectedLocationId) {
       message.error('Selecciona una ubicación');
       return;
     }
@@ -176,7 +186,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
         ...values,
         createdBy: user?.email,
       };
-      if (isAdminOrJefe && selectedLocationId) {
+      if (selectedLocationId) {
         data.locationId = selectedLocationId;
       }
       const response = await workOrdersApi.create(data);
@@ -248,8 +258,8 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
       }}
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
-        {/* Selector de ubicación para ADMIN/JEFE */}
-        {isAdminOrJefe && (
+        {/* Selector de ubicación */}
+        {showLocationSelector && (
           <Form.Item
             label="Ubicación"
             required
@@ -264,6 +274,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
               size={isMobile ? "large" : "middle"}
             >
               {allLocations
+                .filter((loc: any) => hasAllLocationAccess || userLocationIds.includes(loc.id))
                 .sort((a: any, b: any) => a.name.localeCompare(b.name))
                 .map((loc: any) => (
                   <Select.Option key={loc.id} value={loc.id}>
@@ -287,7 +298,7 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
                   size="small"
                   style={typeCardStyle('EQUIPO')}
                   styles={{ body: { padding: '12px 16px', textAlign: 'center' } }}
-                  onClick={() => { form.setFieldsValue({ maintenanceType: 'EQUIPO', assetId: undefined, locativeCategoryId: undefined }); if (isAdminOrJefe && selectedLocationId) loadAssetsByLocation(selectedLocationId); }}
+                  onClick={() => { form.setFieldsValue({ maintenanceType: 'EQUIPO', assetId: undefined, locativeCategoryId: undefined }); if (selectedLocationId) loadAssetsByLocation(selectedLocationId); }}
                 >
                   <ToolOutlined style={{ fontSize: 22, color: maintenanceType === 'EQUIPO' ? '#1890ff' : '#8c8c8c', display: 'block', marginBottom: 4 }} />
                   <div style={{ fontWeight: 600, fontSize: 13 }}>Equipo</div>
@@ -320,11 +331,11 @@ const CreateWorkOrderModal: React.FC<CreateWorkOrderModalProps> = ({
                 rules={[{ required: true, message: 'Selecciona un equipo' }]}
               >
                 <Select
-                  placeholder={isAdminOrJefe && !selectedLocationId ? "Primero selecciona una ubicación" : assets.length > 0 ? "Selecciona el equipo" : "No hay equipos en esta ubicación"}
+                  placeholder={showLocationSelector && !selectedLocationId ? "Primero selecciona una ubicación" : assets.length > 0 ? "Selecciona el equipo" : "No hay equipos en esta ubicación"}
                   loading={loadingAssets}
                   showSearch
                   optionFilterProp="children"
-                  disabled={assets.length === 0 || (isAdminOrJefe && !selectedLocationId)}
+                  disabled={assets.length === 0 || (showLocationSelector && !selectedLocationId)}
                   size={isMobile ? "large" : "middle"}
                   style={{ width: '100%' }}
                 >

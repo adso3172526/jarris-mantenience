@@ -11,11 +11,6 @@ export class UpdateProfileDto {
   permissions?: string[];
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  locationIds?: string[];
-
-  @IsOptional()
   @IsBoolean()
   active?: boolean;
 }

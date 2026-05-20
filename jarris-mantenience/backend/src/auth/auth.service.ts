@@ -18,13 +18,15 @@ export class AuthService {
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
 
+    // Extract roles from normalized table
+    const roles = (user.userRoles || []).map(ur => ur.role);
+
     // Resolve permissions from profile
     let permissions: string[] = [];
     let profileId: string | null = null;
     let profileName: string | null = null;
-    let profileLocationIds: string[] = [];
 
-    const isAdmin = user.roles?.includes('ADMIN');
+    const isAdmin = roles.includes('ADMIN');
 
     if (isAdmin) {
       // ADMIN doesn't need a profile
@@ -32,19 +34,21 @@ export class AuthService {
       if (!user.profile.active) {
         throw new BadRequestException('El perfil asignado está inactivo');
       }
-      permissions = user.profile.permissions;
+      permissions = (user.profile.profilePermissions || []).map(pp => pp.permission);
       profileId = user.profile.id;
       profileName = user.profile.name;
-      profileLocationIds = user.profile.locationIds || [];
     } else {
       // Non-ADMIN without profile cannot login
       throw new BadRequestException('El usuario no tiene un perfil asignado. Contacte al administrador.');
     }
 
+    // Extract location IDs from normalized table
+    const profileLocationIds = (user.userLocations || []).map(ul => ul.locationId);
+
     const payload = {
       sub: user.id,
       email: user.email,
-      roles: user.roles,
+      roles,
       locationId: user.locationId,
       permissions,
       profileId,
