@@ -485,7 +485,8 @@ export class WarehouseService {
       .createQueryBuilder('m')
       .leftJoinAndSelect('m.item', 'item')
       .leftJoinAndSelect('m.warehouse', 'warehouse')
-      .leftJoinAndSelect('warehouse.location', 'location');
+      .leftJoinAndSelect('warehouse.location', 'location')
+      .leftJoinAndSelect('m.workOrder', 'workOrder');
 
     if (filters.warehouseId) {
       qb.andWhere('m.warehouseId = :warehouseId', {

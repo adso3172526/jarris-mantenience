@@ -59,15 +59,6 @@ interface Profile {
   updatedAt?: string;
 }
 
-const roleLabels: Record<string, string> = {
-  ADMIN: 'Administrador',
-  JEFE_MANTENIMIENTO: 'Jefe Mantenimiento',
-  TECNICO_INTERNO: 'Técnico Interno',
-  CONTRATISTA: 'Contratista',
-  PDV: 'Punto de Venta',
-  ADMINISTRACION: 'Administración',
-};
-
 // Helper to extract permissions from normalized profile
 const getProfilePerms = (profile: Profile): string[] =>
   (profile.profilePermissions || []).map(pp => pp.permission);
@@ -440,19 +431,15 @@ const UsersPage: React.FC = () => {
   const showLocationSection = !isAdminUser;
 
 
-  const getRoleOrProfileLabel = (user: User) => {
+  const getProfileLabel = (user: User) => {
+    const roles = (user.userRoles || []).map(ur => ur.role);
+    if (roles.includes('ADMIN')) {
+      return <Tag style={{ background: '#fff' }}>ADMINISTRADOR</Tag>;
+    }
     if (user.profile) {
       return <Tag style={{ background: '#fff' }}>{user.profile.name}</Tag>;
     }
-    return (
-      <Space wrap size={4}>
-        {(user.userRoles || []).map((ur) => ur.role).map((role) => (
-          <Tag key={role} style={{ margin: 0, background: '#fff' }}>
-            {roleLabels[role] || role}
-          </Tag>
-        ))}
-      </Space>
-    );
+    return <Tag style={{ background: '#fff', color: '#8c8c8c' }}>Sin perfil</Tag>;
   };
 
   const renderUserMobileCard = (record: User) => (
@@ -473,7 +460,7 @@ const UsersPage: React.FC = () => {
           </div>
         )}
         <div style={{ marginBottom: 4 }}>
-          {getRoleOrProfileLabel(record)}
+          {getProfileLabel(record)}
         </div>
         {(record.userLocations && record.userLocations.length > 0) && (
           <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 4 }}>
@@ -518,15 +505,15 @@ const UsersPage: React.FC = () => {
       ),
     },
     {
-      title: 'Rol / Perfil',
-      key: 'roleProfile',
+      title: 'Perfil',
+      key: 'profile',
       width: 280,
       sorter: (a, b) => {
         const aLabel = a.profile?.name || (a.userRoles || [])[0]?.role || '';
         const bLabel = b.profile?.name || (b.userRoles || [])[0]?.role || '';
         return aLabel.localeCompare(bLabel);
       },
-      render: (_, record) => getRoleOrProfileLabel(record),
+      render: (_, record) => getProfileLabel(record),
     },
     {
       title: 'Estado',

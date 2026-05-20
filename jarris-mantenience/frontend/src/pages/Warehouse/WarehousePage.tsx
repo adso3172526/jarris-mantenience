@@ -12,6 +12,7 @@ import {
   Card,
   Tooltip,
   Empty,
+  Pagination,
 } from 'antd';
 import {
   PlusOutlined,
@@ -86,6 +87,9 @@ const WarehousePage: React.FC = () => {
   const [movFilterItem, setMovFilterItem] = useState<string>('');
   const [movFilterType, setMovFilterType] = useState<string>('');
   const [movFilterDates, setMovFilterDates] = useState<any>(null);
+  const [movFilterDateFrom, setMovFilterDateFrom] = useState<any>(null);
+  const [movFilterDateTo, setMovFilterDateTo] = useState<any>(null);
+  const [movMobilePage, setMovMobilePage] = useState(1);
 
   // ─── Data Loading ──────────────────────────────────
 
@@ -127,8 +131,11 @@ const WarehousePage: React.FC = () => {
       if (movFilterWarehouse) params.warehouseId = movFilterWarehouse;
       if (movFilterItem) params.itemId = movFilterItem;
       if (movFilterType) params.type = movFilterType;
+      // Desktop uses RangePicker, mobile uses separate DatePickers
       if (movFilterDates?.[0]) params.dateFrom = movFilterDates[0].startOf('day').toISOString();
+      else if (movFilterDateFrom) params.dateFrom = movFilterDateFrom.startOf('day').toISOString();
       if (movFilterDates?.[1]) params.dateTo = movFilterDates[1].endOf('day').toISOString();
+      else if (movFilterDateTo) params.dateTo = movFilterDateTo.endOf('day').toISOString();
       const res = await warehouseApi.getMovements(params);
       setMovements(res.data);
     } catch {
@@ -136,7 +143,7 @@ const WarehousePage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [movFilterWarehouse, movFilterItem, movFilterType, movFilterDates]);
+  }, [movFilterWarehouse, movFilterItem, movFilterType, movFilterDates, movFilterDateFrom, movFilterDateTo]);
 
   const loadLowStock = useCallback(async () => {
     try {
@@ -193,12 +200,12 @@ const WarehousePage: React.FC = () => {
 
   const handleStockEntryClose = (saved?: boolean) => {
     setStockEntryOpen(false);
-    if (saved) { loadItems(selectedWarehouseId); loadLowStock(); }
+    if (saved) { loadItems(selectedWarehouseId); loadLowStock(); loadMovements(); }
   };
 
   const handleTransferClose = (saved?: boolean) => {
     setTransferOpen(false);
-    if (saved) { loadWarehouses(); if (selectedWarehouseId) loadItems(selectedWarehouseId); loadLowStock(); }
+    if (saved) { loadWarehouses(); if (selectedWarehouseId) loadItems(selectedWarehouseId); loadLowStock(); loadMovements(); }
   };
 
 
@@ -336,36 +343,65 @@ const WarehousePage: React.FC = () => {
   const renderItemsTab = () => (
     <Card
       title={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>Items</span>
-            <Select
-              style={{ minWidth: 180 }}
-              placeholder="Seleccione almacén"
-              value={selectedWarehouseId || undefined}
-              onChange={(val) => { setSelectedWarehouseId(val); setItemSearch(''); }}
-              options={warehouses.map((w: any) => ({ label: w.name, value: w.id }))}
-              allowClear
-              size={isMobile ? 'small' : 'middle'}
-            />
+        isMobile ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 14, fontWeight: 600 }}>Items</span>
+            <Space wrap>
+              {hasPermission('EDITAR_ITEMS_ALMACEN') && (
+                <Button icon={<PlusOutlined />} disabled={!selectedWarehouseId} onClick={() => setCreateItemOpen(true)} size="small">
+                  Item
+                </Button>
+              )}
+              {hasPermission('INGRESAR_STOCK') && (
+                <Button type="primary" icon={<ImportOutlined />} disabled={!selectedWarehouseId || items.length === 0} onClick={() => setStockEntryOpen(true)} size="small">
+                  Ingreso
+                </Button>
+              )}
+            </Space>
           </div>
-          <Space wrap>
-            {hasPermission('EDITAR_ITEMS_ALMACEN') && (
-              <Button icon={<PlusOutlined />} disabled={!selectedWarehouseId} onClick={() => setCreateItemOpen(true)} size="middle">
-                {isMobile ? 'Item' : 'Crear Item'}
-              </Button>
-            )}
-            {hasPermission('INGRESAR_STOCK') && (
-              <Button type="primary" icon={<ImportOutlined />} disabled={!selectedWarehouseId || items.length === 0} onClick={() => setStockEntryOpen(true)} size="middle">
-                {isMobile ? 'Ingreso' : 'Ingreso Stock'}
-              </Button>
-            )}
-          </Space>
-        </div>
+        ) : (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>Items</span>
+              <Select
+                style={{ minWidth: 180 }}
+                placeholder="Seleccione almacén"
+                value={selectedWarehouseId || undefined}
+                onChange={(val) => { setSelectedWarehouseId(val); setItemSearch(''); }}
+                options={warehouses.map((w: any) => ({ label: w.name, value: w.id }))}
+                allowClear
+                size="middle"
+              />
+            </div>
+            <Space wrap>
+              {hasPermission('EDITAR_ITEMS_ALMACEN') && (
+                <Button icon={<PlusOutlined />} disabled={!selectedWarehouseId} onClick={() => setCreateItemOpen(true)} size="middle">
+                  Crear Item
+                </Button>
+              )}
+              {hasPermission('INGRESAR_STOCK') && (
+                <Button type="primary" icon={<ImportOutlined />} disabled={!selectedWarehouseId || items.length === 0} onClick={() => setStockEntryOpen(true)} size="middle">
+                  Ingreso Stock
+                </Button>
+              )}
+            </Space>
+          </div>
+        )
       }
-      styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
-      style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+      styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden' } }}
+      style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden' }}
     >
+      {isMobile && (
+        <Select
+          style={{ width: '100%', marginBottom: 12 }}
+          placeholder="Seleccione almacén"
+          value={selectedWarehouseId || undefined}
+          onChange={(val) => { setSelectedWarehouseId(val); setItemSearch(''); }}
+          options={warehouses.map((w: any) => ({ label: w.name, value: w.id }))}
+          allowClear
+          size="middle"
+        />
+      )}
       {!selectedWarehouseId ? (
         <div style={{ textAlign: 'center', padding: 40, color: '#888' }}>
           Seleccione un almacén para ver sus items
@@ -497,7 +533,7 @@ const WarehousePage: React.FC = () => {
       dataIndex: 'workOrderId',
       key: 'wo',
       align: 'center' as const,
-      render: (v: string) => v ? <Tooltip title={v}>{v.substring(0, 8)}</Tooltip> : '-',
+      render: (_: string, r: any) => r.workOrderId ? <Tooltip title={r.workOrder?.title}><span style={{ fontFamily: 'monospace' }}>OT-{r.workOrderId.substring(0, 8)}</span></Tooltip> : '-',
     },
     { title: 'Usuario', dataIndex: 'createdBy', key: 'user', ellipsis: true },
     { title: 'Observación', dataIndex: 'observation', key: 'obs', ellipsis: true, render: (v: any) => v || '-' },
@@ -520,8 +556,8 @@ const WarehousePage: React.FC = () => {
           <span style={{ fontSize: isMobile ? 14 : 16, fontWeight: 600 }}>Movimientos (Kardex)</span>
         </div>
       }
-      styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } }}
-      style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+      styles={{ body: { padding: isMobile ? 12 : '12px 24px', flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden' } }}
+      style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden' }}
     >
       <div style={{ marginBottom: 12, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         <Select
@@ -552,43 +588,99 @@ const WarehousePage: React.FC = () => {
           allowClear
           size={isMobile ? 'small' : 'middle'}
         />
-        {!isMobile && (
+        {isMobile ? (
+          <>
+            <DatePicker
+              placeholder="Desde"
+              value={movFilterDateFrom}
+              onChange={(date) => setMovFilterDateFrom(date)}
+              format="DD/MM/YY"
+              size="small"
+              style={{ flex: 1, minWidth: 100 }}
+            />
+            <DatePicker
+              placeholder="Hasta"
+              value={movFilterDateTo}
+              onChange={(date) => setMovFilterDateTo(date)}
+              format="DD/MM/YY"
+              size="small"
+              style={{ flex: 1, minWidth: 100 }}
+            />
+          </>
+        ) : (
           <RangePicker
             onChange={(dates) => setMovFilterDates(dates)}
             value={movFilterDates}
             format="DD/MM/YYYY"
           />
         )}
-        <Button icon={<SearchOutlined />} type="primary" onClick={loadMovements} size="middle">
+        <Button icon={<SearchOutlined />} type="primary" onClick={() => { setMovMobilePage(1); loadMovements(); }} size="middle">
           {isMobile ? '' : 'Buscar'}
         </Button>
-        <Button icon={<ReloadOutlined />} onClick={() => { setMovFilterWarehouse(''); setMovFilterItem(''); setMovFilterType(''); setMovFilterDates(null); }} size="middle">
+        <Button icon={<ReloadOutlined />} onClick={() => { setMovFilterWarehouse(''); setMovFilterItem(''); setMovFilterType(''); setMovFilterDates(null); setMovFilterDateFrom(null); setMovFilterDateTo(null); setMovMobilePage(1); }} size="middle">
           {isMobile ? '' : 'Limpiar'}
         </Button>
       </div>
 
       {isMobile ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {movements.map((m: any) => {
+          {movements.length > 0 && (
+            <div style={{ fontSize: 12, color: '#888', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 }}>
+              <span>Total: <strong>{movements.length}</strong> movimientos</span>
+              <span>
+                {Object.entries(
+                  movements.reduce((acc: Record<string, number>, m: any) => {
+                    acc[m.type] = (acc[m.type] || 0) + 1;
+                    return acc;
+                  }, {}),
+                ).map(([type, count]) => {
+                  const cfg = MOVEMENT_TYPE_CONFIG[type] || { label: type };
+                  return `${cfg.label}: ${count}`;
+                }).join(' · ')}
+              </span>
+            </div>
+          )}
+          {movements.slice((movMobilePage - 1) * 5, movMobilePage * 5).map((m: any) => {
             const cfg = MOVEMENT_TYPE_CONFIG[m.type] || { color: 'default', label: m.type };
             return (
-              <Card key={m.id} size="small">
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <Tag color={cfg.color}>{cfg.label}</Tag>
-                  <span style={{ fontSize: 12, color: '#888' }}>{dayjs(m.createdAt).format('DD/MM/YY HH:mm')}</span>
+              <Card key={m.id} size="small" styles={{ body: { padding: '10px 12px' } }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <Tag color={cfg.color} style={{ margin: 0 }}>{cfg.label}</Tag>
+                  <span style={{ fontSize: 11, color: '#888' }}>{dayjs(m.createdAt).format('DD/MM/YY HH:mm')}</span>
                 </div>
-                <div><strong>{m.item?.name || '-'}</strong></div>
-                <div style={{ fontSize: 12, color: '#888' }}>{m.warehouse?.name}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                  <span>Cant: {Number(m.quantity).toLocaleString('es-CO')}</span>
-                  <span>Total: ${Number(m.totalCost).toLocaleString('es-CO')}</span>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{m.item?.name || '-'}</div>
+                <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{m.warehouse?.name}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                  <span>Cant: <strong>{Number(m.quantity).toLocaleString('es-CO')}</strong></span>
+                  <span>Unit: <strong>${Number(m.unitCostAtTime || 0).toLocaleString('es-CO')}</strong></span>
+                  <span>Total: <strong>${Number(m.totalCost).toLocaleString('es-CO')}</strong></span>
                 </div>
-                {m.workOrderId && <div style={{ fontSize: 12, color: '#888' }}>OT: {m.workOrderId.substring(0, 8)}...</div>}
-                <div style={{ fontSize: 11, color: '#999' }}>{m.createdBy}</div>
+                {m.workOrderId && (
+                  <div style={{ fontSize: 12, color: '#1890ff', marginTop: 4 }}>
+                    <span style={{ fontFamily: 'monospace' }}>OT-{m.workOrderId.substring(0, 8)}</span>
+                  </div>
+                )}
+                {m.observation && (
+                  <div style={{ fontSize: 11, color: '#666', marginTop: 2, fontStyle: 'italic' }}>
+                    {m.observation}
+                  </div>
+                )}
+                <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>{m.createdBy}</div>
               </Card>
             );
           })}
           {movements.length === 0 && <div style={{ textAlign: 'center', padding: 20, color: '#888' }}>No hay movimientos</div>}
+          {movements.length > 5 && (
+            <Pagination
+              current={movMobilePage}
+              pageSize={5}
+              total={movements.length}
+              onChange={(page) => setMovMobilePage(page)}
+              size="small"
+              simple
+              style={{ textAlign: 'center', marginTop: 8 }}
+            />
+          )}
         </div>
       ) : (
         <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -807,12 +899,12 @@ const WarehousePage: React.FC = () => {
   const tabItems = allTabItems.filter(Boolean) as any[];
 
   return (
-    <div style={{ height: isMobile ? 'auto' : '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ height: isMobile ? 'auto' : '100%', display: 'flex', flexDirection: 'column', overflow: isMobile ? 'visible' : 'hidden' }}>
       <style>{`
-        .warehouse-tabs { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .warehouse-tabs > .ant-tabs-content-holder { flex: 1; overflow: hidden; }
-        .warehouse-tabs .ant-tabs-content { height: 100%; }
-        .warehouse-tabs .ant-tabs-tabpane-active { height: 100%; display: flex; flex-direction: column; }
+        .warehouse-tabs { flex: 1; display: flex; flex-direction: column; ${isMobile ? '' : 'overflow: hidden;'} }
+        .warehouse-tabs > .ant-tabs-content-holder { flex: 1; ${isMobile ? 'overflow: visible;' : 'overflow: hidden;'} }
+        .warehouse-tabs .ant-tabs-content { ${isMobile ? '' : 'height: 100%;'} }
+        .warehouse-tabs .ant-tabs-tabpane-active { ${isMobile ? '' : 'height: 100%;'} display: flex; flex-direction: column; }
         ${isMobile ? `
           .warehouse-tabs .ant-tabs-tab { color: rgba(255,255,255,0.65) !important; }
           .warehouse-tabs .ant-tabs-tab-active .ant-tabs-tab-btn { color: #fff !important; }

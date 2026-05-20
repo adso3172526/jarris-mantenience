@@ -52,7 +52,14 @@ export class LocativeCategoriesService implements OnModuleInit {
     }
     const nextCode = await this.getNextCode();
     const entity = this.repo.create({ name: normalizedName, code: nextCode, active: true });
-    return this.repo.save(entity);
+    try {
+      return await this.repo.save(entity);
+    } catch (err: any) {
+      if (err.code === '23505') {
+        throw new ConflictException(`Ya existe una categoría locativa con el nombre "${normalizedName}"`);
+      }
+      throw err;
+    }
   }
 
   private async getNextCode(): Promise<number> {
