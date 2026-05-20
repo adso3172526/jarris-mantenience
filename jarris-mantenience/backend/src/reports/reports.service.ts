@@ -42,6 +42,7 @@ export class ReportsService {
         wo."assigneeEmail" AS email_tecnico,
         wo.priority AS prioridad,
         wo.cost AS costo,
+        wo.materials_cost AS costo_materiales,
         wo."createdAt" AS fecha,
         wo."assignedAt" AS fecha_asignacion,
         wo."startedAt" AS fecha_inicio,
@@ -83,6 +84,7 @@ export class ReportsService {
         ae."createdBy" AS email_tecnico,
         NULL::text AS prioridad,
         ae.cost AS costo,
+        0 AS costo_materiales,
         ae."createdAt" AS fecha,
         NULL::timestamptz AS fecha_asignacion,
         NULL::timestamptz AS fecha_inicio,
@@ -293,6 +295,7 @@ export class ReportsService {
       { header: 'Responsable', key: 'nombre_responsable', width: 25 },
       { header: 'Email Responsable', key: 'email_responsable', width: 30 },
       { header: 'Costo', key: 'costo', width: 15 },
+      { header: 'Costo Materiales', key: 'costo_materiales', width: 18 },
       { header: 'Fecha Ingreso', key: 'fecha', width: 18 },
       { header: 'Fecha Asignación', key: 'fecha_asignacion', width: 18 },
       { header: 'Fecha Inicio', key: 'fecha_inicio', width: 18 },
@@ -333,6 +336,7 @@ export class ReportsService {
         nombre_responsable: row.nombre_tecnico || 'N/A',
         email_responsable: row.email_tecnico || 'N/A',
         costo: Number(row.costo || 0),
+        costo_materiales: Number(row.costo_materiales || 0),
         fecha: row.fecha ? new Date(row.fecha) : null,
         fecha_asignacion: row.fecha_asignacion ? new Date(row.fecha_asignacion) : null,
         fecha_inicio: row.fecha_inicio ? new Date(row.fecha_inicio) : null,
@@ -343,47 +347,17 @@ export class ReportsService {
 
     // Formato de costo
     worksheet.getColumn('costo').numFmt = '"$"#,##0';
+    worksheet.getColumn('costo_materiales').numFmt = '"$"#,##0';
 
     // Formato de fechas
     ['fecha', 'fecha_asignacion', 'fecha_inicio', 'fecha_terminacion', 'fecha_cierre'].forEach(col => {
       worksheet.getColumn(col).numFmt = 'dd/mm/yyyy hh:mm';
     });
 
-    // Contar totales por tipo
-    const totalOT = data.filter(r => r.tipo_registro === 'OT').length;
-    const totalEventos = data.filter(r => r.tipo_registro === 'EVENTO').length;
-    const costoTotal = data.reduce((sum, row) => sum + Number(row.costo || 0), 0);
-
-    // Fila de totales
-    const lastRow = worksheet.addRow({
-      tipo_registro: '',
-      id: '',
-      estado: '',
-      prioridad: '',
-      categoria_ot: '',
-      tipo_evento: '',
-      ubicacion_nombre: '',
-      co: '',
-      cc: '',
-      activo: '',
-      categoria_detalle: '',
-      trabajo_realizado: 'TOTALES:',
-      nombre_responsable: `${totalOT} OT | ${totalEventos} Eventos`,
-      email_responsable: '',
-      costo: costoTotal,
-    });
-
-    lastRow.font = { bold: true };
-    lastRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFF0F0F0' },
-    };
-
     // Auto-filtros
     worksheet.autoFilter = {
       from: 'A1',
-      to: 'T1',
+      to: 'U1',
     };
 
     // Generar buffer
