@@ -29,7 +29,6 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>('');
   const [warehouseItems, setWarehouseItems] = useState<any[]>([]);
   const [consumptionLines, setConsumptionLines] = useState<{ itemId: string; quantity: number }[]>([]);
-
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -165,13 +164,22 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
       okText="Finalizar"
       cancelText="Cancelar"
       width={isMobile ? '100%' : 600}
+      centered
       style={isMobile ? { top: 0, paddingBottom: 0, maxHeight: '100vh' } : {}}
-      bodyStyle={isMobile ? { 
-        maxHeight: 'calc(100vh - 110px)', 
-        overflowY: 'auto',
-        padding: '16px'
-      } : {}}
+      styles={{
+        body: {
+          padding: 0,
+        },
+      }}
     >
+      <div
+        id="finish-wo-modal-body"
+        style={{
+          maxHeight: isMobile ? 'calc(100vh - 110px)' : 'calc(100vh - 200px)',
+          overflowY: 'auto',
+          padding: isMobile ? '16px' : '24px',
+        }}
+      >
       {/* Info de la OT */}
       <div style={{ 
         marginBottom: 16, 
@@ -348,7 +356,13 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
                     <Button
                       type="dashed"
                       icon={<PlusOutlined />}
-                      onClick={() => setConsumptionLines([...consumptionLines, { itemId: '', quantity: 0 }])}
+                      onClick={() => {
+                        setConsumptionLines([...consumptionLines, { itemId: '', quantity: 0 }]);
+                        setTimeout(() => {
+                          const el = document.getElementById('finish-wo-modal-body');
+                          if (el) el.scrollTop = el.scrollHeight;
+                        }, 50);
+                      }}
                       size="small"
                       block
                     >
@@ -366,6 +380,7 @@ const FinishWorkOrderModal: React.FC<FinishWorkOrderModalProps> = ({
           }]}
         />
       )}
+      </div>
     </Modal>
   );
 };

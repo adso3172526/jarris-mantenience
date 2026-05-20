@@ -75,15 +75,17 @@ export class WorkOrdersController {
   @Get('by-assignee')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'CONTRATISTA')
   @Permissions(Permission.EDITAR_OT, Permission.VER_OT, Permission.INICIAR_OT, Permission.FINALIZAR_OT)
-  findByAssignee(@Query('email') email: string) {
-    return this.service.findByAssignee(email);
+  findByAssignee(@Query('email') email: string, @Req() req: any) {
+    const profileLocationIds = req.user?.profileLocationIds || [];
+    return this.service.findByAssignee(email, profileLocationIds);
   }
 
   @Get('by-creator')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'PDV', 'ADMINISTRACION')
   @Permissions(Permission.VER_ACTIVOS, Permission.EDITAR_OT, Permission.CREAR_OT_EQUIPO, Permission.CREAR_OT_LOCATIVO)
-  findByCreator(@Query('email') email: string) {
-    return this.service.findByCreator(email);
+  findByCreator(@Query('email') email: string, @Req() req: any) {
+    const profileLocationIds = req.user?.profileLocationIds || [];
+    return this.service.findByCreator(email, profileLocationIds);
   }
 
   @Get(':id')

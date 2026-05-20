@@ -818,18 +818,26 @@ Fecha: ${new Date().toLocaleString('es-CO')}
     });
   }
 
-  async findByAssignee(assigneeEmail: string) {
+  async findByAssignee(assigneeEmail: string, profileLocationIds?: string[]) {
+    const where: any = { assigneeEmail };
+    if (profileLocationIds && profileLocationIds.length > 0) {
+      where.location = { id: In(profileLocationIds) };
+    }
     return this.woRepo.find({
-      where: { assigneeEmail },
+      where,
       relations: ['asset', 'asset.category', 'location', 'locativeCategory'],
       order: { createdAt: 'DESC' },
     });
   }
 
   // NUEVO: Buscar OT por creador (para PDV)
-  async findByCreator(creatorEmail: string) {
+  async findByCreator(creatorEmail: string, profileLocationIds?: string[]) {
+    const where: any = { createdBy: creatorEmail };
+    if (profileLocationIds && profileLocationIds.length > 0) {
+      where.location = { id: In(profileLocationIds) };
+    }
     return this.woRepo.find({
-      where: { createdBy: creatorEmail },
+      where,
       relations: ['asset', 'asset.category', 'location', 'locativeCategory'],
       order: { createdAt: 'DESC' },
     });

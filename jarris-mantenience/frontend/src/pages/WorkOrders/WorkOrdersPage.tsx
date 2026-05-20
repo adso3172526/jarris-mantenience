@@ -395,6 +395,7 @@ const WorkOrdersPage: React.FC = () => {
       dataIndex: 'priority',
       key: 'priority',
       width: 90,
+      align: 'center',
       ellipsis: true,
       sorter: (a, b) => (a.priority || '').localeCompare(b.priority || ''),
       render: (priority: string) => priority ? (
