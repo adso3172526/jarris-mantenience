@@ -430,7 +430,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
           <Divider />
           <div style={{ marginBottom: 16 }}>
             <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 8 }}>
-              Detalle de Materiales
+              Materiales de Almacén
             </Text>
             {consumptionData.map((m: any, idx: number) => (
               <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid #f0f0f0' }}>
@@ -651,7 +651,7 @@ const ViewWorkOrderModal: React.FC<ViewWorkOrderModalProps> = ({
       {/* Materiales Consumidos */}
       {consumptionData.length > 0 && (
         <>
-          <Title level={5} style={{ marginTop: 24 }}>Detalle de Materiales</Title>
+          <Title level={5} style={{ marginTop: 24 }}>Materiales de Almacén</Title>
           <Table
             dataSource={consumptionData}
             rowKey="id"
