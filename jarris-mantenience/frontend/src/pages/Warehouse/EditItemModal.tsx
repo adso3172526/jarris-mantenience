@@ -36,6 +36,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
         unitOfMeasure: item.unitOfMeasure,
         weightOrSize: item.weightOrSize,
         unitCost: Number(item.unitCost || 0),
+        stock: Number(item.stock || 0),
         minimumStock: Number(item.minimumStock || 0),
         observations: item.observations,
         active: item.active,
@@ -53,6 +54,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
         unitOfMeasure: values.unitOfMeasure,
         weightOrSize: values.weightOrSize || undefined,
         unitCost: values.unitCost,
+        stock: values.stock,
         minimumStock: values.minimumStock,
         observations: values.observations || undefined,
         active: values.active,
@@ -152,6 +154,19 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
             placeholder="0"
             formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
             parser={(value) => value!.replace(/\$\s?|(,*)/g, '') as any}
+            size={isMobile ? 'large' : 'middle'}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label="Stock Actual"
+          name="stock"
+          rules={[{ required: true, message: 'El stock es requerido' }]}
+        >
+          <InputNumber
+            style={{ width: '100%' }}
+            min={0}
+            placeholder="0"
             size={isMobile ? 'large' : 'middle'}
           />
         </Form.Item>

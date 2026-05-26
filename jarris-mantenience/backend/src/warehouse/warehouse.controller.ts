@@ -111,21 +111,21 @@ export class WarehouseController {
 
   @Get(':warehouseId/items')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO', 'TECNICO_INTERNO', 'CONTRATISTA', 'PDV', 'ADMINISTRACION')
-  @Permissions(Permission.VER_TODOS_ALMACENES, Permission.VER_ITEMS_ALMACEN, Permission.EDITAR_OT, Permission.FINALIZAR_OT)
+  @Permissions(Permission.VER_TODOS_ALMACENES, Permission.VER_ITEMS_ALMACEN, Permission.VER_STOCK, Permission.EDITAR_OT, Permission.FINALIZAR_OT)
   findItems(@Param('warehouseId') warehouseId: string) {
     return this.service.findItemsByWarehouse(warehouseId);
   }
 
   @Get('items/:id')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  @Permissions(Permission.VER_TODOS_ALMACENES)
+  @Permissions(Permission.VER_TODOS_ALMACENES, Permission.VER_STOCK)
   findItem(@Param('id') id: string) {
     return this.service.findItemById(id);
   }
 
   @Patch('items/:id')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  @Permissions(Permission.EDITAR_ITEMS_ALMACEN)
+  @Permissions(Permission.EDITAR_ITEMS_ALMACEN, Permission.EDITAR_STOCK)
   updateItem(@Param('id') id: string, @Body() dto: UpdateItemDto) {
     return this.service.updateItem(id, dto);
   }
@@ -134,7 +134,7 @@ export class WarehouseController {
 
   @Post('stock-entry')
   @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
-  @Permissions(Permission.INGRESAR_STOCK)
+  @Permissions(Permission.INGRESAR_STOCK, Permission.EDITAR_STOCK)
   addStockEntry(@Body() dto: StockEntryDto) {
     return this.service.addStockEntry(dto);
   }

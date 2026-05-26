@@ -50,6 +50,8 @@ export enum Permission {
   VER_PERFILES = 'VER_PERFILES',
   CREAR_PERFILES = 'CREAR_PERFILES',
   EDITAR_PERFILES = 'EDITAR_PERFILES',
+  VER_STOCK = 'VER_STOCK',
+  EDITAR_STOCK = 'EDITAR_STOCK',
   CONSUMIR_ALMACEN_OT = 'CONSUMIR_ALMACEN_OT',
   EDITAR_CONSUMO_ALMACEN_OT = 'EDITAR_CONSUMO_ALMACEN_OT',
 }
@@ -108,6 +110,8 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   [Permission.VER_PERFILES]: 'Ver perfiles',
   [Permission.CREAR_PERFILES]: 'Crear perfiles',
   [Permission.EDITAR_PERFILES]: 'Editar perfiles',
+  [Permission.VER_STOCK]: 'Ver stock de almacén',
+  [Permission.EDITAR_STOCK]: 'Editar stock de almacén',
   [Permission.CONSUMIR_ALMACEN_OT]: 'Registrar consumo de almacén en OT',
   [Permission.EDITAR_CONSUMO_ALMACEN_OT]: 'Editar consumo de almacén en OT cerrada',
 };

@@ -182,6 +182,7 @@ export class WarehouseService {
     if (dto.unitCost !== undefined) item.unitCost = dto.unitCost;
     if (dto.minimumStock !== undefined) item.minimumStock = dto.minimumStock;
     if (dto.observations !== undefined) item.observations = dto.observations?.trim() || undefined;
+    if (dto.stock !== undefined) item.stock = dto.stock;
     if (dto.active !== undefined) item.active = dto.active;
     return this.itemRepo.save(item);
   }

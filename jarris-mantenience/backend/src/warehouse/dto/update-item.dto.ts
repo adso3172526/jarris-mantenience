@@ -39,6 +39,11 @@ export class UpdateItemDto {
   @IsOptional()
   observations?: string;
 
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  stock?: number;
+
   @IsBoolean()
   @IsOptional()
   active?: boolean;

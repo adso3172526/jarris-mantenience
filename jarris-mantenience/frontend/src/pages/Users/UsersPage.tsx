@@ -96,6 +96,8 @@ const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
   EDITAR_ALMACEN: ['VER_TODOS_ALMACENES'],
   EDITAR_ITEMS_ALMACEN: ['VER_TODOS_ALMACENES'],
   INGRESAR_STOCK: ['VER_TODOS_ALMACENES'],
+  VER_STOCK: ['VER_TODOS_ALMACENES'],
+  EDITAR_STOCK: ['VER_TODOS_ALMACENES', 'VER_STOCK'],
   VER_TRASLADOS_ALMACEN: ['VER_TODOS_ALMACENES'],
   CREAR_TRASLADOS_ALMACEN: ['VER_TODOS_ALMACENES', 'VER_TRASLADOS_ALMACEN'],
 };
@@ -174,6 +176,8 @@ const PERMISSION_CATEGORIES = [
       { key: 'EDITAR_ALMACEN', label: 'Editar almacén' },
       { key: 'EDITAR_ITEMS_ALMACEN', label: 'Editar items de almacén' },
       { key: 'INGRESAR_STOCK', label: 'Ingresar stock' },
+      { key: 'VER_STOCK', label: 'Ver stock de almacén' },
+      { key: 'EDITAR_STOCK', label: 'Editar stock de almacén' },
       { key: 'VER_TRASLADOS_ALMACEN', label: 'Ver traslados de almacén' },
       { key: 'CREAR_TRASLADOS_ALMACEN', label: 'Crear traslados de almacén' },
       { key: 'CONSUMIR_ALMACEN_OT', label: 'Registrar consumo de almacén en OT' },

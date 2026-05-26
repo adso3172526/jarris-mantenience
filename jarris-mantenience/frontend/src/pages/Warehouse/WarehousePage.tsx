@@ -352,7 +352,7 @@ const WarehousePage: React.FC = () => {
                   Item
                 </Button>
               )}
-              {hasPermission('INGRESAR_STOCK') && (
+              {(hasPermission('INGRESAR_STOCK') || hasPermission('EDITAR_STOCK')) && (
                 <Button type="primary" icon={<ImportOutlined />} disabled={!selectedWarehouseId || items.length === 0} onClick={() => setStockEntryOpen(true)} size="small">
                   Ingreso
                 </Button>
@@ -379,7 +379,7 @@ const WarehousePage: React.FC = () => {
                   Crear Item
                 </Button>
               )}
-              {hasPermission('INGRESAR_STOCK') && (
+              {(hasPermission('INGRESAR_STOCK') || hasPermission('EDITAR_STOCK')) && (
                 <Button type="primary" icon={<ImportOutlined />} disabled={!selectedWarehouseId || items.length === 0} onClick={() => setStockEntryOpen(true)} size="middle">
                   Ingreso Stock
                 </Button>

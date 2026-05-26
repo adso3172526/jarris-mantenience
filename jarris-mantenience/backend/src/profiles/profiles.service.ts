@@ -25,6 +25,7 @@ const DEFAULT_PROFILES: Record<string, string[]> = {
     Permission.VER_TODOS_ALMACENES,
     Permission.VER_MOVIMIENTOS_ALMACEN, Permission.VER_ALERTAS_ALMACEN,
     Permission.EDITAR_ALMACEN, Permission.EDITAR_ITEMS_ALMACEN, Permission.INGRESAR_STOCK,
+    Permission.VER_STOCK, Permission.EDITAR_STOCK,
     Permission.VER_TRASLADOS_ALMACEN, Permission.CREAR_TRASLADOS_ALMACEN,
     Permission.VER_SOLICITUDES, Permission.VER_ORDENES_CERRADAS,
     Permission.EDITAR_SOLICITUD, Permission.CERRAR_SOLICITUD, Permission.RECHAZAR_SOLICITUD,
