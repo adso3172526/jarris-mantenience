@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Form, Input, InputNumber, Select, message } from 'antd';
+import { Modal, Form, Input, Select, message } from 'antd';
 import { warehouseApi } from '../../services/api';
 
 interface CreateWarehouseModalProps {
@@ -23,7 +23,7 @@ const CreateWarehouseModal: React.FC<CreateWarehouseModalProps> = ({
       await warehouseApi.create({
         name: values.name,
         locationId: values.locationId,
-        costCenter: values.costCenter || undefined,
+        costCenter: values.costCenter != null ? String(values.costCenter).trim() || undefined : undefined,
       });
       message.success('Bodega creada exitosamente');
       form.resetFields();
@@ -75,11 +75,9 @@ const CreateWarehouseModal: React.FC<CreateWarehouseModalProps> = ({
           label="Centro de Costos (CC)"
           name="costCenter"
         >
-          <InputNumber
-            placeholder="Ej: 200"
+          <Input
+            placeholder="Ej: 0001"
             size={isMobile ? 'large' : 'middle'}
-            style={{ width: '100%' }}
-            precision={0}
           />
         </Form.Item>
 

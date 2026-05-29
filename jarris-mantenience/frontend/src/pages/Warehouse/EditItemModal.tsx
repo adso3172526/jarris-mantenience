@@ -78,7 +78,7 @@ const EditItemModal: React.FC<EditItemModalProps> = ({
 
   return (
     <Modal
-      title={`Editar Articulo - ${item?.name || ''}`}
+      title={`Editar Articulo - ID: ${item?.code || 'N/A'}`}
       open={open}
       onCancel={handleCancel}
       onOk={() => form.submit()}

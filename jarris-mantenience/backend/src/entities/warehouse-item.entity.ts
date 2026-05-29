@@ -27,6 +27,9 @@ export class WarehouseItemEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ length: 5, unique: true, nullable: true })
+  code: string;
+
   @ManyToOne(() => WarehouseEntity)
   @JoinColumn({ name: 'warehouseId' })
   warehouse: WarehouseEntity;

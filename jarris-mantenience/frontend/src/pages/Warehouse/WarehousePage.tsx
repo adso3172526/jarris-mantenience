@@ -303,6 +303,7 @@ const WarehousePage: React.FC = () => {
   // ─── Items Tab ─────────────────────────────────────
 
   const itemColumns = [
+    { title: 'ID', dataIndex: 'code', key: 'code', width: 90, render: (v: any) => v || '-' },
     { title: 'Nombre', dataIndex: 'name', key: 'name', ellipsis: true },
     { title: 'Marca', dataIndex: 'brand', key: 'brand', render: (v: any) => v || '-' },
     { title: 'Unidad', dataIndex: 'unitOfMeasure', key: 'unit', render: (v: string) => UNIT_LABELS[v] || v },
@@ -435,7 +436,7 @@ const WarehousePage: React.FC = () => {
                         hasPermission('EDITAR_ITEMS_ALMACEN') && <Button size="small" icon={<EditOutlined />} onClick={() => { setEditItemData(item); setEditItemOpen(true); }} />
                       }
                     >
-                      <div><strong>{item.name}</strong></div>
+                      <div><strong>{item.code ? `[${item.code}] ` : ''}{item.name}</strong></div>
                       {item.brand && <div style={{ color: '#888', fontSize: 12 }}>Marca: {item.brand}</div>}
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
                         <span>{UNIT_LABELS[item.unitOfMeasure] || item.unitOfMeasure}</span>
@@ -499,6 +500,12 @@ const WarehousePage: React.FC = () => {
       title: 'Almacén',
       key: 'warehouse',
       render: (_: any, r: any) => r.warehouse?.name || '-',
+    },
+    {
+      title: 'ID',
+      key: 'itemCode',
+      width: 90,
+      render: (_: any, r: any) => r.item?.code || '-',
     },
     {
       title: 'Item',
@@ -779,6 +786,7 @@ const WarehousePage: React.FC = () => {
   // ─── Alerts Tab ────────────────────────────────────
 
   const alertColumns = [
+    { title: 'ID', dataIndex: 'code', key: 'code', width: 90, render: (v: any) => v || '-' },
     {
       title: 'Almacén',
       key: 'warehouse',
@@ -835,7 +843,7 @@ const WarehousePage: React.FC = () => {
               style={{ borderLeft: '3px solid #ff4d4f' }}
             >
               <div style={{ fontSize: 12, color: '#888' }}>{item.warehouse?.name || '-'}</div>
-              <div><strong>{item.name}</strong></div>
+              <div><strong>{item.code ? `[${item.code}] ` : ''}{item.name}</strong></div>
               {item.brand && <div style={{ color: '#888', fontSize: 12 }}>Marca: {item.brand}</div>}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
                 <span style={{ color: '#ff4d4f', fontWeight: 600 }}>

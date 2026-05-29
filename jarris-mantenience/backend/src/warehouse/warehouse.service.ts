@@ -1,8 +1,10 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   BadRequestException,
   ConflictException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
@@ -24,7 +26,9 @@ import { WorkOrderEntity } from '../entities/work-order.entity';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
-export class WarehouseService {
+export class WarehouseService implements OnModuleInit {
+  private readonly logger = new Logger(WarehouseService.name);
+
   constructor(
     @InjectRepository(WarehouseEntity)
     private warehouseRepo: Repository<WarehouseEntity>,
@@ -36,6 +40,20 @@ export class WarehouseService {
     private locationRepo: Repository<LocationEntity>,
     private dataSource: DataSource,
   ) {}
+
+  async onModuleInit() {
+    const withoutCode = await this.itemRepo
+      .createQueryBuilder('item')
+      .where('item.code IS NULL')
+      .orderBy('item.createdAt', 'ASC')
+      .getMany();
+
+    for (const item of withoutCode) {
+      item.code = await this.generateItemCode();
+      await this.itemRepo.save(item);
+      this.logger.log(`[seed] Código asignado: ${item.code} - ${item.name}`);
+    }
+  }
 
   // ─── WAREHOUSES ────────────────────────────────────────
 
@@ -122,12 +140,25 @@ export class WarehouseService {
 
   // ─── ITEMS ─────────────────────────────────────────────
 
+  private async generateItemCode(): Promise<string> {
+    const last = await this.itemRepo
+      .createQueryBuilder('item')
+      .where('item.code IS NOT NULL')
+      .orderBy('item.code', 'DESC')
+      .getOne();
+
+    const lastNum = last?.code ? parseInt(last.code, 36) : 0;
+    const next = lastNum + 1;
+    return next.toString(36).toUpperCase().padStart(5, '0');
+  }
+
   async createItem(dto: CreateItemDto): Promise<WarehouseItemEntity> {
     await this.findWarehouseById(dto.warehouseId);
 
     const initialStock = dto.initialStock && dto.initialStock > 0 ? dto.initialStock : 0;
 
     const item = new WarehouseItemEntity();
+    item.code = await this.generateItemCode();
     item.warehouseId = dto.warehouseId;
     item.name = dto.name.trim();
     item.brand = dto.brand?.trim() || undefined;

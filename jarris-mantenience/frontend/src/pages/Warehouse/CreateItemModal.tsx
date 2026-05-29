@@ -59,7 +59,7 @@ const CreateItemModal: React.FC<CreateItemModalProps> = ({
 
   return (
     <Modal
-      title="Nuevo Item"
+      title="Nuevo Item (ID se asigna automáticamente)"
       open={open}
       onCancel={() => { form.resetFields(); onClose(); }}
       onOk={() => form.submit()}

@@ -1,4 +1,4 @@
-import { IsBoolean, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 import { LocationType } from '../../entities/location.entity';
 
 export class UpdateLocationDto {
@@ -11,12 +11,12 @@ export class UpdateLocationDto {
   type?: LocationType;
 
   @IsOptional()
-  @IsInt()
-  operationalCenter?: number;
+  @IsString()
+  operationalCenter?: string;
 
   @IsOptional()
-  @IsInt()
-  costCenter?: number;
+  @IsString()
+  costCenter?: string;
 
   @IsOptional()
   @IsBoolean()

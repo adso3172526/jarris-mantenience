@@ -24,8 +24,8 @@ export class WarehouseEntity {
   @Column({ type: 'uuid' })
   locationId: string;
 
-  @Column({ type: 'int', nullable: true, unique: true })
-  costCenter: number | null;
+  @Column({ type: 'varchar', length: 20, nullable: true, unique: true })
+  costCenter: string | null;
 
   @Column({ default: true })
   active: boolean;

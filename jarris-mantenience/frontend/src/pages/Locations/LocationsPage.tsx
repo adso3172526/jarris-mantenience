@@ -7,7 +7,6 @@ import {
   Modal,
   Form,
   Input,
-  InputNumber,
   Select,
   Switch,
   message,
@@ -25,8 +24,8 @@ interface Location {
   id: string;
   name: string;
   type: string;
-  operationalCenter: number | null;
-  costCenter: number | null;
+  operationalCenter: string | null;
+  costCenter: string | null;
   active: boolean;
   createdAt: string;
 }
@@ -80,17 +79,26 @@ const LocationsPage: React.FC = () => {
 
   const handleEdit = (location: Location) => {
     setEditingLocation(location);
-    form.setFieldsValue(location);
+    form.setFieldsValue({
+      ...location,
+      operationalCenter: location.operationalCenter != null ? String(location.operationalCenter) : undefined,
+      costCenter: location.costCenter != null ? String(location.costCenter) : undefined,
+    });
     setModalOpen(true);
   };
 
   const handleSubmit = async (values: any) => {
     try {
+      const payload = {
+        ...values,
+        operationalCenter: values.operationalCenter != null ? String(values.operationalCenter).trim() || undefined : undefined,
+        costCenter: values.costCenter != null ? String(values.costCenter).trim() || undefined : undefined,
+      };
       if (editingLocation) {
-        await locationsApi.update(editingLocation.id, values);
+        await locationsApi.update(editingLocation.id, payload);
         message.success('Ubicación actualizada exitosamente');
       } else {
-        await locationsApi.create(values);
+        await locationsApi.create(payload);
         message.success('Ubicación creada exitosamente');
       }
       setModalOpen(false);
@@ -158,8 +166,8 @@ const LocationsPage: React.FC = () => {
       key: 'operationalCenter',
       width: 80,
       align: 'center',
-      sorter: (a, b) => (a.operationalCenter ?? 0) - (b.operationalCenter ?? 0),
-      render: (val: number | null) => val ?? <span style={{ color: '#8c8c8c' }}>-</span>,
+      sorter: (a, b) => (a.operationalCenter ?? '').localeCompare(b.operationalCenter ?? ''),
+      render: (val: string | null) => val || <span style={{ color: '#8c8c8c' }}>-</span>,
     },
     {
       title: 'CC',
@@ -167,8 +175,8 @@ const LocationsPage: React.FC = () => {
       key: 'costCenter',
       width: 80,
       align: 'center',
-      sorter: (a, b) => (a.costCenter ?? 0) - (b.costCenter ?? 0),
-      render: (val: number | null) => val ?? <span style={{ color: '#8c8c8c' }}>-</span>,
+      sorter: (a, b) => (a.costCenter ?? '').localeCompare(b.costCenter ?? ''),
+      render: (val: string | null) => val || <span style={{ color: '#8c8c8c' }}>-</span>,
     },
     {
       title: 'Estado',
@@ -346,11 +354,9 @@ const LocationsPage: React.FC = () => {
             label="Centro Operativo (CO)"
             name="operationalCenter"
           >
-            <InputNumber
-              placeholder="Ej: 100"
+            <Input
+              placeholder="Ej: 0001"
               size={isMobile ? 'large' : 'middle'}
-              style={{ width: '100%' }}
-              precision={0}
             />
           </Form.Item>
 
@@ -358,11 +364,9 @@ const LocationsPage: React.FC = () => {
             label="Centro de Costos (CC)"
             name="costCenter"
           >
-            <InputNumber
-              placeholder="Ej: 200"
+            <Input
+              placeholder="Ej: 0001"
               size={isMobile ? 'large' : 'middle'}
-              style={{ width: '100%' }}
-              precision={0}
             />
           </Form.Item>
 

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, InputNumber, Select, Switch, message } from 'antd';
+import { Modal, Form, Input, Select, Switch, message } from 'antd';
 import { warehouseApi } from '../../services/api';
 
 interface EditWarehouseModalProps {
   open: boolean;
   onClose: (reload?: boolean) => void;
-  warehouse: { id: string; name: string; locationId: string; costCenter?: number | null; active: boolean } | null;
+  warehouse: { id: string; name: string; locationId: string; costCenter?: string | null; active: boolean } | null;
   locations: { id: string; name: string }[];
 }
 
@@ -24,7 +24,7 @@ const EditWarehouseModal: React.FC<EditWarehouseModalProps> = ({
       form.setFieldsValue({
         name: warehouse.name,
         locationId: warehouse.locationId,
-        costCenter: warehouse.costCenter,
+        costCenter: warehouse.costCenter != null ? String(warehouse.costCenter) : undefined,
         active: warehouse.active,
       });
     }
@@ -37,7 +37,7 @@ const EditWarehouseModal: React.FC<EditWarehouseModalProps> = ({
       await warehouseApi.update(warehouse.id, {
         name: values.name,
         locationId: values.locationId,
-        costCenter: values.costCenter ?? null,
+        costCenter: values.costCenter != null ? String(values.costCenter).trim() || null : null,
         active: values.active,
       });
       message.success('Almacén actualizado exitosamente');
@@ -105,11 +105,9 @@ const EditWarehouseModal: React.FC<EditWarehouseModalProps> = ({
           label="Centro de Costos (CC)"
           name="costCenter"
         >
-          <InputNumber
-            placeholder="Ej: 200"
+          <Input
+            placeholder="Ej: 0001"
             size={isMobile ? 'large' : 'middle'}
-            style={{ width: '100%' }}
-            precision={0}
           />
         </Form.Item>
 

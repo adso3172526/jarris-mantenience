@@ -41,8 +41,8 @@ export class LocationsService {
     const entity = this.repo.create({
       name: normalizedName,
       type: dto.type,
-      operationalCenter: dto.operationalCenter ?? null,
-      costCenter: dto.costCenter ?? null,
+      operationalCenter: dto.operationalCenter?.trim() || null,
+      costCenter: dto.costCenter?.trim() || null,
       active: true,
     });
     return this.repo.save(entity);
@@ -86,7 +86,7 @@ export class LocationsService {
           throw new ConflictException(`Ya existe una ubicación con el Centro Operativo ${dto.operationalCenter}`);
         }
       }
-      item.operationalCenter = dto.operationalCenter ?? null;
+      item.operationalCenter = dto.operationalCenter?.trim() || null;
     }
 
     if (dto.costCenter !== undefined) {
@@ -96,7 +96,7 @@ export class LocationsService {
           throw new ConflictException(`Ya existe una ubicación con el Centro de Costos ${dto.costCenter}`);
         }
       }
-      item.costCenter = dto.costCenter ?? null;
+      item.costCenter = dto.costCenter?.trim() || null;
     }
 
     if (dto.active !== undefined) item.active = dto.active;

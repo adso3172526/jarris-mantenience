@@ -86,7 +86,7 @@ const StockEntryModal: React.FC<StockEntryModalProps> = ({
           >
             {items.map((item) => (
               <Select.Option key={item.id} value={item.id}>
-                {item.name} (Stock actual: {Number(item.currentStock || 0)})
+                {item.name} (Stock actual: {Number(item.stock || 0)})
               </Select.Option>
             ))}
           </Select>

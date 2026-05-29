@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { LocationType } from '../../entities/location.entity';
 
 export class CreateLocationDto {
@@ -10,10 +10,10 @@ export class CreateLocationDto {
   type: LocationType;
 
   @IsOptional()
-  @IsInt()
-  operationalCenter?: number;
+  @IsString()
+  operationalCenter?: string;
 
   @IsOptional()
-  @IsInt()
-  costCenter?: number;
+  @IsString()
+  costCenter?: string;
 }
