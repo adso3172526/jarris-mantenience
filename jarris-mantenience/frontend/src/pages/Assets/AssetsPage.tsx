@@ -31,6 +31,7 @@ import {
   ToolOutlined,
   FilterOutlined,
   DownloadOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -41,6 +42,7 @@ import CreateAssetModal from './CreateAssetModal';
 import EditAssetModal from './EditAssetModal';
 import TransferAssetModal from './TransferAssetModal';
 import ViewAssetDetailModal from './ViewAssetDetailModal';
+import ImportAssetsModal from './ImportAssetsModal';
 
 interface Asset {
   id: string;
@@ -77,6 +79,7 @@ const AssetsPage: React.FC = () => {
 
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
@@ -99,6 +102,7 @@ const AssetsPage: React.FC = () => {
   const isPDV = hasPermission('VER_ACTIVOS') && !hasPermission('EDITAR_ACTIVOS') && (user?.profileLocationIds?.length ?? 0) > 0;
   const canEdit = hasAccess(['ADMIN'], ['EDITAR_ACTIVOS']);
   const canDeactivate = hasAccess(['ADMIN'], ['EDITAR_ACTIVOS']);
+  const canImport = hasPermission('IMPORTAR_ACTIVOS');
 
   const formatCOP = (value: number) => {
     return `$${Math.round(value).toLocaleString('es-CO')}`;
@@ -845,16 +849,27 @@ const AssetsPage: React.FC = () => {
               <ToolOutlined style={{ fontSize: isMobile ? 14 : 18, color: '#E60012' }} />
               <span style={{ fontSize: isMobile ? 14 : 18, fontWeight: 600 }}>Activos</span>
             </Space>
-            {canEdit && (
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => setCreateModalOpen(true)}
-                size={isMobile ? "middle" : "middle"}
-              >
-                {isMobile ? "Nuevo" : "Nuevo Activo"}
-              </Button>
-            )}
+            <Space wrap>
+              {canImport && (
+                <Button
+                  icon={<UploadOutlined />}
+                  onClick={() => setImportModalOpen(true)}
+                  size="middle"
+                >
+                  {isMobile ? "Importar" : "Importar Excel"}
+                </Button>
+              )}
+              {canEdit && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => setCreateModalOpen(true)}
+                  size="middle"
+                >
+                  {isMobile ? "Nuevo" : "Nuevo Activo"}
+                </Button>
+              )}
+            </Space>
           </div>
         }
       >
@@ -865,6 +880,12 @@ const AssetsPage: React.FC = () => {
       <CreateAssetModal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
+        onSuccess={loadData}
+      />
+
+      <ImportAssetsModal
+        open={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
         onSuccess={loadData}
       />
 

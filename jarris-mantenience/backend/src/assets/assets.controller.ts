@@ -9,9 +9,13 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFiles,
+  UploadedFile,
+  Res,
+  BadRequestException,
 } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import type { Response } from 'express';
+import { FilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage, memoryStorage } from 'multer';
 import { extname } from 'path';
 import { AssetsService } from './assets.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
@@ -40,6 +44,43 @@ export class AssetsController {
   @Permissions(Permission.VER_ACTIVOS)
   findAll() {
     return this.assetsService.findAll();
+  }
+
+  @Get('import/template')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
+  @Permissions(Permission.IMPORTAR_ACTIVOS)
+  async downloadImportTemplate(@Res() res: Response) {
+    const buffer = await this.assetsService.generateImportTemplate();
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="Plantilla_Carga_Activos.xlsx"',
+    );
+    res.setHeader('Content-Length', buffer.length);
+    res.send(buffer);
+  }
+
+  @Post('import')
+  @Roles('ADMIN', 'JEFE_MANTENIMIENTO')
+  @Permissions(Permission.IMPORTAR_ACTIVOS)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (req, file, cb) => {
+        if (!/\.(xlsx)$/i.test(file.originalname)) {
+          return cb(new BadRequestException('Solo se permiten archivos .xlsx'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async importAssets(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('No se recibió ningún archivo');
+    return this.assetsService.importFromExcel(file.buffer);
   }
 
   @Get('location/:locationId')

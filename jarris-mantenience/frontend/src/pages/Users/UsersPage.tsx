@@ -66,6 +66,7 @@ const getProfilePerms = (profile: Profile): string[] =>
 const PERMISSION_DEPENDENCIES: Record<string, string[]> = {
   VER_HISTORIAL_ACTIVO: ['VER_ACTIVOS'],
   EDITAR_ACTIVOS: ['VER_ACTIVOS'],
+  IMPORTAR_ACTIVOS: ['VER_ACTIVOS', 'EDITAR_ACTIVOS'],
   VER_TRASLADOS: ['VER_ACTIVOS'],
   CREAR_TRASLADOS: ['VER_ACTIVOS', 'VER_TRASLADOS'],
   EDITAR_TRASLADOS: ['VER_ACTIVOS', 'CREAR_TRASLADOS'],
@@ -139,6 +140,7 @@ const PERMISSION_CATEGORIES = [
       { key: 'VER_ACTIVOS', label: 'Ver activos' },
       { key: 'VER_HISTORIAL_ACTIVO', label: 'Ver historial del activo' },
       { key: 'EDITAR_ACTIVOS', label: 'Editar activos' },
+      { key: 'IMPORTAR_ACTIVOS', label: 'Importar activos (carga masiva)' },
       { key: 'VER_EVENTOS', label: 'Ver eventos' },
       { key: 'VER_BAJAS', label: 'Ver bajas' },
     ],

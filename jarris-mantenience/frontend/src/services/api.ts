@@ -93,6 +93,14 @@ export const assetsApi = {
   getByCode: (code: string) => api.get(`/assets/code/${code}`),
   getByLocation: (locationId: string) => api.get(`/assets/location/${locationId}`),
   getQR: (id: string) => api.get(`/assets/${id}/qr`),
+
+  // Carga masiva
+  downloadTemplate: () =>
+    api.get('/assets/import/template', { responseType: 'blob' }),
+  importExcel: (formData: FormData) =>
+    api.post('/assets/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
   
   // ? Obtener gastos por ubicación
   getLocationExpenses: (assetId: string) => api.get(`/assets/${assetId}/location-expenses`),
