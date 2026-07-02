@@ -10,12 +10,19 @@ process.env.TZ = 'America/Bogota';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   
-  // CORS - Permite tu IP local ⭐
+  // CORS - orígenes permitidos desde variable de entorno CORS_ORIGINS
+  // (lista separada por comas). Si no está definida, usa los de desarrollo.
+  const defaultOrigins = [
+    'http://localhost:5173',
+    'http://192.168.123.98:5173',
+  ];
+  const corsOrigins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: [
-      'http://localhost:5173',
-      'http://192.168.123.98:5173', // ⭐ TU IP
-    ],
+    origin: corsOrigins.length > 0 ? corsOrigins : defaultOrigins,
     credentials: true,
   });
   
